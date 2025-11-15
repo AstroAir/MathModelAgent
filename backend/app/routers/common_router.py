@@ -4,6 +4,8 @@ from app.utils.common_utils import get_config_template
 from app.schemas.enums import CompTemplate
 from app.services.redis_manager import redis_manager
 from app.utils.log_util import logger
+import os
+import json
 
 router = APIRouter()
 
@@ -34,9 +36,64 @@ async def get_writer_seque():
 
 @router.get("/track")
 async def track(task_id: str):
-    # 获取任务的token使用情况
-
-    pass
+    """获取任务的token使用情况"""
+    try:
+        from app.utils.common_utils import get_work_dir
+        
+        # 获取工作目录
+        work_dir = get_work_dir(task_id)
+        
+        # 读取token使用情况
+        token_usage_path = os.path.join(work_dir, "token_usage.json")
+        chat_completion_path = os.path.join(work_dir, "chat_completion.json")
+        
+        result = {
+            "task_id": task_id,
+            "token_usage": None,
+            "chat_completion_count": None,
+            "total_cost": 0.0
+        }
+        
+        # 读取token使用统计
+        if os.path.exists(token_usage_path):
+            with open(token_usage_path, "r", encoding="utf-8") as f:
+                token_usage = json.load(f)
+                result["token_usage"] = token_usage
+                # 计算总费用
+                result["total_cost"] = sum(
+                    agent_data.get("cost", 0.0) 
+                    for agent_data in token_usage.values()
+                )
+        
+        # 读取聊天完成记录数
+        if os.path.exists(chat_completion_path):
+            with open(chat_completion_path, "r", encoding="utf-8") as f:
+                chat_completion = json.load(f)
+                result["chat_completion_count"] = {
+                    agent: len(completions) 
+                    for agent, completions in chat_completion.items()
+                }
+        
+        return result
+        
+    except FileNotFoundError as e:
+        logger.warning(f"任务 {task_id} 的统计文件不存在: {str(e)}")
+        return {
+            "task_id": task_id,
+            "error": "Task not found or no statistics available",
+            "token_usage": None,
+            "chat_completion_count": None,
+            "total_cost": 0.0
+        }
+    except Exception as e:
+        logger.error(f"获取任务统计信息失败: {str(e)}")
+        return {
+            "task_id": task_id,
+            "error": str(e),
+            "token_usage": None,
+            "chat_completion_count": None,
+            "total_cost": 0.0
+        }
 
 
 @router.get("/status")

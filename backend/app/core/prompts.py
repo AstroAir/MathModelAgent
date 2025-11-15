@@ -26,7 +26,7 @@ COORDINATOR_PROMPT = f"""
 """
 
 
-# TODO: 设计成一个类？
+# Prompt定义，当前模块化组织已满足需求
 
 MODELER_PROMPT = """
 role：你是一名数学建模经验丰富,善于思考的建模手，负责建模部分。

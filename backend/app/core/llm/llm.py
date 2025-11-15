@@ -1,6 +1,6 @@
 from app.utils.common_utils import transform_link, split_footnotes
 from app.utils.log_util import logger
-import time
+import asyncio
 from app.schemas.response import (
     CoderMessage,
     WriterMessage,
@@ -69,7 +69,7 @@ class LLM:
             kwargs["base_url"] = self.base_url
         litellm.enable_json_schema_validation = True #加入json格式验证
 
-        # TODO: stream 输出
+        # 当前使用非流式输出，确保完整响应后再处理
         for attempt in range(max_retries):
             try:
                 # completion = self.client.chat.completions.create(**kwargs)
@@ -81,10 +81,11 @@ class LLM:
                 await self.send_message(response, agent_name, sub_title)
                 return response
             except Exception as e:
-                logger.error(f"第{attempt + 1}次重试: {str(e)}")
+                logger.error(f"LLM调用失败，第{attempt + 1}/{max_retries}次重试: {str(e)}")
                 if attempt < max_retries - 1:  # 如果不是最后一次尝试
-                    time.sleep(retry_delay * (attempt + 1))  # 指数退避
+                    await asyncio.sleep(retry_delay * (attempt + 1))  # 指数退避
                     continue
+                logger.error(f"LLM调用失败，已达最大重试次数: {max_retries}")
                 logger.debug(f"请求参数: {kwargs}")
                 raise  # 如果所有重试都失败，则抛出异常
 

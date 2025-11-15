@@ -14,13 +14,14 @@ from app.core.llm.llm_factory import LLMFactory
 
 
 class WorkFlow:
+    """工作流基类，定义工作流的基本接口"""
     def __init__(self):
+        """初始化工作流"""
         pass
 
     def execute(self) -> str:
-        # RichPrinter.workflow_start()
-        # RichPrinter.workflow_end()
-        pass
+        """执行工作流，由子类实现具体逻辑"""
+        raise NotImplementedError("子类必须实现execute方法")
 
 
 class MathModelWorkFlow(WorkFlow):
@@ -119,42 +120,53 @@ class MathModelWorkFlow(WorkFlow):
         config_template = get_config_template(problem.comp_template)
 
         for key, value in solution_flows.items():
-            await redis_manager.publish_message(
-                self.task_id,
-                SystemMessage(content=f"代码手开始求解{key}"),
-            )
+            try:
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"代码手开始求解{key}"),
+                )
 
-            coder_response = await coder_agent.run(
-                prompt=value["coder_prompt"], subtask_title=key
-            )
+                coder_response = await coder_agent.run(
+                    prompt=value["coder_prompt"], subtask_title=key
+                )
 
-            await redis_manager.publish_message(
-                self.task_id,
-                SystemMessage(content=f"代码手求解成功{key}", type="success"),
-            )
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"代码手求解成功{key}", type="success"),
+                )
 
-            writer_prompt = flows.get_writer_prompt(
-                key, coder_response.code_response, code_interpreter, config_template
-            )
+                writer_prompt = flows.get_writer_prompt(
+                    key, coder_response.coder_response, code_interpreter, config_template
+                )
 
-            await redis_manager.publish_message(
-                self.task_id,
-                SystemMessage(content=f"论文手开始写{key}部分"),
-            )
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"论文手开始写{key}部分"),
+                )
 
-            ## TODO: 图片引用错误
-            writer_response = await writer_agent.run(
-                writer_prompt,
-                available_images=coder_response.created_images,
-                sub_title=key,
-            )
+                # 传递创建的图片给writer，用于引用
+                writer_response = await writer_agent.run(
+                    writer_prompt,
+                    available_images=coder_response.created_images,
+                    sub_title=key,
+                )
 
-            await redis_manager.publish_message(
-                self.task_id,
-                SystemMessage(content=f"论文手完成{key}部分"),
-            )
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"论文手完成{key}部分"),
+                )
 
-            user_output.set_res(key, writer_response)
+                user_output.set_res(key, writer_response)
+                
+            except Exception as e:
+                error_msg = f"处理子任务 {key} 时发生错误: {str(e)}"
+                logger.error(error_msg)
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"子任务 {key} 失败: {str(e)}", type="error"),
+                )
+                # 继续处理其他子任务而不是完全停止
+                continue
 
         # 关闭沙盒
 
@@ -167,14 +179,25 @@ class MathModelWorkFlow(WorkFlow):
             user_output, config_template, problem.ques_all
         )
         for key, value in write_flows.items():
-            await redis_manager.publish_message(
-                self.task_id,
-                SystemMessage(content=f"论文手开始写{key}部分"),
-            )
+            try:
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"论文手开始写{key}部分"),
+                )
 
-            writer_response = await writer_agent.run(prompt=value, sub_title=key)
+                writer_response = await writer_agent.run(prompt=value, sub_title=key)
 
-            user_output.set_res(key, writer_response)
+                user_output.set_res(key, writer_response)
+                
+            except Exception as e:
+                error_msg = f"论文手处理 {key} 部分时发生错误: {str(e)}"
+                logger.error(error_msg)
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"论文手处理 {key} 部分失败: {str(e)}", type="error"),
+                )
+                # 继续处理其他部分
+                continue
 
         logger.info(user_output.get_res())
 

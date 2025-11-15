@@ -11,6 +11,11 @@ from app.utils.common_utils import (
     get_current_files,
     md_2_docx,
 )
+from app.utils.file_utils import (
+    is_archive_file,
+    extract_archive,
+    count_files_in_directory,
+)
 import os
 import asyncio
 from fastapi import HTTPException
@@ -20,6 +25,7 @@ from pydantic import BaseModel
 import litellm
 from app.config.setting import settings
 import requests
+from app.models.task_history import TaskHistoryItem, task_history_manager
 
 router = APIRouter()
 
@@ -168,6 +174,20 @@ async def exampleModeling(
         dst_file = os.path.join(work_dir, file)
         with open(src_file, "rb") as src, open(dst_file, "wb") as dst:
             dst.write(src.read())
+    
+    # 创建任务历史记录
+    title = ques_all[:50].strip() + "..." if len(ques_all) > 50 else ques_all.strip()
+    task_history = TaskHistoryItem(
+        task_id=task_id,
+        title=title,
+        description=ques_all[:200].strip() + "..." if len(ques_all) > 200 else ques_all.strip(),
+        task_type="example",
+        comp_template=CompTemplate.CHINA,
+        status="processing",
+        file_count=len(current_files)
+    )
+    task_history_manager.add_task(task_history)
+    
     # 存储任务ID
     await redis_manager.set(f"task_id:{task_id}", task_id)
 
@@ -194,14 +214,14 @@ async def modeling(
     task_id = create_task_id()
     work_dir = create_work_dir(task_id)
 
+    file_count = 0
+    archive_files = []  # 记录压缩包文件
+    
     # 如果有上传文件，保存文件
     if files:
         logger.info(f"开始处理上传的文件，工作目录: {work_dir}")
         for file in files:
             try:
-                data_file_path = os.path.join(work_dir, file.filename)
-                logger.info(f"保存文件: {file.filename} -> {data_file_path}")
-
                 # 确保文件名不为空
                 if not file.filename:
                     logger.warning("跳过空文件名")
@@ -212,17 +232,79 @@ async def modeling(
                     logger.warning(f"文件 {file.filename} 内容为空")
                     continue
 
+                # 处理文件路径（支持文件夹结构）
+                # 如果文件名包含路径分隔符，创建对应的目录结构
+                file_path_parts = file.filename.replace('\\', '/').split('/')
+                if len(file_path_parts) > 1:
+                    # 有子目录
+                    sub_dir = os.path.join(work_dir, *file_path_parts[:-1])
+                    os.makedirs(sub_dir, exist_ok=True)
+                    data_file_path = os.path.join(work_dir, *file_path_parts)
+                else:
+                    # 直接在工作目录下
+                    data_file_path = os.path.join(work_dir, file.filename)
+                
+                logger.info(f"保存文件: {file.filename} -> {data_file_path}")
+
+                # 保存文件
                 with open(data_file_path, "wb") as f:
                     f.write(content)
                 logger.info(f"成功保存文件: {data_file_path}")
+                
+                # 检查是否为压缩包
+                if is_archive_file(file.filename):
+                    logger.info(f"检测到压缩包: {file.filename}")
+                    archive_files.append(data_file_path)
+                else:
+                    file_count += 1
 
             except Exception as e:
                 logger.error(f"保存文件 {file.filename} 失败: {str(e)}")
                 raise HTTPException(
                     status_code=500, detail=f"保存文件 {file.filename} 失败: {str(e)}"
                 )
+        
+        # 处理压缩包
+        if archive_files:
+            logger.info(f"开始解压 {len(archive_files)} 个压缩包")
+            for archive_path in archive_files:
+                success, error_msg, extracted_files = extract_archive(archive_path, work_dir)
+                
+                if success:
+                    logger.info(f"成功解压 {archive_path}: {len(extracted_files)} 个文件")
+                    file_count += len(extracted_files)
+                    
+                    # 删除原始压缩包（可选）
+                    try:
+                        os.remove(archive_path)
+                        logger.info(f"已删除原始压缩包: {archive_path}")
+                    except Exception as e:
+                        logger.warning(f"删除压缩包失败: {str(e)}")
+                else:
+                    logger.error(f"解压失败 {archive_path}: {error_msg}")
+                    # 如果解压失败，至少保留压缩包本身
+                    file_count += 1
+        
+        # 如果没有压缩包，统计实际文件数
+        if not archive_files and file_count == 0:
+            file_count = count_files_in_directory(work_dir)
+        
+        logger.info(f"文件处理完成，共 {file_count} 个文件")
     else:
         logger.warning("没有上传文件")
+
+    # 创建任务历史记录
+    title = ques_all[:50].strip() + "..." if len(ques_all) > 50 else ques_all.strip()
+    task_history = TaskHistoryItem(
+        task_id=task_id,
+        title=title,
+        description=ques_all[:200].strip() + "..." if len(ques_all) > 200 else ques_all.strip(),
+        task_type="custom",
+        comp_template=comp_template,
+        status="processing",
+        file_count=file_count
+    )
+    task_history_manager.add_task(task_history)
 
     # 存储任务ID
     await redis_manager.set(f"task_id:{task_id}", task_id)
@@ -250,24 +332,49 @@ async def run_modeling_task_async(
         format_output=format_output,
     )
 
-    # 发送任务开始状态
-    await redis_manager.publish_message(
-        task_id,
-        SystemMessage(content="任务开始处理"),
-    )
+    try:
+        # 发送任务开始状态
+        await redis_manager.publish_message(
+            task_id,
+            SystemMessage(content="任务开始处理"),
+        )
 
-    # 给一个短暂的延迟，确保 WebSocket 有机会连接
-    await asyncio.sleep(1)
+        # 给一个短暂的延迟，确保 WebSocket 有机会连接
+        await asyncio.sleep(1)
 
-    # 创建任务并等待它完成
-    task = asyncio.create_task(MathModelWorkFlow().execute(problem))
-    # 设置超时时间（比如 300 分钟）
-    await asyncio.wait_for(task, timeout=3600 * 5)
+        # 创建任务并等待它完成
+        task = asyncio.create_task(MathModelWorkFlow().execute(problem))
+        # 设置超时时间（比如 5 小时）
+        await asyncio.wait_for(task, timeout=3600 * 5)
 
-    # 发送任务完成状态
-    await redis_manager.publish_message(
-        task_id,
-        SystemMessage(content="任务处理完成", type="success"),
-    )
-    # 转换md为docx
-    md_2_docx(task_id)
+        # 发送任务完成状态
+        await redis_manager.publish_message(
+            task_id,
+            SystemMessage(content="任务处理完成", type="success"),
+        )
+        # 转换md为docx
+        md_2_docx(task_id)
+        
+        # 更新任务历史状态为完成
+        task_history_manager.update_task(task_id, status="completed")
+        
+    except asyncio.TimeoutError:
+        error_msg = "任务执行超时（超过5小时）"
+        logger.error(f"Task {task_id} timeout: {error_msg}")
+        await redis_manager.publish_message(
+            task_id,
+            SystemMessage(content=error_msg, type="error"),
+        )
+        # 更新任务历史状态为失败
+        task_history_manager.update_task(task_id, status="failed")
+    except Exception as e:
+        error_msg = f"任务执行过程中发生错误: {str(e)}"
+        logger.error(f"Task {task_id} failed: {error_msg}")
+        await redis_manager.publish_message(
+            task_id,
+            SystemMessage(content=error_msg, type="error"),
+        )
+        # 更新任务历史状态为失败
+        task_history_manager.update_task(task_id, status="failed")
+    finally:
+        logger.info(f"Task {task_id} completed or failed, cleaning up...")

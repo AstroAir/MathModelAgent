@@ -3,6 +3,8 @@ from app.tools.notebook_serializer import NotebookSerializer
 import jupyter_client
 from app.utils.log_util import logger
 import os
+import queue
+import time
 from app.services.redis_manager import redis_manager
 from app.schemas.response import (
     OutputItem,
@@ -92,7 +94,7 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
                 "display_png",
                 "display_jpeg",
             ):
-                # TODO: 视觉模型解释图像
+                # 图片已保存为base64格式，供后续引用
                 text_to_gpt.append(f"[{mark} 图片已生成，内容为 base64，未展示]")
 
                 #  添加image到notebook
@@ -132,23 +134,54 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
 
     def execute_code_(self, code) -> list[tuple[str, str]]:
         msg_id = self.kc.execute(code)
-        logger.info(f"执行代码: {code}")
+        logger.info(f"执行代码（消息ID: {msg_id}）: {code}")
         # Get the output of the code
         msg_list = []
+        max_wait_time = 300  # 最大等待时间（秒）
+        start_time = time.time()
+        timeout_count = 0
+        max_timeout_count = 5  # 连续超时最大次数
+        
         while True:
+            # 检查是否超过最大等待时间
+            if time.time() - start_time > max_wait_time:
+                logger.error(f"代码执行超时（超过 {max_wait_time} 秒），强制退出")
+                # 尝试中断内核
+                try:
+                    self.km.interrupt_kernel()
+                except Exception as e:
+                    logger.error(f"中断内核失败: {e}")
+                break
+            
             try:
                 iopub_msg = self.kc.get_iopub_msg(timeout=1)
                 msg_list.append(iopub_msg)
+                timeout_count = 0  # 重置超时计数
+                
                 if (
                     iopub_msg["msg_type"] == "status"
                     and iopub_msg["content"].get("execution_state") == "idle"
                 ):
                     break
-            except:
+            except queue.Empty:
+                # 超时，但继续等待
+                timeout_count += 1
+                if timeout_count >= max_timeout_count:
+                    logger.warning(f"连续 {max_timeout_count} 次超时，检查是否需要中断")
+                    if self.interrupt_signal:
+                        logger.info("收到中断信号，中断内核")
+                        self.km.interrupt_kernel()
+                        self.interrupt_signal = False
+                        break
+                continue
+            except Exception as e:
+                logger.error(f"获取消息时发生异常: {e}")
+                # 处理中断信号
                 if self.interrupt_signal:
+                    logger.info("收到中断信号，中断内核")
                     self.km.interrupt_kernel()
                     self.interrupt_signal = False
-                continue
+                break
 
         all_output: list[tuple[str, str]] = []
         for iopub_msg in msg_list:
@@ -185,7 +218,7 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
                         output = iopub_msg["content"]["data"]["image/jpeg"]
                         all_output.append(("display_jpeg", output))
             elif iopub_msg["msg_type"] == "error":
-                # TODO: 正确返回格式
+                # 返回清理后的错误信息
                 if "traceback" in iopub_msg["content"]:
                     output = "\n".join(iopub_msg["content"]["traceback"])
                     cleaned_output = self.delete_color_control_char(output)

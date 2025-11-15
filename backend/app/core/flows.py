@@ -40,11 +40,26 @@ class Flows:
             }
             for key, value in questions_quesx.items()
         }
+        
+        # 获取当前目录下的数据集文件
+        from app.utils.common_utils import get_current_files
+        import os
+        work_dir = os.path.join("backend", "project", "work_dir")
+        data_files = []
+        try:
+            if os.path.exists(work_dir):
+                data_files = get_current_files(work_dir, 'data')
+        except Exception:
+            # 如果获取失败，让agent自己去list_files
+            pass
+        
+        data_files_info = f"数据集文件: {', '.join(data_files)}" if data_files else "请使用list_files工具查看当前目录下的数据文件"
+        
         flows = {
             "eda": {
-                # TODO ： 获取当前路径下的所有数据集
                 "coder_prompt": f"""
                         参考建模手给出的解决方案{modeler_response.questions_solution["eda"]}
+                        {data_files_info}
                         对当前目录下数据进行EDA分析(数据清洗,可视化),清洗后的数据保存当前目录下,**不需要复杂的模型**
                     """,
             },

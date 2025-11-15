@@ -62,10 +62,12 @@ watch(() => props.messages, async (messages) => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-4">
-    <div class="h-full bg-white rounded-lg border shadow-sm">
-      <div class="border-b px-4 py-3">
-        <h2 class="text-lg font-semibold text-gray-900">论文内容</h2>
+  <div class="h-full flex flex-col p-4 bg-gradient-to-br from-gray-50 to-slate-50">
+    <div class="h-full bg-white rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="border-b bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 rounded-t-xl">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          📝 论文内容
+        </h2>
       </div>
       <div class="h-full pb-14">
         <ScrollArea class="h-full overflow-y-auto">
@@ -73,7 +75,7 @@ watch(() => props.messages, async (messages) => {
             <div class="max-w-4xl mx-auto overflow-y-auto space-y-6">
               <TransitionGroup name="section" tag="div" class="space-y-6">
                 <div v-for="section in sortedSections" :key="section.id"
-                  class="bg-gray-50 rounded-lg shadow-sm transform transition-all duration-500">
+                  class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md hover:shadow-lg border transform transition-all duration-500">
                   <div class="p-6">
                     <div class="prose prose-slate max-w-none" v-html="section.renderedContent"></div>
                   </div>

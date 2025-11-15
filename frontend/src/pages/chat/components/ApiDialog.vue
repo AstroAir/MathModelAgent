@@ -10,7 +10,6 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectLabel,
   SelectTrigger,
@@ -20,10 +19,38 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useApiKeyStore } from '@/stores/apiKeys'
-import { CheckCircle, XCircle } from 'lucide-vue-next'
+import { CheckCircle, XCircle, Wand2, Copy, Settings2, Sparkles, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { validateApiKey, saveApiConfig, validateOpenalexEmail } from '@/apis/apiKeyApi'
 
 const apiKeyStore = useApiKeyStore()
+
+// 统一配置模式
+const unifiedMode = ref(false)
+const unifiedConfig = ref({
+  apiKey: '',
+  baseUrl: '',
+  modelId: '',
+  provider: ''
+})
+
+// 折叠状态管理
+const collapsedAgents = ref<Record<string, boolean>>({
+  coordinator: false,
+  modeler: false,
+  coder: false,
+  writer: false
+})
+
+const toggleAgentCollapse = (agentKey: string) => {
+  collapsedAgents.value[agentKey] = !collapsedAgents.value[agentKey]
+}
+
+const toggleAllAgents = () => {
+  const allCollapsed = Object.values(collapsedAgents.value).every(v => v)
+  Object.keys(collapsedAgents.value).forEach(key => {
+    collapsedAgents.value[key] = !allCollapsed
+  })
+}
 
 // 本地表单数据
 const form = ref<{
@@ -224,61 +251,222 @@ const resetAll = () => {
     writer: { apiKey: '', baseUrl: '', modelId: '', provider: '' },
     openalex_email: ''
   }
+  unifiedConfig.value = { apiKey: '', baseUrl: '', modelId: '', provider: '' }
 }
 
+// 应用统一配置到所有Agent
+const applyUnifiedConfig = () => {
+  if (!unifiedConfig.value.apiKey || !unifiedConfig.value.modelId) {
+    return
+  }
+  form.value.coordinator = { ...unifiedConfig.value }
+  form.value.modeler = { ...unifiedConfig.value }
+  form.value.coder = { ...unifiedConfig.value }
+  form.value.writer = { ...unifiedConfig.value }
+}
 
-const providers = {
-  "DeepSeek": {
-    "url": "https://platform.deepseek.com/api_keys",
-    "key": "DeepSeek",
-    "baseUrl": "https://api.deepseek.com",
-    "modelId": "deepseek/deepseek-chat"
-  },
-  "硅基流动": {
-    "url": "https://cloud.siliconflow.cn/i/UIb4Enf4",
-    "key": "硅基流动",
-    "baseUrl": "https://api.siliconflow.cn",
-    "modelId": "openai/deepseek-ai/DeepSeek-V3"
-  },
-  "Sophnet": {
-    "url": "https://www.sophnet.com/#?code=AZBSFG",
-    "key": "Sophnet",
-    "baseUrl": "https://www.sophnet.com/api/open-apis",
-    "modelId": "openai/DeepSeek-V3-Fast"
-  },
-  "OpenAI": {
-    "url": "https://platform.openai.com/api-keys",
-    "key": "OpenAI",
-    "baseUrl": "https://api.openai.com",
-    "modelId": "openai/gpt-5"
-  },
-  "302.AI": {
-    "url": "https://share.302.ai/UoTruU",
-    "key": "302.AI",
-    "baseUrl": "https://api.302.ai",
-    "modelId": "openai/deepseek-chat"
-  },
-  "OpenAI 兼容": {
-    "url": "/",
-    "key": "OpenAI 兼容",
-    "baseUrl": "basurl",
-    "modelId": "provider/model_id"
+// 切换统一配置模式
+const toggleUnifiedMode = () => {
+  unifiedMode.value = !unifiedMode.value
+  if (unifiedMode.value && form.value.coordinator.apiKey) {
+    // 如果开启统一模式且已有配置，使用coordinator的配置
+    unifiedConfig.value = { ...form.value.coordinator }
   }
 }
+
+
+const providerCategories = {
+  popular: {
+    label: '🔥 热门推荐',
+    providers: {
+      "DeepSeek": {
+        "url": "https://platform.deepseek.com/api_keys",
+        "key": "DeepSeek",
+        "baseUrl": "https://api.deepseek.com",
+        "modelId": "deepseek-chat",
+        "description": "高性价比的国产大模型"
+      },
+      "硅基流动": {
+        "url": "https://cloud.siliconflow.cn/i/UIb4Enf4",
+        "key": "硅基流动",
+        "baseUrl": "https://api.siliconflow.cn",
+        "modelId": "deepseek-ai/DeepSeek-V3",
+        "description": "国内稳定访问"
+      },
+      "OpenAI": {
+        "url": "https://platform.openai.com/api-keys",
+        "key": "OpenAI",
+        "baseUrl": "https://api.openai.com/v1",
+        "modelId": "gpt-4o",
+        "description": "GPT系列模型"
+      },
+      "302.AI": {
+        "url": "https://share.302.ai/UoTruU",
+        "key": "302.AI",
+        "baseUrl": "https://api.302.ai",
+        "modelId": "deepseek-chat",
+        "description": "一站式AI平台"
+      }
+    }
+  },
+  international: {
+    label: '🌍 国际厂商',
+    providers: {
+      "Anthropic": {
+        "url": "https://console.anthropic.com/",
+        "key": "Anthropic (Claude)",
+        "baseUrl": "https://api.anthropic.com",
+        "modelId": "claude-3-5-sonnet-20241022",
+        "description": "Claude系列模型"
+      },
+      "Google Gemini": {
+        "url": "https://aistudio.google.com/app/apikey",
+        "key": "Google Gemini",
+        "baseUrl": "https://generativelanguage.googleapis.com",
+        "modelId": "gemini/gemini-2.0-flash-exp",
+        "description": "Google最新模型"
+      },
+      "xAI": {
+        "url": "https://console.x.ai/",
+        "key": "xAI (Grok)",
+        "baseUrl": "https://api.x.ai/v1",
+        "modelId": "grok-beta",
+        "description": "Grok系列模型"
+      },
+      "Mistral AI": {
+        "url": "https://console.mistral.ai/",
+        "key": "Mistral AI",
+        "baseUrl": "https://api.mistral.ai/v1",
+        "modelId": "mistral-large-latest",
+        "description": "欧洲开源模型"
+      },
+      "Cohere": {
+        "url": "https://dashboard.cohere.com/api-keys",
+        "key": "Cohere",
+        "baseUrl": "https://api.cohere.ai",
+        "modelId": "command-r-plus",
+        "description": "企业级AI模型"
+      }
+    }
+  },
+  fast: {
+    label: '⚡ 高速推理',
+    providers: {
+      "Groq": {
+        "url": "https://console.groq.com/keys",
+        "key": "Groq",
+        "baseUrl": "https://api.groq.com/openai/v1",
+        "modelId": "llama-3.3-70b-versatile",
+        "description": "超快推理速度"
+      },
+      "Fireworks AI": {
+        "url": "https://fireworks.ai/api-keys",
+        "key": "Fireworks AI",
+        "baseUrl": "https://api.fireworks.ai/inference/v1",
+        "modelId": "accounts/fireworks/models/llama-v3p3-70b-instruct",
+        "description": "高性能推理"
+      },
+      "Together AI": {
+        "url": "https://api.together.xyz/settings/api-keys",
+        "key": "Together AI",
+        "baseUrl": "https://api.together.xyz/v1",
+        "modelId": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        "description": "开源模型托管"
+      }
+    }
+  },
+  chinese: {
+    label: '🇨🇳 国产模型',
+    providers: {
+      "Moonshot AI": {
+        "url": "https://platform.moonshot.cn/console/api-keys",
+        "key": "Moonshot AI (Kimi)",
+        "baseUrl": "https://api.moonshot.cn/v1",
+        "modelId": "moonshot-v1-8k",
+        "description": "Kimi长文本模型"
+      },
+      "智谱AI": {
+        "url": "https://open.bigmodel.cn/usercenter/apikeys",
+        "key": "智谱AI (GLM)",
+        "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+        "modelId": "glm-4-plus",
+        "description": "GLM系列模型"
+      },
+      "阿里通义": {
+        "url": "https://dashscope.console.aliyun.com/apiKey",
+        "key": "阿里通义",
+        "baseUrl": "https://dashscope.aliyuncs.com/api/v1",
+        "modelId": "qwen-plus",
+        "description": "通义千问"
+      }
+    }
+  },
+  aggregator: {
+    label: '🔀 聚合平台',
+    providers: {
+      "OpenRouter": {
+        "url": "https://openrouter.ai/keys",
+        "key": "OpenRouter",
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "modelId": "anthropic/claude-3.5-sonnet",
+        "description": "多模型聚合"
+      },
+      "Perplexity AI": {
+        "url": "https://www.perplexity.ai/settings/api",
+        "key": "Perplexity AI",
+        "baseUrl": "https://api.perplexity.ai",
+        "modelId": "llama-3.1-sonar-large-128k-online",
+        "description": "在线搜索增强"
+      },
+      "Sophnet": {
+        "url": "https://www.sophnet.com/#?code=AZBSFG",
+        "key": "Sophnet",
+        "baseUrl": "https://www.sophnet.com/api/open-apis",
+        "modelId": "DeepSeek-V3-Fast",
+        "description": "API聚合平台"
+      }
+    }
+  },
+  custom: {
+    label: '⚙️ 自定义',
+    providers: {
+      "OpenAI 兼容": {
+        "url": "/",
+        "key": "OpenAI 兼容",
+        "baseUrl": "https://your-api-endpoint.com/v1",
+        "modelId": "your-model-id",
+        "description": "自定义兼容端点"
+      }
+    }
+  }
+}
+
+// 扁平化的providers对象用于向后兼容
+const providers = Object.values(providerCategories).reduce((acc, category) => {
+  return { ...acc, ...category.providers }
+}, {} as Record<string, any>)
 
 // 当供应商选择改变时，自动填写配置
 const onProviderChange = (configKey: string, providerKey: string) => {
   const provider = providers[providerKey as keyof typeof providers]
   if (provider) {
-    const formConfig = (form.value as any)[configKey]
-    formConfig.provider = providerKey
-    formConfig.baseUrl = provider.baseUrl
-    formConfig.modelId = provider.modelId
+    if (configKey === 'unified') {
+      // 统一配置模式
+      unifiedConfig.value.provider = providerKey
+      unifiedConfig.value.baseUrl = provider.baseUrl
+      unifiedConfig.value.modelId = provider.modelId
+    } else {
+      // 单独配置模式
+      const formConfig = (form.value as any)[configKey]
+      formConfig.provider = providerKey
+      formConfig.baseUrl = provider.baseUrl
+      formConfig.modelId = provider.modelId
 
-    // 清除之前的验证结果
-    validationResults.value[configKey as keyof typeof validationResults.value] = {
-      valid: false,
-      message: ''
+      // 清除之前的验证结果
+      validationResults.value[configKey as keyof typeof validationResults.value] = {
+        valid: false,
+        message: ''
+      }
     }
   }
 }
@@ -287,42 +475,162 @@ const onProviderChange = (configKey: string, providerKey: string) => {
 
 <template>
   <Dialog :open="props.open" @update:open="updateOpen">
-    <DialogContent class="max-w-xl max-h-[85vh] overflow-y-auto">
+    <DialogContent class="max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
-        <DialogTitle>设置</DialogTitle>
-        <DialogDescription>
-          为每个 Agent 配置合适模型
-          <br>
-          <div><a href="https://docs.litellm.ai/docs/providers" target="_blank"
-              class="text-blue-600 hover:text-blue-800 underline text-xs">
-              more details
-            </a>
-          </div>
+        <DialogTitle class="flex items-center gap-2 text-xl">
+          <Settings2 class="w-5 h-5 text-blue-600" />
+          API 配置
+        </DialogTitle>
+        <DialogDescription class="text-sm">
+          为每个 Agent 配置合适的模型，或使用统一配置快速设置所有 Agent
+          <a href="https://docs.litellm.ai/docs/providers" target="_blank"
+            class="text-blue-600 hover:text-blue-800 underline ml-2">
+            查看支持的提供商
+          </a>
         </DialogDescription>
       </DialogHeader>
 
-      <div class="space-y-4 py-2">
+      <!-- 统一配置模式切换 -->
+      <div class="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+        <Wand2 class="w-5 h-5 text-blue-600" />
+        <div class="flex-1">
+          <h3 class="text-sm font-semibold text-gray-900">统一配置模式</h3>
+          <p class="text-xs text-gray-600">为所有 Agent 使用相同的模型配置</p>
+        </div>
+        <Button 
+          @click="toggleUnifiedMode" 
+          :variant="unifiedMode ? 'default' : 'outline'" 
+          size="sm"
+          class="transition-all"
+        >
+          {{ unifiedMode ? '已启用' : '启用' }}
+        </Button>
+      </div>
+
+      <!-- 统一配置表单 -->
+      <div v-if="unifiedMode" class="space-y-3 p-4 border-2 border-blue-300 rounded-lg bg-blue-50/50">
+        <div class="flex items-center gap-2 mb-2">
+          <Sparkles class="w-4 h-4 text-blue-600" />
+          <h3 class="text-sm font-semibold text-gray-900">统一配置</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-2">
+            <Label class="text-xs text-gray-700 font-medium">提供商</Label>
+            <div class="flex gap-2">
+              <Select :model-value="unifiedConfig.provider" 
+                @update:model-value="(value: any) => value && onProviderChange('unified', String(value))">
+                <SelectTrigger class="h-9 text-sm">
+                  <SelectValue placeholder="选择提供商" />
+                </SelectTrigger>
+                <SelectContent class="max-h-[400px]">
+                  <div v-for="(category, catKey) in providerCategories" :key="catKey">
+                    <SelectLabel class="text-xs font-semibold text-gray-700 px-2 py-1 sticky top-0 bg-white">
+                      {{ (category as any).label }}
+                    </SelectLabel>
+                    <SelectItem v-for="(provider, key) in (category as any).providers" :key="key" :value="key" 
+                      class="text-sm pl-2">
+                      <div class="flex flex-col gap-0.5">
+                        <span class="font-medium">{{ (provider as any).key }}</span>
+                        <span class="text-xs text-gray-500">{{ (provider as any).description }}</span>
+                      </div>
+                    </SelectItem>
+                  </div>
+                </SelectContent>
+              </Select>
+              <a v-if="unifiedConfig.provider" 
+                :href="providers[unifiedConfig.provider as keyof typeof providers]?.url"
+                target="_blank" 
+                class="flex items-center px-3 py-2 text-xs text-blue-600 hover:text-blue-800 underline border rounded-md hover:bg-blue-50">
+                获取
+              </a>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label class="text-xs text-gray-700 font-medium">API Key</Label>
+            <Input v-model.trim="unifiedConfig.apiKey" type="password"
+              placeholder="请输入 API Key" class="h-9 text-sm" />
+          </div>
+
+          <div class="space-y-2">
+            <Label class="text-xs text-gray-700 font-medium">Base URL</Label>
+            <Input v-model.trim="unifiedConfig.baseUrl"
+              placeholder="例如: https://api.openai.com" class="h-9 text-sm" />
+          </div>
+
+          <div class="space-y-2">
+            <Label class="text-xs text-gray-700 font-medium">Model ID</Label>
+            <Input v-model.trim="unifiedConfig.modelId"
+              placeholder="例如: gpt-4" class="h-9 text-sm" />
+          </div>
+        </div>
+
+        <Button @click="applyUnifiedConfig" class="w-full mt-2" size="sm">
+          <Copy class="w-4 h-4 mr-2" />
+          应用到所有 Agent
+        </Button>
+      </div>
+
+      <div class="space-y-4 py-2" v-if="!unifiedMode">
+        <!-- 全部展开/折叠按钮 -->
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-semibold text-gray-800">Agent 配置</h3>
+          <Button @click="toggleAllAgents" variant="ghost" size="sm" class="h-8 text-xs">
+            <ChevronDown class="w-3.5 h-3.5 mr-1" />
+            {{ Object.values(collapsedAgents).every(v => v) ? '全部展开' : '全部折叠' }}
+          </Button>
+        </div>
 
         <!-- Models Configurations -->
-        <div v-for="config in modelConfigs" :key="config.key" class="space-y-2">
-          <h3 class="text-sm font-medium">{{ config.label }}</h3>
-          <div class="grid grid-cols-2 gap-2">
+        <div v-for="config in modelConfigs" :key="config.key" 
+          class="border rounded-lg shadow-sm hover:shadow-md transition-all bg-gradient-to-br from-white to-gray-50 overflow-hidden">
+          <!-- 可折叠的标题栏 -->
+          <div 
+            @click="toggleAgentCollapse(config.key)"
+            class="flex items-center gap-2 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <div :class="[
+              'w-2 h-2 rounded-full',
+              config.key === 'coordinator' ? 'bg-blue-500' :
+              config.key === 'modeler' ? 'bg-green-500' :
+              config.key === 'coder' ? 'bg-purple-500' : 'bg-orange-500'
+            ]"></div>
+            <h3 class="text-sm font-semibold text-gray-800 flex-1">{{ config.label }}</h3>
+            <div v-if="validationResults[config.key as keyof typeof validationResults].valid" 
+              class="flex items-center gap-1 text-xs text-green-600">
+              <CheckCircle class="w-3.5 h-3.5" />
+              <span class="hidden sm:inline">已验证</span>
+            </div>
+            <ChevronDown v-if="!collapsedAgents[config.key]" class="w-4 h-4 text-gray-500 transition-transform" />
+            <ChevronUp v-else class="w-4 h-4 text-gray-500 transition-transform" />
+          </div>
+          
+          <!-- 可折叠的内容区 -->
+          <div v-show="!collapsedAgents[config.key]" class="px-4 pb-4 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="space-y-1">
               <Label :for="`${config.key}-provider`" class="text-xs text-muted-foreground">提供商</Label>
 
               <div class="flex gap-2 items-center">
                 <Select :model-value="(form as any)[config.key].provider"
                   @update:model-value="(value: any) => value && onProviderChange(config.key, String(value))">
-                  <SelectTrigger class="w-[120px] h-7 text-xs">
+                  <SelectTrigger class="w-full sm:w-[180px] h-9 text-sm">
                     <SelectValue placeholder="选择提供商" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>提供商</SelectLabel>
-                      <SelectItem v-for="(provider, key) in providers" :key="key" :value="key">
-                        {{ provider.key }}
+                  <SelectContent class="max-h-[400px]">
+                    <div v-for="(category, catKey) in providerCategories" :key="catKey">
+                      <SelectLabel class="text-xs font-semibold text-gray-700 px-2 py-1 sticky top-0 bg-white">
+                        {{ category.label }}
+                      </SelectLabel>
+                      <SelectItem v-for="(provider, key) in category.providers" :key="key" :value="key" 
+                        class="text-sm pl-4">
+                        <div class="flex flex-col gap-0.5">
+                          <span class="font-medium">{{ (provider as any).key }}</span>
+                          <span class="text-xs text-gray-500">{{ (provider as any).description }}</span>
+                        </div>
                       </SelectItem>
-                    </SelectGroup>
+                    </div>
                   </SelectContent>
                 </Select>
                 <div v-if="(form as any)[config.key].provider">
@@ -334,78 +642,97 @@ const onProviderChange = (configKey: string, providerKey: string) => {
               </div>
             </div>
 
-            <div class="space-y-1">
-
-              <Label :for="`${config.key}-api-key`" class="text-xs text-muted-foreground">API Key</Label>
-
-              <Input :id="`${config.key}-api-key`" v-model.trim="(form as any)[config.key].apiKey" type="password"
-                placeholder="请输入 API Key" class="h-7 text-xs flex-1" />
-
-              <div v-if="validationResults[config.key as keyof typeof validationResults].message"
-                class="flex items-center">
-                <CheckCircle v-if="validationResults[config.key as keyof typeof validationResults].valid"
-                  class="h-4 w-4 text-green-500" />
-                <XCircle v-else class="h-4 w-4 text-red-500" />
+            <div class="space-y-2">
+              <Label :for="`${config.key}-api-key`" class="text-xs text-gray-700 font-medium">API Key</Label>
+              <div class="relative">
+                <Input :id="`${config.key}-api-key`" v-model.trim="(form as any)[config.key].apiKey" type="password"
+                  placeholder="请输入 API Key" class="h-9 text-sm pr-10" />
+                <div v-if="validationResults[config.key as keyof typeof validationResults].message"
+                  class="absolute right-2 top-1/2 -translate-y-1/2">
+                  <CheckCircle v-if="validationResults[config.key as keyof typeof validationResults].valid"
+                    class="h-4 w-4 text-green-500" />
+                  <XCircle v-else class="h-4 w-4 text-red-500" />
+                </div>
               </div>
             </div>
-
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
-            <div class="space-y-1">
-              <Label :for="`${config.key}-base-url`" class="text-xs text-muted-foreground">Base URL</Label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-2">
+              <Label :for="`${config.key}-base-url`" class="text-xs text-gray-700 font-medium">Base URL</Label>
               <Input :id="`${config.key}-base-url`" v-model.trim="(form as any)[config.key].baseUrl"
-                placeholder="baseUrl" class="h-7 text-xs" />
+                placeholder="例如: https://api.openai.com" class="h-9 text-sm" />
             </div>
-            <div class="space-y-1">
-              <Label :for="`${config.key}-model-id`" class="text-xs text-muted-foreground">Model ID</Label>
+            <div class="space-y-2">
+              <Label :for="`${config.key}-model-id`" class="text-xs text-gray-700 font-medium">Model ID</Label>
               <Input :id="`${config.key}-model-id`" v-model.trim="(form as any)[config.key].modelId"
-                placeholder="provider/model_id" class="h-7 text-xs" />
+                placeholder="例如: gpt-4" class="h-9 text-sm" />
             </div>
           </div>
           <div v-if="validationResults[config.key as keyof typeof validationResults].message" :class="[
-            'text-xs px-2 py-1 rounded text-left border',
-            validationResults[config.key as keyof typeof validationResults].valid ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
+            'text-xs px-3 py-2 rounded-md text-left border flex items-start gap-2',
+            validationResults[config.key as keyof typeof validationResults].valid ? 
+              'bg-green-50 text-green-700 border-green-200' : 
+              'bg-red-50 text-red-700 border-red-200'
           ]">
-            {{ validationResults[config.key as keyof typeof validationResults].message }}
+            <CheckCircle v-if="validationResults[config.key as keyof typeof validationResults].valid"
+              class="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <XCircle v-else class="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span class="flex-1">{{ validationResults[config.key as keyof typeof validationResults].message }}</span>
+          </div>
           </div>
         </div>
       </div>
 
 
 
-      <div class="space-y-2">
-        <h3 class="text-sm font-medium">其他</h3>
-        <Label :for="`openalex-email`" class="text-xs text-muted-foreground">OpenAlex Email</Label>
-        <div class="text-xs text-muted-foreground">
-          使用 email 注册账号从 <a href="https://openalex.org/" target="_blank"
-            class="text-blue-600 hover:text-blue-800 underline text-xs">OpenAlex</a> 获取访问文献权利
+      <!-- OpenAlex Email配置 -->
+      <div class="space-y-3 p-4 border rounded-lg bg-gradient-to-br from-purple-50 to-pink-50">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-purple-500"></div>
+          <h3 class="text-sm font-semibold text-gray-800">文献访问</h3>
         </div>
-        <Input :id="`openalex-email`" v-model.trim="form.openalex_email" placeholder="请输入 OpenAlex Email"
-          class="h-7 text-xs flex-1" />
-        <div v-if="validationResults.openalex_email.message" :class="[
-          'text-xs px-2 py-1 rounded text-left border',
-          validationResults.openalex_email.valid ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
-        ]">
-          {{ validationResults.openalex_email.message }}
+        <div class="space-y-2">
+          <Label :for="`openalex-email`" class="text-xs text-gray-700 font-medium">OpenAlex Email</Label>
+          <div class="text-xs text-gray-600 mb-2">
+            使用 email 注册账号从 <a href="https://openalex.org/" target="_blank"
+              class="text-blue-600 hover:text-blue-800 underline font-medium">OpenAlex</a> 获取访问文献权利
+          </div>
+          <Input :id="`openalex-email`" v-model.trim="form.openalex_email" placeholder="请输入 OpenAlex Email"
+            type="email" class="h-9 text-sm" />
+          <div v-if="validationResults.openalex_email.message" :class="[
+            'text-xs px-3 py-2 rounded-md text-left border flex items-start gap-2',
+            validationResults.openalex_email.valid ? 
+              'bg-green-50 text-green-700 border-green-200' : 
+              'bg-red-50 text-red-700 border-red-200'
+          ]">
+            <CheckCircle v-if="validationResults.openalex_email.valid"
+              class="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <XCircle v-else class="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span class="flex-1">{{ validationResults.openalex_email.message }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="flex justify-between items-center pt-3 border-t">
-        <div class="flex justify-between items-center gap-2">
-          <Button @click="validateAllApiKeys" :disabled="validating" class="h-7 text-xs px-3" variant="secondary">
+      <!-- 底部操作按钮 -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t">
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Button @click="validateAllApiKeys" :disabled="validating" 
+            class="flex-1 sm:flex-none h-9 text-sm px-4" 
+            variant="secondary">
+            <Sparkles :class="['w-4 h-4 mr-2', validating && 'animate-spin']" />
             {{ validating ? '验证中...' : '一键验证' }}
           </Button>
-          <Button @click="resetAll" class="h-7 text-xs px-3" variant="secondary">
+          <Button @click="resetAll" class="flex-1 sm:flex-none h-9 text-sm px-4" variant="outline">
             重置
           </Button>
         </div>
-        <div class="flex space-x-2">
-          <Button variant="outline" @click="updateOpen(false)" class="h-7 text-xs px-3">
+        <div class="flex space-x-2 w-full sm:w-auto">
+          <Button variant="outline" @click="updateOpen(false)" class="flex-1 sm:flex-none h-9 text-sm px-4">
             取消
           </Button>
-          <Button @click="saveAndClose" class="h-7 text-xs px-3">
-            保存
+          <Button @click="saveAndClose" class="flex-1 sm:flex-none h-9 text-sm px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+            保存配置
           </Button>
         </div>
       </div>

@@ -2,10 +2,23 @@
 import type { CodeExecutionResult } from '@/utils/response'
 import { renderMarkdown } from '@/utils/markdown'
 import type { NoteCell, CodeCell, ResultCell } from '@/utils/interface'
+import { ref, computed, onMounted } from 'vue'
+import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-vue-next'
+import hljs from 'highlight.js/lib/core'
+import python from 'highlight.js/lib/languages/python'
+import 'highlight.js/styles/github.css'
 
-defineProps<{
+// 注册Python语言支持
+hljs.registerLanguage('python', python)
+
+const props = defineProps<{
   cell: NoteCell
 }>()
+
+const isCodeCollapsed = ref(false)
+const isResultCollapsed = ref(false)
+const isCopied = ref(false)
+const codeRef = ref<HTMLElement | null>(null)
 
 // 获取结果格式的CSS类
 const getResultClass = (result: CodeExecutionResult) => {
@@ -60,24 +73,102 @@ const isCodeCell = (cell: NoteCell): cell is CodeCell => {
 const isResultCell = (cell: NoteCell): cell is ResultCell => {
   return cell.type === 'result'
 }
+
+// 语法高亮
+const highlightedCode = computed(() => {
+  if (isCodeCell(props.cell)) {
+    try {
+      return hljs.highlight(props.cell.content, { language: 'python' }).value
+    } catch (e) {
+      return props.cell.content
+    }
+  }
+  return ''
+})
+
+// 复制代码
+const copyCode = async () => {
+  if (isCodeCell(props.cell)) {
+    try {
+      await navigator.clipboard.writeText(props.cell.content)
+      isCopied.value = true
+      setTimeout(() => {
+        isCopied.value = false
+      }, 2000)
+    } catch (e) {
+      console.error('Failed to copy code:', e)
+    }
+  }
+}
+
+// 切换折叠
+const toggleCodeCollapse = () => {
+  isCodeCollapsed.value = !isCodeCollapsed.value
+}
+
+const toggleResultCollapse = () => {
+  isResultCollapsed.value = !isResultCollapsed.value
+}
+
+// 代码行数
+const codeLines = computed(() => {
+  if (isCodeCell(props.cell)) {
+    return props.cell.content.split('\n').length
+  }
+  return 0
+})
+
+// 是否应该显示折叠按钮（代码超过10行）
+const shouldShowCollapseButton = computed(() => {
+  return codeLines.value > 10
+})
 </script>
 
 <template>
   <div :class="[
-    'bg-white rounded-lg shadow-sm overflow-hidden',
-    'border border-gray-200 hover:border-blue-300',
+    'bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200',
+    'border border-gray-200 hover:border-blue-300 hover:shadow-md',
     cell.type === 'code' ? 'code-cell' : 'result-cell'
   ]">
     <!-- 单元格头部 -->
     <div
-      class="px-3 py-1 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+      class="px-3 py-2 flex items-center justify-between bg-gradient-to-r from-gray-50 via-white to-gray-50 border-b border-gray-200">
       <div class="flex items-center space-x-2">
         <span :class="[
-          'px-2 py-1 rounded text-xs font-medium',
-          cell.type === 'code' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'
+          'px-2 py-1 rounded text-xs font-semibold',
+          cell.type === 'code' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
         ]">
-          {{ cell.type === 'code' ? 'Code' : 'Result' }}
+          {{ cell.type === 'code' ? '💻 Python Code' : '📊 Output' }}
         </span>
+        <!-- 代码行数 -->
+        <span v-if="cell.type === 'code' && codeLines > 0" class="text-xs text-gray-500">
+          {{ codeLines }} {{ codeLines === 1 ? 'line' : 'lines' }}
+        </span>
+      </div>
+      
+      <!-- 操作按钮 -->
+      <div class="flex items-center gap-2">
+        <!-- 复制按钮（仅代码单元格） -->
+        <button
+          v-if="cell.type === 'code'"
+          @click="copyCode"
+          class="p-1.5 rounded hover:bg-gray-100 transition-colors group"
+          :title="isCopied ? '已复制!' : '复制代码'"
+        >
+          <Check v-if="isCopied" class="w-4 h-4 text-green-600" />
+          <Copy v-else class="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
+        </button>
+        
+        <!-- 折叠按钮 -->
+        <button
+          v-if="shouldShowCollapseButton || cell.type === 'result'"
+          @click="cell.type === 'code' ? toggleCodeCollapse() : toggleResultCollapse()"
+          class="p-1.5 rounded hover:bg-gray-100 transition-colors"
+          :title="(cell.type === 'code' ? isCodeCollapsed : isResultCollapsed) ? '展开' : '折叠'"
+        >
+          <ChevronDown v-if="cell.type === 'code' ? !isCodeCollapsed : !isResultCollapsed" class="w-4 h-4 text-gray-500" />
+          <ChevronRight v-else class="w-4 h-4 text-gray-500" />
+        </button>
       </div>
     </div>
 
@@ -85,15 +176,31 @@ const isResultCell = (cell: NoteCell): cell is ResultCell => {
     <div class="relative">
       <!-- 代码单元格 -->
       <template v-if="isCodeCell(cell)">
-        <div class="p-4 font-mono relative group">
-          <pre class="text-sm overflow-x-auto"><code>{{ cell.content }}</code></pre>
+        <div v-if="!isCodeCollapsed" class="relative group">
+          <!-- 行号和代码 -->
+          <div class="flex">
+            <!-- 行号列 -->
+            <div class="select-none bg-gray-50 px-3 py-4 text-right border-r border-gray-200">
+              <div v-for="(_, index) in cell.content.split('\n')" :key="index" 
+                class="text-xs text-gray-400 leading-6 font-mono">
+                {{ index + 1 }}
+              </div>
+            </div>
+            <!-- 代码列 -->
+            <div class="flex-1 p-4 overflow-x-auto bg-gray-50">
+              <pre class="text-sm font-mono"><code v-html="highlightedCode" class="language-python"></code></pre>
+            </div>
+          </div>
+        </div>
+        <!-- 折叠状态 -->
+        <div v-else class="px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" @click="toggleCodeCollapse">
+          <span class="text-xs text-gray-500 italic">{{ cell.content.split('\n')[0] }}...</span>
         </div>
       </template>
 
       <!-- 结果单元格 -->
       <template v-else-if="isResultCell(cell)">
-        <div class="px-4 py-3 bg-gray-50">
-          <div class="text-xs font-medium text-gray-500 mb-2">输出:</div>
+        <div v-if="!isResultCollapsed" class="px-4 py-3 bg-gray-50">
           
           <!-- 遍历所有执行结果 -->
           <div v-for="(result, index) in cell.code_results" :key="index" class="mb-2 last:mb-0">
@@ -145,6 +252,10 @@ const isResultCell = (cell: NoteCell): cell is ResultCell => {
               </div>
             </template>
           </div>
+        </div>
+        <!-- 折叠状态 -->
+        <div v-else class="px-4 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" @click="toggleResultCollapse">
+          <span class="text-xs text-gray-500 italic">{{ cell.code_results.length }} 条输出结果...</span>
         </div>
       </template>
     </div>

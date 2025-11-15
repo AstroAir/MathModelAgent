@@ -4,9 +4,9 @@ from app.utils.log_util import logger
 from typing import Any, Dict
 
 
-# TODO: 记录数据
-# data analysis : save all data and result
-# agent-histroy, token usgae, , cost , workflow cost , res
+# DataRecorder: 数据记录器
+# 功能：记录agent对话历史、token使用情况、费用统计
+# 保存：chat_history.json, chat_completion.json, token_usage.json
 class DataRecorder:
     def __init__(self, log_work_dir: str = ""):
         self.total_cost = 0.0

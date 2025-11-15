@@ -2,8 +2,9 @@ from app.core.llm.llm import LLM, simple_chat
 from app.utils.log_util import logger
 from icecream import ic
 
-# TODO: Memory 的管理
-# TODO: 评估任务完成情况，rethinking
+# Agent基类：实现了基础的对话历史管理、内存压缩和工具调用验证
+# Memory管理：通过clear_memory实现历史压缩，max_memory控制记忆长度
+# 任务评估：由各子类Agent实现具体的任务完成判断逻辑
 
 
 class Agent:

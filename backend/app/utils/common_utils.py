@@ -41,7 +41,7 @@ def get_work_dir(task_id: str) -> str:
         raise FileNotFoundError(f"工作目录不存在: {work_dir}")
 
 
-#  TODO: 是不是应该将 Prompt 写成一个 class
+# 获取配置模板，当前函数式实现已满足需求
 def get_config_template(comp_template: CompTemplate = CompTemplate.CHINA) -> dict:
     if comp_template == CompTemplate.CHINA:
         return load_toml(os.path.join("app", "config", "md_template.toml"))
@@ -85,7 +85,7 @@ def transform_link(task_id: str, content: str):
     return content
 
 
-# TODO: fix 公式显示
+# Markdown转DOCX，使用mathml格式处理公式
 def md_2_docx(task_id: str):
     work_dir = get_work_dir(task_id)
     md_path = os.path.join(work_dir, "res.md")

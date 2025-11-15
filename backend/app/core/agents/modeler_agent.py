@@ -6,7 +6,8 @@ from app.utils.log_util import logger
 import json
 from icecream import ic
 
-# TODO: 提问工具tool
+# ModelerAgent：负责数学建模方案设计的Agent
+# 当前实现：通过LLM生成建模思路和求解方案
 
 
 class ModelerAgent(Agent):  # 继承自Agent类

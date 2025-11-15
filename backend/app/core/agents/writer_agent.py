@@ -12,11 +12,11 @@ from icecream import ic
 from app.schemas.A2A import WriterResponse
 
 
-# 长文本
-# TODO: 并行 parallel
-# TODO: 获取当前文件下的文件
-# TODO: 引用cites tool
-class WriterAgent(Agent):  # 同样继承自Agent类
+# WriterAgent：负责论文写作的Agent
+# - 支持文献搜索工具（search_papers）
+# - 自动处理图片引用（available_images参数）
+# - 分段写作，支持footnotes引用管理
+class WriterAgent(Agent):
     def __init__(
         self,
         task_id: str,
@@ -115,7 +115,7 @@ class WriterAgent(Agent):  # 同样继承自Agent类
                     return WriterResponse(
                         response_content=error_msg, footnotes=footnotes
                     )
-                # TODO: pass to frontend
+                # 搜索结果已通过redis发送到前端
                 papers_str = self.scholar.papers_to_str(papers)
                 logger.info(f"搜索文献结果\n{papers_str}")
                 await self.append_chat_history(

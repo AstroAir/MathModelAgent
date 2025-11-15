@@ -19,15 +19,67 @@ coder_tools = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "pip_install",
+            "description": "Install Python packages using pip. This function executes 'pip install' command for the specified packages. "
+            "Note: Common packages like numpy, scipy, pandas, matplotlib, seaborn, scikit-learn, xgboost are already installed.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "packages": {
+                        "type": "string",
+                        "description": "Package name(s) to install, e.g., 'requests' or 'beautifulsoup4 lxml'"
+                    }
+                },
+                "required": ["packages"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_files",
+            "description": "List files in the current working directory. Can filter by file type (e.g., '.csv', '.xlsx', '.txt', '.png').",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "extension": {
+                        "type": "string",
+                        "description": "Optional file extension filter (e.g., '.csv', '.xlsx'). If not provided, lists all files."
+                    }
+                },
+                "additionalProperties": False,
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the content of a file in the working directory. Returns the file content as text for text files, "
+            "or basic information for binary files.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Name of the file to read (e.g., 'data.csv', 'readme.txt')"
+                    }
+                },
+                "required": ["filename"],
+                "additionalProperties": False,
+            },
+        },
+    },
 ]
 
 # have installed: numpy scipy pandas matplotlib seaborn scikit-learn xgboost
-
-# TODO: pip install python
-
-# TODO: read files
-
-# TODO: get_cites
 
 
 ## writeragent tools

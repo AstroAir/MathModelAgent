@@ -271,8 +271,8 @@ class E2BCodeInterpreter(BaseCodeInterpreter):
         except Exception as e:
             logger.error(f"文件同步失败: {str(e)}")
 
-        # 保存到分段内容
-        ## TODO: Base64 等图像需要优化
+        # 保存到分段内容并推送到WebSocket
+        # 图像以Base64格式传输，前端负责渲染
         await self._push_to_websocket(content_to_display)
 
         return (
@@ -345,9 +345,8 @@ class E2BCodeInterpreter(BaseCodeInterpreter):
 
                     # 检查文件是否需要更新
                     if file.name in local_files:
-                        # 这里可以添加文件修改时间或内容哈希的比较
-                        # 暂时简单处理，有同名文件就更新
-                        pass
+                        # 文件已存在，跳过下载（可扩展：比较修改时间或哈希）
+                        continue
 
                     if should_download:
                         # 使用 bytes 格式读取文件内容，确保正确处理二进制数据

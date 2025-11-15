@@ -67,11 +67,13 @@ const questionsList = computed(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-4">
+  <div class="h-full flex flex-col p-4 bg-gradient-to-br from-gray-50 to-slate-50">
     <!-- 上半部分：CoordinatorMessage 结构化信息 -->
-    <div class="h-1/2 mb-4 bg-white rounded-lg border shadow-sm">
-      <div class="border-b px-4 py-3">
-        <h2 class="text-lg font-semibold text-gray-900">题目信息</h2>
+    <div class="h-1/2 mb-4 bg-white rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="border-b bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-3 rounded-t-xl">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          📋 题目信息
+        </h2>
       </div>
       <div class="h-full pb-14">
         <ScrollArea class="h-full">
@@ -106,9 +108,10 @@ const questionsList = computed(() => {
 
                 <div class="space-y-3">
                   <div v-for="question in questionsList" :key="question.number"
-                    class="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 rounded-r">
-                    <div class="text-sm font-medium text-blue-700 mb-1">
-                      问题 {{ question.number }}
+                    class="border-l-4 border-blue-500 pl-4 py-3 bg-gradient-to-r from-blue-50 to-blue-25 rounded-r-lg shadow-sm hover:shadow-md transition-all duration-200">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="px-2 py-0.5 text-xs font-bold bg-blue-500 text-white rounded">Q{{ question.number }}</span>
+                      <span class="text-sm font-medium text-blue-700">问题 {{ question.number }}</span>
                     </div>
                     <div class="text-sm text-gray-800 leading-relaxed">
                       {{ question.content }}
@@ -127,9 +130,11 @@ const questionsList = computed(() => {
     </div>
 
     <!-- 下半部分：ModelerMessage 建模手册 -->
-    <div class="h-1/2 bg-white rounded-lg border shadow-sm">
-      <div class="border-b px-4 py-3">
-        <h2 class="text-lg font-semibold text-gray-900">建模手册</h2>
+    <div class="h-1/2 bg-white rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div class="border-b bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 rounded-t-xl">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          📚 建模手册
+        </h2>
       </div>
       <div class="h-full pb-14">
         <ScrollArea class="h-full">
@@ -149,12 +154,12 @@ const questionsList = computed(() => {
               <!-- 问题解决方案 -->
               <div v-for="question in questionsList" :key="`solution-${question.number}`" class="space-y-2">
                 <div v-if="modelerData[`ques${question.number}`]">
-                  <h3 class="text-base font-medium text-gray-700 flex items-center gap-2">
-                    <span class="px-2 py-1 text-xs bg-gray-200 border rounded">问题{{ question.number }}</span>
-                    解决方案
+                  <h3 class="text-base font-medium text-gray-700 flex items-center gap-2 mb-2">
+                    <span class="px-2 py-1 text-xs font-bold bg-green-500 text-white rounded">Q{{ question.number }}</span>
+                    <span>解决方案</span>
                   </h3>
                   <div
-                    class="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap bg-green-50 p-3 rounded border-l-4 border-green-500">
+                    class="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-l-4 border-green-500 shadow-sm hover:shadow-md transition-all duration-200">
                     {{ modelerData[`ques${question.number}`] }}
                   </div>
                 </div>

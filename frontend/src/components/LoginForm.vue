@@ -52,8 +52,7 @@ import { Card, CardContent } from '@/components/ui/card'
           </div>
         </form>
         <div class="relative hidden bg-muted md:block">
-          <!-- TODO: 图片 -->
-          <img src="" alt="Image"
+          <img src="/logo.png" alt="Login Background"
             class="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale">
         </div>
       </CardContent>
