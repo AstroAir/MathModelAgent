@@ -41,12 +41,12 @@ const handleFileDownload = (file: string) => {
   <SidebarContent class="h-full">
     <SidebarGroup />
     <div class="h-full flex flex-col overflow-hidden">
-      <div class="px-3 py-2 font-medium text-sm border-b">Files</div>
+      <div class="px-3 py-2 font-medium text-sm border-b border-border text-foreground">Files</div>
       <div class="flex-1 overflow-auto">
-        <div v-if="isLoading" class="px-3 py-2 text-sm text-gray-500">
+        <div v-if="isLoading" class="px-3 py-2 text-sm text-muted-foreground">
           加载中...
         </div>
-        <div v-else-if="fileTree.length === 0" class="px-3 py-2 text-sm text-gray-500">
+        <div v-else-if="fileTree.length === 0" class="px-3 py-2 text-sm text-muted-foreground">
           暂无文件
         </div>
         <div v-else class="p-2">

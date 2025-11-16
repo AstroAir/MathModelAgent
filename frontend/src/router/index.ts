@@ -21,6 +21,14 @@ const routes = [
 		component: () => import("@/pages/task/index.vue"),
 		props: true,
 	},
+	{
+		path: "/settings",
+		component: () => import("@/pages/settings/index.vue"),
+	},
+	{
+		path: "/test/theme",
+		component: () => import("@/pages/test/theme-test.vue"),
+	},
 ];
 
 // 创建路由

@@ -11,6 +11,7 @@ from app.schemas.response import (
     ResultModel,
     StdErrModel,
     SystemMessage,
+    StepMessage,
 )
 
 
@@ -65,6 +66,17 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
         error_occurred: bool = False
         error_message: str = ""
 
+        # 发送步骤消息：开始执行代码
+        await redis_manager.publish_message(
+            self.task_id,
+            StepMessage(
+                step_name="开始执行代码",
+                step_type="tool",
+                status="processing",
+                content="开始执行代码",
+                details={"tool": "execute_code"}
+            ),
+        )
         await redis_manager.publish_message(
             self.task_id,
             SystemMessage(content="开始执行代码"),
@@ -72,8 +84,19 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
         # 执行 Python 代码
         logger.info("开始在本地执行代码...")
         execution = self.execute_code_(code)
-        logger.info("代码执行完成，开始处理结果...")
+        logger.info("代码执行完成")
 
+        # 发送步骤消息：代码执行完成
+        await redis_manager.publish_message(
+            self.task_id,
+            StepMessage(
+                step_name="代码执行完成",
+                step_type="tool",
+                status="completed",
+                content="代码执行完成",
+                details={"tool": "execute_code"}
+            ),
+        )
         await redis_manager.publish_message(
             self.task_id,
             SystemMessage(content="代码执行完成"),

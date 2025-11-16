@@ -7,9 +7,10 @@ from uuid import uuid4
 class Message(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     msg_type: Literal[
-        "system", "agent", "user", "tool"
-    ]  # system msg | agent message | user message | tool message
+        "system", "agent", "user", "tool", "step"
+    ]  # system msg | agent message | user message | tool message | step message
     content: str | None = None
+    timestamp: float = Field(default_factory=lambda: __import__('time').time())
 
 
 class ToolMessage(Message):
@@ -22,6 +23,16 @@ class ToolMessage(Message):
 class SystemMessage(Message):
     msg_type: str = "system"
     type: Literal["info", "warning", "success", "error"] = "info"
+
+
+class StepMessage(Message):
+    """Agent执行步骤消息，用于调试模式下追踪执行流程"""
+    msg_type: str = "step"
+    step_name: str  # 步骤名称，如"代码手求解成功ques5"
+    step_type: Literal["agent", "tool", "task", "processing"]  # 步骤类型
+    status: Literal["processing", "completed", "failed"] = "processing"  # 步骤状态
+    agent_type: str | None = None  # 关联的agent类型
+    details: dict | None = None  # 额外的步骤详情
 
 
 class UserMessage(Message):
@@ -107,6 +118,7 @@ class WriterMessage(AgentMessage):
 # 所有可能的消息类型
 MessageType = Union[
     SystemMessage,
+    StepMessage,
     UserMessage,
     ModelerMessage,
     CoderMessage,

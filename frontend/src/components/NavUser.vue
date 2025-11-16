@@ -22,13 +22,13 @@ import {
 } from '@/components/ui/sidebar'
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
   LogOut,
   KeyRound,
 } from 'lucide-vue-next'
 import { ref } from 'vue'
 import ApiKeyDialog from '@/pages/chat/components/ApiDialog.vue'
+import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 
 const props = defineProps({
   user: {
@@ -98,14 +98,19 @@ const openApiKeyDialog = () => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem @click="$router.push('/settings')">
               <BadgeCheck />
-              Account
+              Settings
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell />
-              Notifications
-            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <div class="px-2 py-1.5">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-medium">Theme</span>
+                <ThemeToggle variant="switch" size="sm" />
+              </div>
+            </div>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem>

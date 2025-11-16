@@ -44,7 +44,7 @@ defineExpose({ openConfirmDialog })
         <DialogTitle>确认操作</DialogTitle>
       </DialogHeader>
       <div class="py-4">
-        <p class="text-gray-700">您尚未上传任何文件，确定要继续吗？</p>
+        <p class="text-foreground">您尚未上传任何文件，确定要继续吗？</p>
       </div>
       <DialogFooter>
         <Button variant="outline" @click="handleCancel">去上传文件</Button>

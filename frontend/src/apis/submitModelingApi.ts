@@ -6,14 +6,16 @@ export function submitModelingTask(
 		ques_all: string;
 		comp_template?: string;
 		format_output?: string;
+		language?: string;
 	},
 	files?: File[],
 ) {
 	const formData = new FormData();
 	// 添加问题数据
 	formData.append("ques_all", problem.ques_all);
-	formData.append("comp_template", 'CHINA');
+	formData.append("comp_template", problem.comp_template || 'CHINA');
 	formData.append("format_output", problem.format_output || "Markdown");
+	formData.append("language", problem.language || "zh");
 
 	if (files) {
 		// file 是文件对象

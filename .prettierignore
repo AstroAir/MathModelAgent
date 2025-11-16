@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+*.egg-info/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Generated files
+*.min.js
+*.min.css
+
+# Lock files
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Logs
+*.log
+
+# Environment
+.env*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Jupyter
+*.ipynb
+
+# Documentation builds
+docs/_build/
+site/

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/sortablejs": "^1.15.9",
     "@vueuse/core": "^12.7.0",
     "axios": "^1.8.4",
     "highlight.js": "^11.11.1",
@@ -23,6 +24,7 @@
     "pinia-plugin-persistedstate": "^4.5.0",
     "reka-ui": "^2.0.0",
     "render-jupyter-notebook-vue": "^2.2.4",
+    "sortablejs": "^1.15.6",
     "theme-colors": "^0.1.0",
     "vue": "^3.5.13",
     "vue-router": "4"

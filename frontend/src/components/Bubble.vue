@@ -10,8 +10,9 @@ import 'highlight.js/styles/github-dark.css'
 import 'katex/dist/katex.min.css'
 import { computed, ref, inject, type Ref } from 'vue'
 import { AgentType } from '@/utils/enum'
-import { ChevronDown, ChevronRight, Bug, Copy, Check } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-vue-next'
 import type { Message, ToolMessage } from '@/utils/response'
+import DebugPanel from './DebugPanel.vue'
 
 // 注册代码高亮语言
 hljs.registerLanguage('python', python)
@@ -140,109 +141,103 @@ const messageTime = computed(() => {
 </script>
 
 <template>
-  <div class="message-item flex gap-1.5 sm:gap-2 md:gap-3 py-1.5 sm:py-2 md:py-3 px-2 sm:px-3 md:px-4 hover:bg-slate-50/50 rounded-lg transition-all duration-200 group">
+  <div class="message-item flex gap-1.5 py-1 px-2 hover:bg-accent/50 transition-colors duration-150 group">
     <!-- 左侧：项目符号/图标 - 移动端优化 -->
-    <div class="flex-shrink-0 mt-1">
-      <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full shadow-sm" :class="{
-        'bg-blue-500 shadow-blue-200': props.type === 'user',
-        'bg-green-500 shadow-green-200': props.type === 'agent' && props.agentType === 'CoderAgent',
-        'bg-purple-500 shadow-purple-200': props.type === 'agent' && props.agentType === 'WriterAgent',
-        'bg-orange-500 shadow-orange-200': props.type === 'tool'
+    <div class="flex-shrink-0 mt-0.5">
+      <div class="w-1.5 h-1.5 rounded-full" :class="{
+        'bg-primary': props.type === 'user',
+        'bg-green-500': props.type === 'agent' && props.agentType === 'CoderAgent',
+        'bg-purple-500': props.type === 'agent' && props.agentType === 'WriterAgent',
+        'bg-orange-500': props.type === 'tool'
       }"></div>
     </div>
-    
+
     <!-- 右侧：内容 -->
     <div class="flex-1 min-w-0">
       <!-- 消息头：类型标签 + 操作按钮 -->
-      <div class="flex items-start justify-between gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
-        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+      <div class="flex items-start justify-between gap-1 mb-1">
+        <div class="flex items-center gap-1 flex-wrap">
           <!-- 消息类型标签 - 移动端优化 -->
-          <span v-if="props.type === 'user'" class="text-[10px] sm:text-xs font-semibold text-blue-600 px-1.5 sm:px-2 py-0.5 bg-blue-50 rounded shadow-sm">User</span>
-          <span v-else-if="props.type === 'tool'" class="text-[10px] sm:text-xs font-semibold text-orange-600 flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-orange-50 rounded shadow-sm">
+          <span v-if="props.type === 'user'" class="text-[9px] font-semibold text-primary px-1.5 py-0.5 bg-primary/10 rounded">User</span>
+          <span v-else-if="props.type === 'tool'" class="text-[9px] font-semibold text-orange-600 flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/10 rounded">
             {{ toolDisplayName }}
           </span>
-          <span v-else-if="props.type === 'agent' && props.agentType === 'CoderAgent'" 
-            class="text-[10px] sm:text-xs font-semibold text-green-600 px-1.5 sm:px-2 py-0.5 bg-green-50 rounded shadow-sm">Coder Agent</span>
-          <span v-else-if="props.type === 'agent' && props.agentType === 'WriterAgent'" 
-            class="text-[10px] sm:text-xs font-semibold text-purple-600 px-1.5 sm:px-2 py-0.5 bg-purple-50 rounded shadow-sm">Writer Agent</span>
+          <span v-else-if="props.type === 'agent' && props.agentType === 'CoderAgent'"
+            class="text-[9px] font-semibold text-green-600 px-1.5 py-0.5 bg-green-500/10 rounded">Coder</span>
+          <span v-else-if="props.type === 'agent' && props.agentType === 'WriterAgent'"
+            class="text-[9px] font-semibold text-purple-600 px-1.5 py-0.5 bg-purple-500/10 rounded">Writer</span>
           
           <!-- 调试模式显示时间戳 -->
-          <span v-if="debugMode && messageTime" class="text-[9px] sm:text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-50 rounded border border-gray-200">
+          <span v-if="debugMode && messageTime" class="text-[8px] text-muted-foreground font-mono px-1 py-0.5 bg-muted rounded">
             {{ messageTime }}
           </span>
         </div>
-        
+
         <!-- 操作按钮组 -->
-        <div class="flex items-center gap-1 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+        <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <!-- 复制按钮 -->
-          <button 
+          <button
             v-if="props.content"
             @click="copyContent"
-            class="p-1 rounded hover:bg-gray-200 transition-all active:scale-95 touch-manipulation"
+            class="p-0.5 rounded hover:bg-accent transition-colors"
             :title="copied ? '已复制' : '复制内容'"
           >
-            <Check v-if="copied" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-500" />
-            <Copy v-else class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-500" />
+            <Check v-if="copied" class="w-3 h-3 text-green-500" />
+            <Copy v-else class="w-3 h-3 text-muted-foreground" />
           </button>
-          
+
           <!-- 折叠按钮 -->
-          <button 
+          <button
             v-if="props.content && props.content.length > 300"
             @click="toggleCollapse"
-            class="p-1 rounded hover:bg-gray-200 transition-all active:scale-95 touch-manipulation"
+            class="p-0.5 rounded hover:bg-accent transition-colors"
             :title="isCollapsed ? '展开' : '折叠'"
           >
-            <ChevronDown v-if="!isCollapsed" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-500" />
-            <ChevronRight v-else class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-500" />
+            <ChevronDown v-if="!isCollapsed" class="w-3 h-3 text-muted-foreground" />
+            <ChevronRight v-else class="w-3 h-3 text-muted-foreground" />
           </button>
         </div>
       </div>
       
       <!-- 消息内容 - 移动端字体优化 -->
-      <div v-if="!isCollapsed" class="text-xs sm:text-sm text-gray-700 leading-relaxed break-words">
+      <div v-if="!isCollapsed" class="text-sm text-foreground leading-relaxed break-words">
         <div v-if="props.content" v-html="renderedContent" class="prose prose-sm max-w-none"></div>
-        
-        <!-- 调试模式：显示原始消息 -->
-        <div v-if="debugMode && props.message" class="mt-3 p-2 sm:p-3 bg-gray-900 rounded-lg border border-gray-700">
-          <div class="flex items-center gap-1.5 mb-2">
-            <Bug class="w-3 h-3 text-yellow-400" />
-            <span class="text-[10px] sm:text-xs font-semibold text-yellow-400">调试信息</span>
-          </div>
-          <pre class="text-[9px] sm:text-[10px] text-gray-300 overflow-x-auto max-h-40 overflow-y-auto font-mono">{{ JSON.stringify(props.message, null, 2) }}</pre>
-        </div>
-        
+
+        <!-- 调试模式：使用DebugPanel组件显示详细调试信息 -->
+        <DebugPanel v-if="debugMode && props.message" :message="props.message" :agentType="props.agentType" />
+
         <!-- 工具调用详情 -->
-        <div v-if="isToolMessage && toolMessage" class="mt-2 sm:mt-3">
-          <button 
+        <div v-if="isToolMessage && toolMessage" class="mt-2">
+          <button
             @click="toggleToolExpand"
-            class="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-gray-500 hover:text-orange-600 transition-colors active:scale-95 touch-manipulation"
+            class="flex items-center gap-1 text-[9px] text-muted-foreground hover:text-orange-500 transition-colors"
           >
-            <ChevronRight :class="['w-2.5 h-2.5 sm:w-3 sm:h-3 transition-transform', isToolExpanded ? 'rotate-90' : '']" />
+            <ChevronRight :class="['w-2.5 h-2.5 transition-transform', isToolExpanded ? 'rotate-90' : '']" />
             <span>{{ isToolExpanded ? '隐藏详情' : '查看详情' }}</span>
           </button>
-          
+
           <!-- 工具输入输出 - 移动端优化 -->
-          <div v-if="isToolExpanded" class="mt-2 sm:mt-3 space-y-2 sm:space-y-3 text-[10px] sm:text-xs bg-gray-50 rounded-lg p-2 sm:p-3 md:p-4 border border-gray-200">
+          <div v-if="isToolExpanded" class="mt-2 space-y-2 text-[9px] bg-muted rounded p-2 border border-border">
             <!-- 输入 -->
             <div v-if="toolMessage.input">
-              <div class="font-semibold text-gray-700 mb-1 sm:mb-2">输入参数:</div>
-              <pre class="text-[10px] sm:text-xs bg-white p-2 sm:p-3 rounded border overflow-x-auto max-h-40 sm:max-h-60 overflow-y-auto">{{ JSON.stringify(toolMessage.input, null, 2) }}</pre>
+              <div class="font-semibold text-foreground mb-1">输入参数:</div>
+              <pre class="text-[8px] bg-background p-2 rounded border-border overflow-x-auto max-h-32 overflow-y-auto">{{ JSON.stringify(toolMessage.input, null, 2) }}</pre>
             </div>
-            
+
             <!-- 输出预览 -->
             <div v-if="toolMessage.output">
-              <div class="font-semibold text-gray-700 mb-1 sm:mb-2">输出结果:</div>
-              <div class="text-gray-600 bg-white p-2 sm:p-3 rounded border max-h-40 sm:max-h-60 overflow-y-auto">
+              <div class="font-semibold text-foreground mb-1">输出结果:</div>
+              <div class="text-muted-foreground bg-background p-2 rounded border-border max-h-32 overflow-y-auto">
                 {{ Array.isArray(toolMessage.output) ? `${toolMessage.output.length} 条结果` : '查看结果' }}
               </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- 折叠状态的预览 - 移动端优化 -->
-      <div v-else class="text-xs sm:text-sm text-gray-500 cursor-pointer hover:text-gray-700 transition-colors active:opacity-70" @click="toggleCollapse">
-        {{ props.content?.substring(0, 100) }}<span class="hidden sm:inline">{{ props.content?.substring(100, 150) }}</span>...
+      <div v-else class="text-sm text-muted-foreground cursor-pointer hover:text-foreground transition-colors" @click="toggleCollapse">
+        {{ props.content?.substring(0, 80) }}...
       </div>
     </div>
   </div>
@@ -264,20 +259,15 @@ const messageTime = computed(() => {
 .prose h2,
 .prose h3,
 .prose h4 {
-  @apply my-3 font-semibold;
-  color: #1f2937;
+  @apply my-3 font-semibold text-foreground;
 }
 
 .prose h1 {
-  @apply text-xl sm:text-2xl;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 0.5rem;
+  @apply text-xl sm:text-2xl border-b-2 border-border pb-2;
 }
 
 .prose h2 {
-  @apply text-lg sm:text-xl;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.25rem;
+  @apply text-lg sm:text-xl border-b border-border pb-1;
 }
 
 .prose h3 {
@@ -308,24 +298,20 @@ const messageTime = computed(() => {
 
 /* 行内代码 */
 .prose code:not(.hljs) {
-  @apply px-1.5 py-0.5 rounded text-xs sm:text-sm;
-  background: #f3f4f6;
-  color: #dc2626;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-weight: 500;
+  @apply px-1.5 py-0.5 rounded text-xs sm:text-sm bg-muted text-destructive font-mono font-medium;
 }
 
 /* 代码块容器 */
 .prose pre {
-  @apply my-3 rounded-lg overflow-hidden shadow-sm;
-  background: #1e293b !important;
-  border: 1px solid #334155;
+  @apply my-3 rounded-lg overflow-hidden shadow-sm bg-gray-800 border border-border;
+}
+
+.dark .prose pre {
+  @apply bg-gray-900;
 }
 
 .prose pre code.hljs {
-  @apply p-3 sm:p-4 block overflow-x-auto text-xs sm:text-sm;
-  background: transparent !important;
-  color: #e2e8f0;
+  @apply p-3 sm:p-4 block overflow-x-auto text-xs sm:text-sm bg-transparent text-gray-200;
   line-height: 1.6;
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   max-height: 500px;
@@ -339,73 +325,52 @@ const messageTime = computed(() => {
 }
 
 .prose pre code.hljs::-webkit-scrollbar-track {
-  background: #334155;
-  border-radius: 4px;
+  @apply bg-muted rounded-md;
 }
 
 .prose pre code.hljs::-webkit-scrollbar-thumb {
-  background: #64748b;
-  border-radius: 4px;
+  @apply bg-border rounded-md;
 }
 
 .prose pre code.hljs::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  @apply bg-border/80;
 }
 
 .prose blockquote {
-  @apply my-3 pl-4 border-l-4 italic;
-  border-color: #3b82f6;
-  color: #4b5563;
-  background: #f9fafb;
-  padding: 0.75rem 1rem;
-  border-radius: 0.25rem;
+  @apply my-3 pl-4 border-l-4 italic border-primary bg-muted p-4 rounded-md;
 }
 
 .prose a {
-  @apply underline underline-offset-2;
-  color: #3b82f6;
-  transition: color 0.2s;
-}
-
-.prose a:hover {
-  color: #2563eb;
+  @apply underline underline-offset-2 text-primary hover:text-primary/80 transition-colors;
 }
 
 .prose img {
-  @apply my-3 rounded-lg shadow-md;
-  max-width: 100%;
-  height: auto;
+  @apply my-3 rounded-lg shadow-md max-w-full h-auto;
 }
 
 /* 表格样式 */
 .prose table {
-  @apply my-3 w-full border-collapse;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  overflow: hidden;
+  @apply my-3 w-full border-collapse border border-border rounded-lg overflow-hidden;
 }
 
 .prose thead {
-  background: #f3f4f6;
+  @apply bg-muted;
 }
 
 .prose thead tr {
-  border-bottom: 2px solid #d1d5db;
+  @apply border-b-2 border-border;
 }
 
 .prose th {
-  @apply p-2 sm:p-3 text-left font-semibold text-xs sm:text-sm;
-  color: #374151;
+  @apply p-2 sm:p-3 text-left font-semibold text-xs sm:text-sm text-foreground;
 }
 
 .prose td {
-  @apply p-2 sm:p-3 text-xs sm:text-sm;
-  border-top: 1px solid #e5e7eb;
-  color: #4b5563;
+  @apply p-2 sm:p-3 text-xs sm:text-sm border-t border-border text-muted-foreground;
 }
 
 .prose tbody tr:hover {
-  background: #f9fafb;
+  @apply bg-accent;
 }
 
 /* KaTeX数学公式样式 */
@@ -419,92 +384,5 @@ const messageTime = computed(() => {
   overflow-y: hidden;
 }
 
-.prose-invert {
-  @apply text-primary-foreground;
-}
 
-/* 确保透明度样式不会被继承 */
-.prose thead *,
-.prose td * {
-  @apply opacity-100;
-}
-
-.bubble {
-  display: flex;
-  flex: 1 1 0%;
-}
-
-.bubble-user {
-  justify-content: flex-end;
-}
-
-.bubble-coder,
-.bubble-writer {
-  justify-content: flex-start;
-}
-
-/* 用户气泡颜色 */
-.bubble-user .prose {
-  background: #2563eb;
-  /* 蓝色 */
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
-  border: 1px solid #2563eb;
-}
-
-/* CoderAgent 气泡颜色 */
-.bubble-coder .prose {
-  background: #f1f5f9;
-  /* 浅灰 */
-  color: #0f172a;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
-}
-
-/* WriterAgent 气泡颜色 */
-.bubble-writer .prose {
-  background: #fef9c3;
-  /* 浅黄 */
-  color: #92400e;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.08);
-}
-
-/* 消息动画 */
-@keyframes messageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.message-animate {
-  animation: messageSlideIn 0.3s ease-out;
-}
-
-/* 头像容器样式 */
-.avatar-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2px;
-}
-
-.bubble-user .avatar-container {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-}
-
-.bubble-coder .avatar-container {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.bubble-writer .avatar-container {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
 </style>

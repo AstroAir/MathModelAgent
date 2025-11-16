@@ -16,13 +16,13 @@ const props = defineProps<{
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'bg-green-50 border-green-200 text-green-700'
+      return 'bg-green-500/10 border-green-500/20 text-green-600'
     case 'running':
-      return 'bg-blue-50 border-blue-200 text-blue-700'
+      return 'bg-primary/10 border-primary/20 text-primary animate-pulse'
     case 'error':
-      return 'bg-red-50 border-red-200 text-red-700'
+      return 'bg-destructive/10 border-destructive/20 text-destructive'
     default:
-      return 'bg-gray-50 border-gray-200 text-gray-500'
+      return 'bg-muted border-border text-muted-foreground'
   }
 }
 
@@ -52,7 +52,7 @@ const getStatusIcon = (status: string) => {
     >
       <!-- 图标和状态指示器 -->
       <div class="relative flex-shrink-0">
-        <div class="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-2xl">
+        <div class="w-12 h-12 rounded-full bg-background shadow-sm flex items-center justify-center text-2xl">
           {{ agent.icon }}
         </div>
         <div class="absolute -bottom-1 -right-1">
@@ -68,32 +68,17 @@ const getStatusIcon = (status: string) => {
 
       <!-- Agent信息 -->
       <div class="flex-1 min-w-0">
-        <h3 class="font-semibold text-sm mb-1">{{ agent.name }}</h3>
+        <h3 class="font-semibold text-sm mb-1 text-foreground">{{ agent.name }}</h3>
         <p class="text-xs opacity-75 line-clamp-1">{{ agent.description }}</p>
       </div>
 
       <!-- 连接线 -->
       <div
         v-if="index < agents.length - 1"
-        class="absolute left-8 top-full w-0.5 h-3 bg-gray-300"
+        class="absolute left-8 top-full w-0.5 h-3 bg-border"
       />
     </div>
   </div>
 </template>
 
-<style scoped>
-@keyframes pulse-border {
-  0%, 100% {
-    border-color: currentColor;
-    opacity: 1;
-  }
-  50% {
-    border-color: currentColor;
-    opacity: 0.5;
-  }
-}
 
-.border-blue-200 {
-  animation: pulse-border 2s ease-in-out infinite;
-}
-</style>

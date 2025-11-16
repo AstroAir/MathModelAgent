@@ -1,0 +1,74 @@
+name: Question
+description: Ask a question about MathModelAgent
+title: "[Question]: "
+labels: ["question"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! Before creating an issue, please check:
+        - [Documentation](https://github.com/jihe520/MathModelAgent/tree/main/docs)
+        - [Existing Issues](https://github.com/jihe520/MathModelAgent/issues)
+        - [QQ Group or Discord](https://github.com/jihe520/MathModelAgent#-group)
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Installation & Setup
+        - Configuration
+        - Usage & How-to
+        - API & Integration
+        - Models & LLMs
+        - Code Interpreter
+        - Paper Generation
+        - Performance & Optimization
+        - Troubleshooting
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: Ask your question here. Be as specific as possible.
+      placeholder: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context that might help us answer your question
+      placeholder: |
+        - What are you trying to achieve?
+        - What have you tried so far?
+        - Any relevant configuration or setup details?
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: Provide environment details if your question is related to setup or configuration
+      placeholder: |
+        - OS: 
+        - Python Version: 
+        - Node.js Version: 
+        - Deployment Method: 
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched for similar questions before creating this one
+          required: true
+        - label: I have checked the documentation
+          required: true

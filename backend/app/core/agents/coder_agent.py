@@ -6,10 +6,9 @@ from app.schemas.response import SystemMessage, InterpreterMessage
 from app.tools.base_interpreter import BaseCodeInterpreter
 from app.core.llm.llm import LLM
 from app.schemas.A2A import CoderToWriter
-from app.core.prompts import CODER_PROMPT
+from app.core.prompts import get_coder_prompt, get_reflection_prompt, get_completion_check_prompt
 from app.utils.common_utils import get_current_files
 import json
-from app.core.prompts import get_reflection_prompt
 from app.core.functions import coder_tools
 
 # CoderAgent：负责代码生成和执行的Agent
@@ -27,12 +26,14 @@ class CoderAgent(Agent):  # 同样继承自Agent类
         max_chat_turns: int = settings.MAX_CHAT_TURNS,  # 最大聊天次数
         max_retries: int = settings.MAX_RETRIES,  # 最大反思次数
         code_interpreter: BaseCodeInterpreter = None,
+        language: str = "zh",
     ) -> None:
         super().__init__(task_id, model, max_chat_turns)
         self.work_dir = work_dir
         self.max_retries = max_retries
         self.is_first_run = True
-        self.system_prompt = CODER_PROMPT
+        self.language = language
+        self.system_prompt = get_coder_prompt(language)
         self.code_interpreter = code_interpreter
 
     async def run(self, prompt: str, subtask_title: str) -> CoderToWriter:
@@ -145,7 +146,7 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                         retry_count += 1
                         logger.info(f"当前尝试次:{retry_count} / {self.max_retries}")
                         last_error_message = error_message
-                        reflection_prompt = get_reflection_prompt(error_message, code)
+                        reflection_prompt = get_reflection_prompt(error_message, code, self.language)
 
                         await redis_manager.publish_message(
                             self.task_id,

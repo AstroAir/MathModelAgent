@@ -38,17 +38,17 @@ const toggleExamples = () => {
     <AppSidebar />
     <SidebarInset>
       <!-- 移动端优化的Header -->
-      <header class="flex h-14 sm:h-16 shrink-0 items-center gap-2 px-3 sm:px-4 border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+      <header class="flex h-14 sm:h-16 shrink-0 items-center gap-2 px-3 sm:px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <SidebarTrigger class="-ml-1" />
         <div class="flex justify-between w-full gap-2 items-center">
           <ServiceStatus />
           <div class="flex gap-1.5 sm:gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              @click="toggleExamples" 
+            <Button
+              variant="outline"
+              size="sm"
+              @click="toggleExamples"
               class="h-8 sm:h-9 transition-colors"
-              :class="showExamples ? 'bg-blue-50 border-blue-300 text-blue-700' : ''"
+              :class="showExamples ? 'bg-accent text-accent-foreground' : ''"
             >
               <Sparkles class="w-4 h-4" />
               <span class="hidden sm:inline ml-1.5">探索示例</span>
@@ -77,7 +77,7 @@ const toggleExamples = () => {
           <div class="space-y-4 sm:space-y-6 max-w-6xl mx-auto">
             <!-- 标题区域 - 移动端优化 -->
             <div class="text-center space-y-2 mb-6 sm:mb-10">
-              <h1 class="text-xl sm:text-2xl md:text-3xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 class="text-xl sm:text-2xl md:text-3xl font-semibold text-gradient">
                 MathModelAgent
               </h1>
               <p class="text-xs sm:text-sm md:text-base text-muted-foreground px-4">
@@ -97,9 +97,9 @@ const toggleExamples = () => {
 
         <!-- 示例展示覆盖层 -->
         <Transition name="examples">
-          <div 
+          <div
             v-if="showExamples"
-            class="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-gray-100 overflow-y-auto z-20"
+            class="absolute inset-0 bg-background/95 backdrop-blur-sm overflow-y-auto z-20"
             @click.self="showExamples = false"
           >
             <div class="min-h-full py-6 sm:py-8 px-3 sm:px-4 md:px-6">
@@ -107,7 +107,7 @@ const toggleExamples = () => {
                 <!-- 标题栏 -->
                 <div class="flex items-center justify-between mb-8">
                   <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gradient mb-2">
                       探索示例案例
                     </h2>
                     <p class="text-sm text-muted-foreground">

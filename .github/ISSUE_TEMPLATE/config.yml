@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 QQ Group Discussion
+    url: http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=rFKquDTSxKcWpEhRgpJD-dPhTtqLwJ9r&authKey=xYKvCFG5My4uYZTbIIoV5MIPQedW7hYzf0%2Fbs4EUZ100UegQWcQ8xEEgTczHsyU6&noverify=0&group_code=699970403
+    about: Join our QQ group for general discussions and questions
+  - name: 💬 Discord Community
+    url: https://discord.gg/3Jmpqg5J
+    about: Join our Discord server for community support
+  - name: 📖 Documentation
+    url: https://github.com/jihe520/MathModelAgent/tree/main/docs
+    about: Check our documentation for guides and tutorials
+  - name: 🔍 DeepWiki
+    url: https://deepwiki.com/jihe520/MathModelAgent
+    about: Explore the project on DeepWiki

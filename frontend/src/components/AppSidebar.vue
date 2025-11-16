@@ -116,17 +116,17 @@ const getStatusIcon = (status: string) => {
   }
 }
 
-// 获取状态颜色类
+// 获取状态颜色类 - Theme Aware
 const getStatusColorClass = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'text-green-600'
+      return 'text-green-600 dark:text-green-400'
     case 'failed':
-      return 'text-red-600'
+      return 'text-red-600 dark:text-red-400'
     case 'processing':
-      return 'text-blue-600 animate-spin'
+      return 'text-blue-600 dark:text-blue-400 animate-spin'
     default:
-      return 'text-gray-600'
+      return 'text-muted-foreground'
   }
 }
 
@@ -313,7 +313,7 @@ const socialMedia = [
                         <div class="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{{ formatTime(task.created_at) }}</span>
                           <span v-if="task.file_count > 0">· {{ task.file_count }} 个文件</span>
-                          <span class="px-1.5 py-0.5 rounded text-xs" :class="task.task_type === 'example' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'">
+                          <span class="px-1.5 py-0.5 rounded text-xs" :class="task.task_type === 'example' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'bg-muted text-muted-foreground'">
                             {{ task.task_type === 'example' ? '示例' : '自定义' }}
                           </span>
                         </div>

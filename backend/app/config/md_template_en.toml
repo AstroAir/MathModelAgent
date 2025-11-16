@@ -1,0 +1,173 @@
+firstPage = """
+# Title: Generate a title based on the full text
+Example: Research on Agricultural Planting Optimization Model Based on Harris Hawk Algorithm
+
+Abstract
+First paragraph: Background
+Approximately 100 words
+
+Each problem needs to be written as a separate paragraph '\n' similar to the following, without bullet points.
+For problem X, based on the answer to problem X, what model was used, how was the model constructed, what work was done, what results were obtained, and specific numerical values
+Each paragraph approximately 170 words
+
+Last paragraph: Summarize the use and effectiveness of sensitivity analysis, and conclusion.
+Approximately 150 words
+
+Keywords: Models used, etc., approximately 4-5 keywords, without numbering
+Example: HHO  MOHHO  Genetic Algorithm  Mealpy  Monte Carlo Simulation  Planning Problem
+
+Refer to the following problems and model establishment and solution, complete the writing of title, abstract, and keywords according to the above template and requirements
+
+{Problem}
+{Model Establishment and Solution}
+"""
+
+RepeatQues = """
+# 1. Problem Restatement
+## 1.1 Problem Background
+Search literature
+Summarize the problem background based on the topic (search literature)
+Format: One paragraph
+Approximately 160 words
+
+## 1.2 Problem Restatement
+Reference template:
+This paper establishes mathematical models based on the above information to solve the following problems.
+List with bullet points
+
+**Refer to the following problem requirements, and complete the **problem background and problem restatement** in the problem restatement section according to the above template and requirements**
+
+{Problem}
+"""
+
+analysisQues = """
+# 2. Problem Analysis
+## 2.1 Analysis of Problem 1
+Two paragraphs
+Approximately 250 words
+
+Reference template:
+This question requires solving the optimal planting plan for 2024-2030 based on sales volume, planting cost, yield per acre, sales price and other relevant data, considering constraints such as land resources and planting conditions. Problem 1 is divided into two sub-questions, and the profit-optimal planting plan is solved under two different unsalable processing methods, i.e., two different single objective functions.
+Assuming that the 2023 crop data (sales volume, price, yield per acre, planting cost) remain unchanged, and without considering environmental volatility, a single-objective planning model can be established for solving. The Harris Hawk Optimization (HHO) algorithm model is used to solve the optimal crop planting method, compared with Genetic Algorithm (GA), and the planning results of the model are evaluated. The Harris Hawk Optimization algorithm has stronger local search capability and parallel processing capability, is more flexible and agile in problem solving, can search and summarize data more quickly, and finally selects the Harris Hawk algorithm model (HHO) for solving.
+
+Analyze each problem in this way
+## 2.2 Analysis of Problem 2
+
+Refer to the following model establishment and solution and problem, complete the **analysis of each problem** according to the above template and requirements
+
+{Model Establishment and Solution}
+{Problem}
+"""
+
+modelAssumption = """
+# 3. Model Assumptions
+Write about 3-4 items, examples below:
+(1) Data Validity: Assume that the data used is true and reliable
+(2) Market Stability: Assume that there are no factors such as natural disasters or government policies affecting agricultural planting.
+
+Refer to the following model establishment and solution and problem, complete the **model assumptions** according to the above template and requirements
+
+{Model Establishment and Solution}
+{Problem}
+"""
+
+symbol = """
+# 4. Symbol Description and Data Preprocessing
+## 4.1 Symbol Description
+
+Reference template:
+| Symbol | Meaning | Unit |
+| ---- | ---- | ---- |
+| \\( x \\) | Crop type | - |
+| \\( y \\) | Planting area | acre |
+| \\( z \\) | Expected sales volume | ton |
+| \\( c \\) | Planting cost | yuan |
+| \\( p \\) | Sales price | yuan/ton |
+| \\( r \\) | Risk coefficient | - |
+| \\( t \\) | Time (year) | year |
+
+Refer to the following model establishment and solution, provide a table to represent some symbol descriptions
+Note: Symbols are rendered with markdown formulas
+
+{Model Establishment and Solution}
+"""
+
+eda = """
+## 4.2 Descriptive Statistics
+Approximately 200 words
+"""
+
+ques1 = """Template and requirements as follows
+# 5. Model Establishment and Solution
+## 5.1 Model Establishment and Solution for Problem 1
+### 5.1.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.1.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+ques2 = """Reference template
+## 5.2 Model Establishment and Solution for Problem 2
+### 5.2.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.2.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+ques3 = """Reference template
+## 5.3 Model Establishment and Solution for Problem 3
+### 5.3.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.3.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+ques4 = """Reference template
+## 5.4 Model Establishment and Solution for Problem 4
+### 5.4.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.4.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+ques5 = """Reference template
+## 5.5 Model Establishment and Solution for Problem 5
+### 5.5.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.5.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+ques6 = """Reference template
+## 5.6 Model Establishment and Solution for Problem 6
+### 5.6.1 Model Establishment
+Brief introduction to the model, formulas used, model establishment process
+### 5.6.2 Model Solution
+Model verification, result analysis, answer to the question
+Model solution process
+Approximately 600 words
+"""
+
+sensitivity_analysis = """Reference template
+# 6. Model Analysis and Verification
+## 6.1 Sensitivity Analysis
+"""
+
+judge = """Reference template and requirements
+# 7. Model Evaluation, Improvement and Extension
+## 7.1 Model Advantages
+## 7.2 Model Disadvantages
+## 7.3 Model Improvement and Extension
+The number of advantages should be more than disadvantages, approximately 2-3 disadvantages
+Approximately 200 words
+"""

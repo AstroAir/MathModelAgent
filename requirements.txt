@@ -1,0 +1,43 @@
+# MathModelAgent Backend Requirements
+# Generated from pyproject.toml
+# Install with: pip install -r requirements.txt
+# Or use uv for faster installation: uv pip install -r requirements.txt
+
+# Core dependencies
+aiofile>=3.9.0
+aioredis>=2.0.1
+ansi2html>=1.9.2
+celery>=5.4.0
+e2b-code-interpreter>=1.0.5
+fastapi[standard]>=0.115.8
+httpx[socks]>=0.28.1
+icecream>=2.1.4
+ipykernel>=6.29.5
+jupyter-client>=8.6.3
+litellm>=1.69.0
+loguru>=0.7.3
+matplotlib>=3.10.1
+nbformat>=5.10.4
+numpy>=2.2.5
+openai>=1.65.4
+openpyxl>=3.1.5
+pandas>=2.2.3
+py7zr>=0.22.0
+pydantic>=2.10.6
+rarfile>=4.2
+pydantic-settings>=2.8.0
+pypandoc-binary>=1.15
+redis>=5.2.1
+scikit-learn>=1.6.1
+scipy>=1.15.2
+seaborn>=0.13.2
+semanticscholar>=0.10.0
+shap>=0.47.2
+statsmodels>=0.14.4
+uvicorn[standard]>=0.34.0
+websocket>=0.2.1
+xgboost>=3.0.0
+
+# Development dependencies (optional)
+# Uncomment to install dev dependencies
+# ruff>=0.9.10

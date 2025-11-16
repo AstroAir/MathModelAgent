@@ -76,22 +76,23 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 px-4 max-w-4xl">
-    <Button variant="ghost" class="mb-6" @click="goBack">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
-        <path d="m15 18-6-6 6-6" />
-      </svg>
-      返回首页
-    </Button>
+  <div class="min-h-screen bg-background text-foreground">
+    <div class="container mx-auto py-8 px-4 max-w-4xl">
+      <Button variant="ghost" class="mb-6" @click="goBack">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        返回首页
+      </Button>
 
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-    </div>
+      <div v-if="loading" class="flex justify-center py-12">
+        <div class="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
 
-    <div v-else-if="example" class="space-y-8">
-      <div class="space-y-4">
-        <h1 class="text-2xl font-semibold">{{ example.title }}</h1>
+      <div v-else-if="example" class="space-y-8">
+        <div class="space-y-4">
+          <h1 class="text-2xl font-semibold text-foreground">{{ example.title }}</h1>
         <p class="text-muted-foreground">{{ example.source }}</p>
         <div class="flex flex-wrap gap-2 mt-4">
           <span v-for="tag in example.tags" :key="tag"
@@ -102,21 +103,21 @@ const goBack = () => {
       </div>
 
       <!-- 题目图片 -->
-      <div v-if="example.image" class="rounded-lg overflow-hidden border">
+      <div v-if="example.image" class="rounded-lg overflow-hidden border border-border">
         <img :src="example.image" alt="题目图片" class="w-full h-auto" />
       </div>
 
       <div class="space-y-4">
-        <h2 class="text-xl font-medium">题目描述</h2>
-        <div class="p-6 border rounded-lg bg-muted/20">
-          <p class="whitespace-pre-line">{{ example.problemText }}</p>
+        <h2 class="text-xl font-medium text-foreground">题目描述</h2>
+        <div class="p-6 border border-border rounded-lg bg-muted">
+          <p class="whitespace-pre-line text-muted-foreground">{{ example.problemText }}</p>
         </div>
       </div>
 
       <div class="space-y-4">
-        <h2 class="text-xl font-medium">解题思路</h2>
-        <div class="p-6 border rounded-lg">
-          <ol class="list-decimal list-inside space-y-3">
+        <h2 class="text-xl font-medium text-foreground">解题思路</h2>
+        <div class="p-6 border border-border rounded-lg">
+          <ol class="list-decimal list-inside space-y-3 text-muted-foreground">
             <li>分析问题背景和关键变量</li>
             <li>收集和预处理相关数据</li>
             <li>构建数学模型并确定算法</li>
@@ -135,7 +136,7 @@ const goBack = () => {
     </div>
 
     <div v-else class="text-center py-12">
-      <p>未找到相关样例</p>
+      <p class="text-muted-foreground">未找到相关样例</p>
       <Button variant="outline" class="mt-4" @click="goBack">返回首页</Button>
     </div>
   </div>

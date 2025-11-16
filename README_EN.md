@@ -24,6 +24,7 @@ Automatically generate an award-level modeling paper
 ## ✨ Features
 
 - 🔍 Automatic problem analysis, mathematical modeling, code writing, error correction, and paper writing
+- 🌐 **Smart Language Detection**: Automatically identifies Chinese or English input, no manual selection needed
 - 💻 Code Interpreter
     - Local Interpreter: Based on Jupyter, code saved as notebook for easy editing
     - Cloud Code Interpreter: [E2B](https://e2b.dev/) and [daytona](https://app.daytona.io/)
@@ -39,7 +40,7 @@ Automatically generate an award-level modeling paper
 - [x] Add and complete webui, cli
 - [ ] Comprehensive tutorials and documentation
 - [ ] Provide web service
-- [ ] English support (MCM/ICM)
+- [x] English support (MCM/ICM) **with smart language detection**
 - [ ] LaTeX template integration
 - [ ] Vision model integration
 - [x] Proper citation implementation

@@ -24,6 +24,7 @@
 ## ✨ 功能特性
 
 - 🔍 自动分析问题，数学建模，编写代码，纠正错误，撰写论文
+- 🌐 **智能语言检测**：自动识别中英文输入，无需手动选择
 - 💻 Code Interpreter
     - local Interpreter: 基于 jupyter , 代码保存为 notebook 方便再编辑
     - 云端 code interpreter: [E2B](https://e2b.dev/) 和 [daytona](https://app.daytona.io/)
@@ -39,7 +40,7 @@
 - [x] 添加并完成 webui、cli
 - [ ] 完善的教程、文档
 - [ ] 提供 web 服务
-- [ ] 英文支持（美赛）
+- [x] 英文支持（美赛 MCM/ICM）**含智能语言检测**
 - [ ] 集成 latex 模板
 - [ ] 接入视觉模型
 - [x] 添加正确文献引用

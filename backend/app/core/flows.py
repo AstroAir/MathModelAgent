@@ -4,9 +4,11 @@ from app.core.agents.modeler_agent import ModelerToCoder
 
 
 class Flows:
-    def __init__(self, questions: dict[str, str | int]):
+    def __init__(self, questions: dict[str, str | int], language: str = "zh", work_dir: str | None = None):
         self.flows: dict[str, dict] = {}
         self.questions: dict[str, str | int] = questions
+        self.language = language
+        self.work_dir = work_dir
 
     def set_flows(self, ques_count: int):
         ques_str = [f"ques{i}" for i in range(1, ques_count + 1)]
@@ -31,12 +33,27 @@ class Flows:
             for key, value in questions.items()
             if key.startswith("ques") and key != "ques_count"
         }
+        
+        # Bilingual prompts
+        if self.language == "en":
+            ques_template = "Refer to the solution provided by the modeler: {solution}\nComplete the following problem: {problem}"
+            data_files_with = "Dataset files: {files}"
+            data_files_without = "Please use the list_files tool to view data files in the current directory"
+            eda_template = "Refer to the solution provided by the modeler: {solution}\n{data_info}\nPerform EDA analysis (data cleaning, visualization) on the data in the current directory, save cleaned data to the current directory, **no complex models needed**"
+            sensitivity_template = "Refer to the solution provided by the modeler: {solution}\nComplete sensitivity analysis"
+        else:
+            ques_template = "参考建模手给出的解决方案{solution}\n完成如下问题{problem}"
+            data_files_with = "数据集文件: {files}"
+            data_files_without = "请使用list_files工具查看当前目录下的数据文件"
+            eda_template = "参考建模手给出的解决方案{solution}\n{data_info}\n对当前目录下数据进行EDA分析(数据清洗,可视化),清洗后的数据保存当前目录下,**不需要复杂的模型**"
+            sensitivity_template = "参考建模手给出的解决方案{solution}\n完成敏感性分析"
+        
         ques_flow = {
             key: {
-                "coder_prompt": f"""
-                        参考建模手给出的解决方案{modeler_response.questions_solution[key]}
-                        完成如下问题{value}
-                    """,
+                "coder_prompt": ques_template.format(
+                    solution=modeler_response.questions_solution[key],
+                    problem=value
+                ),
             }
             for key, value in questions_quesx.items()
         }
@@ -44,31 +61,32 @@ class Flows:
         # 获取当前目录下的数据集文件
         from app.utils.common_utils import get_current_files
         import os
-        work_dir = os.path.join("backend", "project", "work_dir")
         data_files = []
         try:
-            if os.path.exists(work_dir):
-                data_files = get_current_files(work_dir, 'data')
+            work_dir = self.work_dir or os.path.join("project", "work_dir")
+            if work_dir and os.path.exists(work_dir) and os.path.isdir(work_dir):
+                data_files = get_current_files(work_dir, "data")
         except Exception:
             # 如果获取失败，让agent自己去list_files
             pass
         
-        data_files_info = f"数据集文件: {', '.join(data_files)}" if data_files else "请使用list_files工具查看当前目录下的数据文件"
+        if data_files:
+            data_files_info = data_files_with.format(files=', '.join(data_files))
+        else:
+            data_files_info = data_files_without
         
         flows = {
             "eda": {
-                "coder_prompt": f"""
-                        参考建模手给出的解决方案{modeler_response.questions_solution["eda"]}
-                        {data_files_info}
-                        对当前目录下数据进行EDA分析(数据清洗,可视化),清洗后的数据保存当前目录下,**不需要复杂的模型**
-                    """,
+                "coder_prompt": eda_template.format(
+                    solution=modeler_response.questions_solution["eda"],
+                    data_info=data_files_info
+                ),
             },
             **ques_flow,
             "sensitivity_analysis": {
-                "coder_prompt": f"""
-                        参考建模手给出的解决方案{modeler_response.questions_solution["sensitivity_analysis"]}
-                        完成敏感性分析
-                    """,
+                "coder_prompt": sensitivity_template.format(
+                    solution=modeler_response.questions_solution["sensitivity_analysis"]
+                ),
             },
         }
         return flows

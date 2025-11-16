@@ -13,10 +13,10 @@ const props = withDefaults(defineProps<SystemMessageProps>(), {
 })
 
 const typeStyles = {
-  info: 'text-blue-500 dark:text-blue-400 bg-blue-500/5 border-blue-500/10',
-  warning: 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/5 border-yellow-500/10',
-  success: 'text-green-500 dark:text-green-400 bg-green-500/5 border-green-500/10',
-  error: 'text-red-500 dark:text-red-400 bg-red-500/5 border-red-500/10'
+  info: 'text-primary bg-primary/10 border-primary/20',
+  warning: 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+  success: 'text-green-500 dark:text-green-400 bg-green-500/10 border-green-500/20',
+  error: 'text-destructive bg-destructive/10 border-destructive/20'
 }
 </script>
 
@@ -57,19 +57,3 @@ const typeStyles = {
   </div>
 </template>
 
-<style scoped>
-@keyframes systemMessageIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.system-message-animate {
-  animation: systemMessageIn 0.3s ease-out;
-}
-</style>

@@ -1,0 +1,8 @@
+# Funding configuration
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# GitHub sponsors
+# github: [your-github-username]
+
+# Custom sponsorship link
+custom: ['https://github.com/jihe520/MathModelAgent/blob/main/docs/md/sponser.md']

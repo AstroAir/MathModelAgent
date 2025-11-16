@@ -42,9 +42,21 @@ def get_work_dir(task_id: str) -> str:
 
 
 # 获取配置模板，当前函数式实现已满足需求
-def get_config_template(comp_template: CompTemplate = CompTemplate.CHINA) -> dict:
-    if comp_template == CompTemplate.CHINA:
-        return load_toml(os.path.join("app", "config", "md_template.toml"))
+def get_config_template(comp_template: CompTemplate, language: str = "zh") -> dict:
+    if comp_template != CompTemplate.CHINA:
+        raise ValueError(f"Unsupported competition template: {comp_template}")
+
+    if language == "zh":
+        template_path = os.path.join("app", "config", "md_template.toml")
+    elif language == "en":
+        template_path = os.path.join("app", "config", "md_template_en.toml")
+    else:
+        raise ValueError(f"Unsupported language for template: {language}")
+
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    return load_toml(template_path)
 
 
 def load_toml(path: str) -> dict:

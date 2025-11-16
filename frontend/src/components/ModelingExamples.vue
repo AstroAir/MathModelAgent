@@ -77,13 +77,13 @@ const selectExample = async (example: ModelingExample) => {
       <div 
         v-for="(example, index) in examples" 
         :key="example.id"
-        class="example-card group relative bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-2xl hover:border-blue-300 transition-all duration-500 cursor-pointer"
+        class="example-card group relative bg-card rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:border-primary/50 transition-all duration-500 cursor-pointer"
         :style="{ animationDelay: `${index * 100}ms` }"
         @click="selectExample(example)"
       >
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/30 to-pink-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-        
-        <div class="relative h-44 sm:h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
+        <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
+        <div class="relative h-44 sm:h-48 overflow-hidden bg-gradient-to-br from-muted to-background">
           <img 
             :src="example.image" 
             :alt="example.title"
@@ -91,12 +91,12 @@ const selectExample = async (example: ModelingExample) => {
           />
           <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           
-          <div class="absolute top-3 right-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-gray-700 shadow-sm">
+          <div class="absolute top-3 right-3 px-2.5 py-1 bg-background/80 backdrop-blur-sm rounded-full text-xs font-medium text-foreground shadow-sm">
             {{ example.category }}
           </div>
-          
+
           <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <Button variant="secondary" size="sm" class="shadow-lg hover:shadow-xl backdrop-blur-sm bg-white/95">
+            <Button variant="secondary" size="sm" class="shadow-lg hover:shadow-xl backdrop-blur-sm bg-background/80">
               <Sparkles class="w-3.5 h-3.5 mr-1.5" />
               开始使用
             </Button>
@@ -105,21 +105,21 @@ const selectExample = async (example: ModelingExample) => {
 
         <div class="relative p-4 sm:p-5">
           <div class="mb-3">
-            <h3 class="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-blue-600 transition-colors duration-300">
+            <h3 class="text-base sm:text-lg font-semibold text-foreground line-clamp-2 mb-1.5 group-hover:text-primary transition-colors duration-300">
               {{ example.title }}
             </h3>
-            <p class="text-xs text-blue-600 font-medium mb-2">{{ example.source }}</p>
+            <p class="text-xs text-primary font-medium mb-2">{{ example.source }}</p>
           </div>
-          
-          <p class="text-sm text-gray-600 line-clamp-2 mb-4">
+
+          <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
             {{ example.description }}
           </p>
 
           <div class="flex flex-wrap gap-1.5">
-            <span 
-              v-for="tag in example.tags" 
+            <span
+              v-for="tag in example.tags"
               :key="tag"
-              class="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+              class="px-2.5 py-1 bg-muted text-muted-foreground rounded-lg text-xs font-medium hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
             >
               {{ tag }}
             </span>

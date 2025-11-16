@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { renderMarkdown } from '@/utils/markdown';
 import type { WriterMessage } from '@/utils/response'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -62,22 +62,22 @@ watch(() => props.messages, async (messages) => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-4 bg-gradient-to-br from-gray-50 to-slate-50">
-    <div class="h-full bg-white rounded-xl border-2 shadow-lg hover:shadow-xl transition-all duration-300">
-      <div class="border-b bg-gradient-to-r from-purple-50 to-pink-50 px-4 py-3 rounded-t-xl">
-        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+  <div class="h-full flex flex-col bg-background">
+    <div class="h-full">
+      <div class="border-b border-border bg-purple-500/10 px-3 py-2">
+        <h2 class="text-sm font-semibold text-foreground flex items-center gap-2">
           📝 论文内容
         </h2>
       </div>
-      <div class="h-full pb-14">
+      <div class="h-full pb-10">
         <ScrollArea class="h-full overflow-y-auto">
-          <div class="p-6">
-            <div class="max-w-4xl mx-auto overflow-y-auto space-y-6">
-              <TransitionGroup name="section" tag="div" class="space-y-6">
+          <div class="p-3">
+            <div class="overflow-y-auto space-y-3">
+              <TransitionGroup name="section" tag="div" class="space-y-3">
                 <div v-for="section in sortedSections" :key="section.id"
-                  class="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-md hover:shadow-lg border transform transition-all duration-500">
-                  <div class="p-6">
-                    <div class="prose prose-slate max-w-none" v-html="section.renderedContent"></div>
+                  class="bg-card border-l-2 border-purple-500/50">
+                  <div class="p-3">
+                    <div class="prose prose-slate max-w-none prose-sm" v-html="section.renderedContent"></div>
                   </div>
                 </div>
               </TransitionGroup>
@@ -90,7 +90,6 @@ watch(() => props.messages, async (messages) => {
 </template>
 
 <style>
-@import 'katex/dist/katex.min.css';
 
 .section-enter-active,
 .section-leave-active {
@@ -108,23 +107,23 @@ watch(() => props.messages, async (messages) => {
 }
 
 .prose {
-  @apply text-gray-800;
+  @apply text-foreground;
 }
 
 .prose h1 {
-  @apply text-3xl font-bold mb-6 text-gray-900;
+  @apply text-xl font-bold mb-3 text-foreground;
 }
 
 .prose h2 {
-  @apply text-2xl font-semibold mt-4 mb-4 text-gray-800;
+  @apply text-lg font-semibold mt-3 mb-2 text-foreground;
 }
 
 .prose h3 {
-  @apply text-xl font-semibold mt-3 mb-3 text-gray-800;
+  @apply text-base font-semibold mt-2 mb-2 text-foreground;
 }
 
 .prose p {
-  @apply mb-4 leading-relaxed;
+  @apply mb-2 leading-relaxed text-sm;
 }
 
 .prose ul {
@@ -136,47 +135,44 @@ watch(() => props.messages, async (messages) => {
 }
 
 .prose blockquote {
-  @apply border-l-4 border-gray-300 pl-4 italic my-4 text-gray-600;
+  @apply border-l-4 border-border pl-4 italic my-4 text-muted-foreground;
 }
 
 .prose a {
-  @apply text-blue-600 hover:text-blue-800 underline;
+  @apply text-primary hover:text-primary/80 underline;
 }
 
 .prose hr {
-  @apply my-8 border-gray-200;
+  @apply my-8 border-border;
 }
 
 .prose table {
-  @apply w-full border-collapse my-6 !border-2 !border-gray-400;
+  @apply w-full border-collapse my-6 !border-2 !border-border;
 }
 
 .prose th {
-  @apply !bg-gray-200 p-3 text-left !font-bold !text-gray-900 !border !border-gray-400;
+  @apply !bg-muted p-3 text-left !font-bold !text-foreground !border !border-border;
 }
 
 .prose td {
-  @apply p-3 !text-gray-900 !border !border-gray-400;
+  @apply p-3 !text-foreground !border !border-border;
 }
 
-.prose tr {
-  @apply !border !border-gray-400;
-}
 
 .prose tr:nth-child(even) {
-  @apply !bg-gray-50;
+  @apply !bg-muted/50;
 }
 
 .prose tr:hover {
-  @apply !bg-gray-100;
+  @apply !bg-accent;
 }
 
 .prose code {
-  @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+  @apply bg-muted px-1 py-0.5 rounded text-sm font-mono;
 }
 
 .prose pre {
-  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto my-4;
+  @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
 }
 
 .prose pre code {

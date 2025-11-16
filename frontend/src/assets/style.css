@@ -9,28 +9,28 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
-  
+
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
-  
+
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
-  
+
     --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 210 20% 98%;
-  
+
     --secondary: 220 14.3% 95.9%;
     --secondary-foreground: 220.9 39.3% 11%;
-  
+
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
-  
+
     --accent: 220 14.3% 95.9%;
     --accent-foreground: 220.9 39.3% 11%;
-  
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
-  
+
     --border:220 13% 91%;
     --input:220 13% 91%;
     --ring:262.1 83.3% 57.8%;
@@ -43,33 +43,45 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart colors */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* Theme transition properties */
+    --theme-transition-duration: 300ms;
+    --theme-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+    --theme-transition: all var(--theme-transition-duration) var(--theme-transition-easing);
   }
    
   .dark {
     --background:224 71.4% 4.1%;
     --foreground:210 20% 98%;
-  
+
     --card:224 71.4% 4.1%;
     --card-foreground:210 20% 98%;
-  
+
     --popover:224 71.4% 4.1%;
     --popover-foreground:210 20% 98%;
-  
+
     --primary:263.4 70% 50.4%;
     --primary-foreground:210 20% 98%;
-  
+
     --secondary:215 27.9% 16.9%;
     --secondary-foreground:210 20% 98%;
-  
+
     --muted:215 27.9% 16.9%;
     --muted-foreground:217.9 10.6% 64.9%;
-  
+
     --accent:215 27.9% 16.9%;
     --accent-foreground:210 20% 98%;
-  
+
     --destructive:0 62.8% 30.6%;
     --destructive-foreground:210 20% 98%;
-  
+
     --border:215 27.9% 16.9%;
     --input:215 27.9% 16.9%;
     --ring:263.4 70% 50.4%;
@@ -81,6 +93,13 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Chart colors for dark theme */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -89,7 +108,191 @@
   * {
     @apply border-border;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: var(--theme-transition);
+  }
+
+  /* Apply smooth transitions to all theme-aware elements */
+  *,
+  *::before,
+  *::after {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, filter, backdrop-filter;
+    transition-timing-function: var(--theme-transition-easing);
+    transition-duration: var(--theme-transition-duration);
+  }
+
+  /* Disable transitions for elements that shouldn't animate */
+  .no-theme-transition,
+  .no-theme-transition *,
+  input[type="range"],
+  progress,
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce {
+    transition: none !important;
+  }
+
+  /* Prevent flash of unstyled content during theme switching */
+  html.theme-switching * {
+    transition-duration: 0ms !important;
+  }
+
+  /* Optimize rendering during theme changes */
+  .theme-optimized {
+    will-change: color, background-color, border-color;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  /* Ensure proper contrast for focus states in both themes */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Enhanced Button Components - Theme Aware */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-semibold hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground px-6 py-3 rounded-2xl font-semibold border-2 border-border hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground px-6 py-3 rounded-2xl font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground px-6 py-3 rounded-2xl font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90 px-6 py-3 rounded-2xl font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Modern Card Component - Theme Aware */
+  .card-modern {
+    @apply rounded-3xl border border-border bg-card text-card-foreground backdrop-blur-sm hover:shadow-2xl hover:-translate-y-1;
+  }
+
+  /* Theme-aware gradient text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent;
+  }
+
+  /* Enhanced Focus States */
+  .focus-enhanced:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+
+  /* Theme-aware form elements */
+  .form-input {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .form-textarea {
+    @apply flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .form-select {
+    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+@layer utilities {
+  /* Animation Utilities */
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Background Pattern */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+/* Keyframe Animations */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Custom Scrollbar - Theme Aware */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-border/80;
+}
+
+/* Theme-aware selection */
+::selection {
+  @apply bg-primary/20 text-primary-foreground;
+}
+
+::-moz-selection {
+  @apply bg-primary/20 text-primary-foreground;
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-shimmer,
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

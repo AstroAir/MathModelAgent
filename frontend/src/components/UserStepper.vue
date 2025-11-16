@@ -34,7 +34,7 @@ const uploadedFiles = ref<File[]>([])
 const question = ref('')
 const selectedOptions = ref({
   template: '国赛',
-  language: '中文',
+  language: '自动检测',
   format: 'Markdown',
 })
 
@@ -47,7 +47,7 @@ const selectConfig = [
   {
     key: '语言',
     label: '选择语言',
-    options: ['中文', '英文'],
+    options: ['自动检测', '中文', '英文'],
   },
   {
     key: '格式',
@@ -144,11 +144,24 @@ const handleSubmit = async () => {
     console.log(selectedOptions.value)
     console.log(question.value)
     console.log(uploadedFiles.value)
+    
+    // Map template and language
+    const templateMap: Record<string, string> = {
+      '国赛': 'CHINA',
+      '美赛': 'AMERICAN'
+    }
+    const languageMap: Record<string, string> = {
+      '自动检测': 'auto',
+      '中文': 'zh',
+      '英文': 'en'
+    }
+    
     const response = await submitModelingTask(
       {
         ques_all: question.value,
-        comp_template: selectedOptions.value.template,
-        format_output: selectedOptions.value.format
+        comp_template: templateMap[selectedOptions.value.template] || 'CHINA',
+        format_output: selectedOptions.value.format,
+        language: languageMap[selectedOptions.value.language] || 'zh'
       },
       uploadedFiles.value
     )
@@ -218,33 +231,33 @@ const handleSubmit = async () => {
       </div>
     </Transition>
 
-    <div class="border-2 rounded-2xl shadow-lg bg-white">
+    <div class="border-2 border-border rounded-2xl shadow-lg bg-card">
       <!-- Step 1: File Upload -->
       <div v-if="currentStep === 1" class="p-8">
         <div class="mb-4">
-          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <FileUp class="w-5 h-5 text-blue-600" />
+          <h3 class="text-xl font-semibold text-foreground flex items-center gap-2">
+            <FileUp class="w-5 h-5 text-primary" />
             上传数据文件
           </h3>
-          <p class="text-sm text-gray-600 mt-1">上传您的数据集文件，支持多种格式</p>
+          <p class="text-sm text-muted-foreground mt-1">上传您的数据集文件，支持多种格式</p>
         </div>
-        
+
         <!-- 上传方式选项卡 -->
         <div class="flex gap-2 mb-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             @click="() => fileInput?.click()"
-            class="flex-1 h-12 hover:bg-blue-50 hover:border-blue-400 transition-all"
+            class="flex-1 h-12 hover:bg-accent hover:border-primary/50 transition-all"
           >
             <FileUp class="w-4 h-4 mr-2" />
             上传文件
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             @click="() => folderInput?.click()"
-            class="flex-1 h-12 hover:bg-purple-50 hover:border-purple-400 transition-all"
+            class="flex-1 h-12 hover:bg-accent hover:border-primary/50 transition-all"
           >
             <FolderUp class="w-4 h-4 mr-2" />
             上传文件夹
@@ -252,41 +265,41 @@ const handleSubmit = async () => {
         </div>
 
         <div
-          class="border-2 border-dashed rounded-xl p-10 text-center hover:border-blue-400 hover:bg-blue-50/50 transition-all duration-300">
-          <input 
-            type="file" 
-            ref="fileInput" 
-            class="hidden" 
-            @change="handleFileUpload" 
+          class="border-2 border-dashed border-border rounded-xl p-10 text-center hover:border-primary/50 hover:bg-accent/50 transition-all duration-300">
+          <input
+            type="file"
+            ref="fileInput"
+            class="hidden"
+            @change="handleFileUpload"
             accept=".txt,.csv,.xlsx,.xls,.json,.xml,.zip,.rar,.7z,.tar,.tar.gz"
             multiple
           >
-          <input 
-            type="file" 
-            ref="folderInput" 
-            class="hidden" 
-            @change="handleFolderUpload" 
+          <input
+            type="file"
+            ref="folderInput"
+            class="hidden"
+            @change="handleFolderUpload"
             webkitdirectory
             multiple
           >
-          <div class="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center transition-transform duration-300">
-            <FileArchive class="w-8 h-8 text-blue-600" />
+          <div class="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center transition-transform duration-300">
+            <FileArchive class="w-8 h-8 text-primary" />
           </div>
           <div class="mt-4">
-            <p class="text-lg font-semibold text-gray-900">拖拽文件/文件夹到此处</p>
-            <p class="text-sm text-gray-500 mt-2">
+            <p class="text-lg font-semibold text-foreground">拖拽文件/文件夹到此处</p>
+            <p class="text-sm text-muted-foreground mt-2">
               支持 .txt, .csv, .xlsx, .zip, .rar 等格式
             </p>
-            <p class="text-xs text-gray-400 mt-1">
+            <p class="text-xs text-muted-foreground/80 mt-1">
               可以上传单个文件、多个文件、文件夹或压缩包
             </p>
-            <div v-if="uploadedFiles.length > 0" class="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p class="text-sm font-medium text-green-700 mb-2">已选择 {{ uploadedFiles.length }} 个文件</p>
-              <ul class="text-xs text-green-600 space-y-1">
+            <div v-if="uploadedFiles.length > 0" class="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+              <p class="text-sm font-medium text-green-600 mb-2">已选择 {{ uploadedFiles.length }} 个文件</p>
+              <ul class="text-xs text-green-600/80 space-y-1">
                 <li v-for="(file, index) in uploadedFiles" :key="index" class="flex items-center gap-2">
                   <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                   <span class="truncate">{{ file.name }}</span>
-                  <span class="text-gray-400 ml-auto">({{ (file.size / 1024).toFixed(1) }} KB)</span>
+                  <span class="text-muted-foreground ml-auto">({{ (file.size / 1024).toFixed(1) }} KB)</span>
                 </li>
               </ul>
             </div>
@@ -302,30 +315,30 @@ const handleSubmit = async () => {
       <!-- Step 2: Question Input -->
       <div v-if="currentStep === 2" class="p-8">
         <div class="mb-4">
-          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <h3 class="text-xl font-semibold text-foreground flex items-center gap-2">
             ✏️ 输入问题描述
           </h3>
-          <p class="text-sm text-gray-600 mt-1">请粘贴完整的题目内容，包括背景和所有小问</p>
+          <p class="text-sm text-muted-foreground mt-1">请粘贴完整的题目内容，包括背景和所有小问</p>
         </div>
-        
+
         <div class="space-y-6">
           <div class="space-y-2">
-            <label class="text-sm font-medium text-gray-700">题目内容</label>
-            <Textarea 
-              v-model="question" 
-              placeholder="请粘贴 PDF 中的完整题目背景和多个小问..." 
-              class="min-h-[160px] resize-none border-2 focus:border-blue-400 transition-colors" 
+            <label class="text-sm font-medium text-foreground">题目内容</label>
+            <Textarea
+              v-model="question"
+              placeholder="请粘贴 PDF 中的完整题目背景和多个小问..."
+              class="min-h-[160px] resize-none border-2 focus:border-primary transition-colors"
             />
           </div>
 
           <div class="space-y-3">
-            <label class="text-sm font-medium text-gray-700">配置选项</label>
+            <label class="text-sm font-medium text-foreground">配置选项</label>
             <div class="grid grid-cols-3 gap-4">
               <div v-for="item in selectConfig" :key="item.key" class="space-y-2">
-                <label class="text-xs text-gray-600">{{ item.label }}</label>
+                <label class="text-xs text-muted-foreground">{{ item.label }}</label>
                 <Select v-model="selectedOptions[item.key.toLowerCase() as keyof typeof selectedOptions]"
                   :defaultValue="item.options[0].toLowerCase()">
-                  <SelectTrigger class="h-10 border-2 hover:border-blue-300 transition-colors">
+                  <SelectTrigger class="h-10 border-2 hover:border-primary/50 transition-colors">
                     <SelectValue :placeholder="item.label" />
                   </SelectTrigger>
                   <SelectContent>
@@ -341,12 +354,12 @@ const handleSubmit = async () => {
             </div>
           </div>
         </div>
-        
+
         <div class="mt-8 flex justify-between items-center">
           <Button variant="outline" @click="prevStep" class="px-6">
             ← 上一步
           </Button>
-          <Button @click="handleSubmit" class="px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transition-all">
+          <Button @click="handleSubmit" class="px-8 shadow-md hover:shadow-lg transition-all">
             🚀 开始分析
           </Button>
         </div>
@@ -375,35 +388,35 @@ const handleSubmit = async () => {
   justify-content: center;
   font-weight: 600;
   font-size: 16px;
-  background: #e5e7eb;
-  color: #9ca3af;
-  border: 3px solid #e5e7eb;
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border: 3px solid hsl(var(--muted));
   transition: all 0.3s ease;
 }
 
 .step-label {
   font-size: 14px;
   font-weight: 500;
-  color: #9ca3af;
+  color: hsl(var(--muted-foreground));
   transition: all 0.3s ease;
 }
 
 .step-indicator.active .step-number {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--primary));
+  box-shadow: 0 4px 12px hsla(var(--primary), 0.3);
 }
 
 .step-indicator.active .step-label {
-  color: #1f2937;
+  color: hsl(var(--foreground));
   font-weight: 600;
 }
 
 .step-divider {
   width: 60px;
   height: 3px;
-  background: #e5e7eb;
+  background: hsl(var(--muted));
   transition: all 0.3s ease;
   margin: 0 -8px;
   align-self: center;
@@ -411,7 +424,7 @@ const handleSubmit = async () => {
 }
 
 .step-divider.active {
-  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  background: hsl(var(--primary));
 }
 
 /* 淡入淡出动画 */

@@ -7,17 +7,9 @@
       <div ref="el" class="absolute inset-0 grid auto-rows-[--cell] justify-center -space-y-px">
         <div v-for="(row, rowIndex) in grid" :key="rowIndex"
           class="grid flex-1 auto-cols-[--cell] grid-flow-col -space-x-px">
-          <div v-for="(cell, cellIndex) in row" :key="cellIndex" :style="{
-            '--border-color': theme[100],
-            '--dark-border-color': theme[900],
-          }" class="relative border border-[--border-color] dark:border-[--dark-border-color]">
-            <div :style="{
-              '--square-color': theme[500],
-              '--square-hover-color': theme[400],
-              '--dark-square-color': theme[700],
-              '--dark-square-hover-color': theme[600],
-            }"
-              class="absolute inset-0 bg-[--square-color] opacity-0 transition-opacity duration-1000 will-change-[opacity] hover:bg-[--square-hover-color] dark:bg-[--dark-square-color] dark:hover:bg-[--dark-square-hover-color]"
+          <div v-for="(cell, cellIndex) in row" :key="cellIndex" class="relative border border-border">
+            <div
+              class="absolute inset-0 bg-primary/20 opacity-0 transition-opacity duration-1000 will-change-[opacity] hover:bg-primary/30"
               :class="[cell && 'cursor-pointer opacity-60']" @click="cell && removeCell(rowIndex, cellIndex)" />
           </div>
         </div>
@@ -29,20 +21,16 @@
 <script setup lang="ts">
 import { useElementSize } from '@vueuse/core';
 import { cn } from '@/lib/utils';
-import { getColors } from 'theme-colors';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 
 interface Props {
   class?: string;
-  squareColor: string;
   base: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   base: 10,
 });
-
-const theme = getColors(props.squareColor);
 
 const el = ref(null);
 const grid = ref<(boolean | null)[][]>([]);

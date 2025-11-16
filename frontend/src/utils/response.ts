@@ -7,8 +7,9 @@ import { AgentType } from './enum';
 
 export interface BaseMessage {
   id: string;
-  msg_type: 'system' | 'agent' | 'user' | 'tool';
+  msg_type: 'system' | 'agent' | 'user' | 'tool' | 'step';
   content?: string | null;
+  timestamp?: number;
 }
 
 export interface ToolMessage extends BaseMessage {
@@ -21,6 +22,15 @@ export interface ToolMessage extends BaseMessage {
 export interface SystemMessage extends BaseMessage {
   msg_type: 'system';
   type: SystemMessageType;
+}
+
+export interface StepMessage extends BaseMessage {
+  msg_type: 'step';
+  step_name: string;
+  step_type: 'agent' | 'tool' | 'task' | 'processing';
+  status: 'processing' | 'completed' | 'failed';
+  agent_type?: string;
+  details?: Record<string, any>;
 }
 
 export interface UserMessage extends BaseMessage {
@@ -105,4 +115,4 @@ export interface WriterMessage extends AgentMessage {
   sub_title?: string;
 }
 
-export type Message = SystemMessage | UserMessage | CoderMessage | WriterMessage | ModelerMessage | CoordinatorMessage | ToolMessage;
+export type Message = SystemMessage | StepMessage | UserMessage | CoderMessage | WriterMessage | ModelerMessage | CoordinatorMessage | ToolMessage;
