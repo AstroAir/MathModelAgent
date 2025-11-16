@@ -1,81 +1,82 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import { useRouter } from 'vue-router'
-import { Sparkles } from 'lucide-vue-next'
+import { Button } from "@/components/ui/button";
+import { Sparkles } from "lucide-vue-next";
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 
+import { exampleAPI } from "@/apis/commonApi";
+import mcmCupC from "@/assets/example/2024高教杯C题.png";
+import wuyiCupC from "@/assets/example/2025五一杯C题.png";
 // 导入图片资源
-import huashuCupC from '@/assets/example/华数杯2023年C题.png'
-import wuyiCupC from '@/assets/example/2025五一杯C题.png'
-import mcmCupC from '@/assets/example/2024高教杯C题.png'
-import { exampleAPI } from '@/apis/commonApi'
+import huashuCupC from "@/assets/example/华数杯2023年C题.png";
 
 // 定义样例类型
 interface ModelingExample {
-  id: number
-  title: string
-  source: string
-  description: string
-  tags: string[]
-  problemText: string
-  image: string
-  category: string
+	id: number;
+	title: string;
+	source: string;
+	description: string;
+	tags: string[];
+	problemText: string;
+	image: string;
+	category: string;
 }
 
 // 定义emit
 const emit = defineEmits<{
-  'example-selected': []
-}>()
+	"example-selected": [];
+}>();
 
-const router = useRouter()
+const router = useRouter();
 const examples = ref<ModelingExample[]>([
-  {
-    id: 1,
-    title: "母亲身心健康对婴儿成长的影响",
-    source: "2023华数杯C题",
-    description: "研究母亲身心健康对婴儿成长的影响，建立预测模型分析婴儿成长情况",
-    tags: ["分类问题", "成长", "健康"],
-    problemText: "给定母亲身心健康数据，建立一个预测模型，预测婴儿成长情况。",
-    image: huashuCupC,
-    category: "数据分析"
-  },
-  {
-    id: 2,
-    title: "社交媒体平台用户分析问题",
-    source: "2025五一杯C题",
-    description: "分析社交媒体平台用户行为特征，构建用户画像模型进行精准分析",
-    tags: ["社交媒体", "用户行为"],
-    problemText: "分析社交媒体平台用户行为特征，构建用户画像模型。",
-    image: wuyiCupC,
-    category: "行为分析"
-  },
-  {
-    id: 3,
-    title: "农作物的种植策略",
-    source: "2024高教杯C题",
-    description: "研究农作物的种植策略，建立优化模型使得农作物产量最大化",
-    tags: ["种植策略", "农作物", "生长"],
-    problemText: "研究农作物的种植策略，建立一个优化模型，使得农作物产量最大化。",
-    image: mcmCupC,
-    category: "优化问题"
-  }
-])
+	{
+		id: 1,
+		title: "母亲身心健康对婴儿成长的影响",
+		source: "2023华数杯C题",
+		description:
+			"研究母亲身心健康对婴儿成长的影响，建立预测模型分析婴儿成长情况",
+		tags: ["分类问题", "成长", "健康"],
+		problemText: "给定母亲身心健康数据，建立一个预测模型，预测婴儿成长情况。",
+		image: huashuCupC,
+		category: "数据分析",
+	},
+	{
+		id: 2,
+		title: "社交媒体平台用户分析问题",
+		source: "2025五一杯C题",
+		description: "分析社交媒体平台用户行为特征，构建用户画像模型进行精准分析",
+		tags: ["社交媒体", "用户行为"],
+		problemText: "分析社交媒体平台用户行为特征，构建用户画像模型。",
+		image: wuyiCupC,
+		category: "行为分析",
+	},
+	{
+		id: 3,
+		title: "农作物的种植策略",
+		source: "2024高教杯C题",
+		description: "研究农作物的种植策略，建立优化模型使得农作物产量最大化",
+		tags: ["种植策略", "农作物", "生长"],
+		problemText:
+			"研究农作物的种植策略，建立一个优化模型，使得农作物产量最大化。",
+		image: mcmCupC,
+		category: "优化问题",
+	},
+]);
 
 // 选择样例并跳转到任务创建步骤
 const selectExample = async (example: ModelingExample) => {
-  const res = await exampleAPI(example.id.toString(), example.source)
-  const task_id = res?.data?.task_id
-  emit('example-selected')
-  router.push(`/task/${task_id}`)
-}
-
+	const res = await exampleAPI(example.id.toString(), example.source);
+	const task_id = res?.data?.task_id;
+	emit("example-selected");
+	router.push(`/task/${task_id}`);
+};
 </script>
 
 <template>
   <div class="w-full">
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
-      <div 
-        v-for="(example, index) in examples" 
+      <div
+        v-for="(example, index) in examples"
         :key="example.id"
         class="example-card group relative bg-card rounded-2xl border border-border overflow-hidden hover:shadow-2xl hover:border-primary/50 transition-all duration-500 cursor-pointer"
         :style="{ animationDelay: `${index * 100}ms` }"
@@ -84,13 +85,13 @@ const selectExample = async (example: ModelingExample) => {
         <div class="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
         <div class="relative h-44 sm:h-48 overflow-hidden bg-gradient-to-br from-muted to-background">
-          <img 
-            :src="example.image" 
+          <img
+            :src="example.image"
             :alt="example.title"
-            class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 ease-out" 
+            class="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-700 ease-out"
           />
           <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          
+
           <div class="absolute top-3 right-3 px-2.5 py-1 bg-background/80 backdrop-blur-sm rounded-full text-xs font-medium text-foreground shadow-sm">
             {{ example.category }}
           </div>

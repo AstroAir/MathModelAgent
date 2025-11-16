@@ -19,3 +19,8 @@ class Problem(BaseModel):
         data["comp_template"] = self.comp_template.value
         data["format_output"] = self.format_output.value
         return data
+
+
+class PromptOptimizeRequest(BaseModel):
+    original_prompt: str
+    context: dict

@@ -1,56 +1,45 @@
 <script setup lang="ts">
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
+import ThemeToggle from "@/components/ui/ThemeToggle.vue";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar'
-import {
-  BadgeCheck,
-  ChevronsUpDown,
-  LogOut,
-  KeyRound,
-} from 'lucide-vue-next'
-import { ref } from 'vue'
-import ApiKeyDialog from '@/pages/chat/components/ApiDialog.vue'
-import ThemeToggle from '@/components/ui/ThemeToggle.vue'
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	useSidebar,
+} from "@/components/ui/sidebar";
+import ApiKeyDialog from "@/pages/chat/components/ApiDialog.vue";
+import { BadgeCheck, ChevronsUpDown, KeyRound, LogOut } from "lucide-vue-next";
+import { ref } from "vue";
 
 const props = defineProps({
-  user: {
-    type: Object,
-    default: () => ({
-      name: 'San Jin',
-      email: 'mathmodel@mathmodel.com',
-      avatar: 'https://github.com/jihe520.png'
-    })
-  }
-})
+	user: {
+		type: Object,
+		default: () => ({
+			name: "San Jin",
+			email: "mathmodel@mathmodel.com",
+			avatar: "https://github.com/jihe520.png",
+		}),
+	},
+});
 
-const { isMobile } = useSidebar()
-
+const { isMobile } = useSidebar();
 
 // API Key 对话框控制
-const isApiKeyDialogOpen = ref(false)
+const isApiKeyDialogOpen = ref(false);
 
 const openApiKeyDialog = () => {
-  isApiKeyDialogOpen.value = true
-}
-
+	isApiKeyDialogOpen.value = true;
+};
 </script>
 
 <template>

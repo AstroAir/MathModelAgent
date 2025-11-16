@@ -10,7 +10,7 @@ class Message(BaseModel):
         "system", "agent", "user", "tool", "step"
     ]  # system msg | agent message | user message | tool message | step message
     content: str | None = None
-    timestamp: float = Field(default_factory=lambda: __import__('time').time())
+    timestamp: float = Field(default_factory=lambda: __import__("time").time())
 
 
 class ToolMessage(Message):
@@ -27,6 +27,7 @@ class SystemMessage(Message):
 
 class StepMessage(Message):
     """Agent执行步骤消息，用于调试模式下追踪执行流程"""
+
     msg_type: str = "step"
     step_name: str  # 步骤名称，如"代码手求解成功ques5"
     step_type: Literal["agent", "tool", "task", "processing"]  # 步骤类型
@@ -125,3 +126,7 @@ MessageType = Union[
     WriterMessage,
     CoordinatorMessage,
 ]
+
+
+class PromptOptimizeResponse(BaseModel):
+    optimized_prompt: str

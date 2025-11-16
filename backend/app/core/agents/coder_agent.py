@@ -6,7 +6,7 @@ from app.schemas.response import SystemMessage, InterpreterMessage
 from app.tools.base_interpreter import BaseCodeInterpreter
 from app.core.llm.llm import LLM
 from app.schemas.A2A import CoderToWriter
-from app.core.prompts import get_coder_prompt, get_reflection_prompt, get_completion_check_prompt
+from app.core.prompts import get_coder_prompt, get_reflection_prompt
 from app.utils.common_utils import get_current_files
 import json
 from app.core.functions import coder_tools
@@ -16,6 +16,7 @@ from app.core.functions import coder_tools
 # - 自动错误重试和反思机制（max_retries控制）
 # - 集成Jupyter内核，支持代码执行和结果记录
 # 注意：长时间执行可通过timeout参数控制，CUDA支持取决于环境配置
+
 
 class CoderAgent(Agent):  # 同样继承自Agent类
     def __init__(
@@ -85,7 +86,7 @@ class CoderAgent(Agent):  # 同样继承自Agent类
 
             self.current_chat_turns += 1
             logger.info(f"当前对话轮次: {self.current_chat_turns}")
-            
+
             response = await self.model.chat(
                 history=self.chat_history,
                 tools=coder_tools,
@@ -101,20 +102,18 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                 logger.info("检测到工具调用")
                 tool_call = response.choices[0].message.tool_calls[0]
                 tool_id = tool_call.id
-                
+
                 tool_name = tool_call.function.name
                 logger.info(f"调用工具: {tool_name}")
                 await redis_manager.publish_message(
                     self.task_id,
                     SystemMessage(content=f"代码手调用{tool_name}工具"),
                 )
-                
+
                 # 更新对话历史 - 添加助手的响应
-                await self.append_chat_history(
-                    response.choices[0].message.model_dump()
-                )
+                await self.append_chat_history(response.choices[0].message.model_dump())
                 logger.info(response.choices[0].message.model_dump())
-                
+
                 if tool_name == "execute_code":
                     code = json.loads(tool_call.function.arguments)["code"]
 
@@ -146,7 +145,9 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                         retry_count += 1
                         logger.info(f"当前尝试次:{retry_count} / {self.max_retries}")
                         last_error_message = error_message
-                        reflection_prompt = get_reflection_prompt(error_message, code, self.language)
+                        reflection_prompt = get_reflection_prompt(
+                            error_message, code, self.language
+                        )
 
                         await redis_manager.publish_message(
                             self.task_id,
@@ -167,15 +168,23 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                             }
                         )
                         continue
-                        
+
                 elif tool_name == "pip_install":
                     packages = json.loads(tool_call.function.arguments)["packages"]
                     pip_code = f"!pip install {packages}"
                     logger.info(f"安装包: {packages}")
-                    
-                    text_to_gpt, error_occurred, error_message = await self.code_interpreter.execute_code(pip_code)
-                    
-                    result_msg = f"成功安装: {packages}" if not error_occurred else f"安装失败: {error_message}"
+
+                    (
+                        text_to_gpt,
+                        error_occurred,
+                        error_message,
+                    ) = await self.code_interpreter.execute_code(pip_code)
+
+                    result_msg = (
+                        f"成功安装: {packages}"
+                        if not error_occurred
+                        else f"安装失败: {error_message}"
+                    )
                     await self.append_chat_history(
                         {
                             "role": "tool",
@@ -185,12 +194,13 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                         }
                     )
                     continue
-                    
+
                 elif tool_name == "list_files":
                     import os
+
                     args = json.loads(tool_call.function.arguments)
                     extension = args.get("extension", "")
-                    
+
                     try:
                         files = os.listdir(self.work_dir)
                         if extension:
@@ -200,7 +210,7 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                     except Exception as e:
                         files_str = f"Error listing files: {str(e)}"
                         logger.error(files_str)
-                    
+
                     await self.append_chat_history(
                         {
                             "role": "tool",
@@ -210,19 +220,23 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                         }
                     )
                     continue
-                    
+
                 elif tool_name == "read_file":
                     import os
+
                     filename = json.loads(tool_call.function.arguments)["filename"]
                     filepath = os.path.join(self.work_dir, filename)
-                    
+
                     try:
                         # 尝试以文本模式读取
-                        with open(filepath, 'r', encoding='utf-8') as f:
+                        with open(filepath, "r", encoding="utf-8") as f:
                             content = f.read()
                             # 限制长度，避免内容过长
                             if len(content) > 5000:
-                                content = content[:5000] + f"\n... (truncated, total {len(content)} characters)"
+                                content = (
+                                    content[:5000]
+                                    + f"\n... (truncated, total {len(content)} characters)"
+                                )
                         logger.info(f"读取文件: {filename}")
                     except UnicodeDecodeError:
                         # 如果是二进制文件
@@ -232,7 +246,7 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                     except Exception as e:
                         content = f"Error reading file: {str(e)}"
                         logger.error(f"读取文件失败: {str(e)}")
-                    
+
                     await self.append_chat_history(
                         {
                             "role": "tool",
@@ -251,5 +265,5 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                         subtask_title
                     ),
                 )
-        
+
         logger.info(f"{self.__class__.__name__}:完成:执行子任务: {subtask_title}")

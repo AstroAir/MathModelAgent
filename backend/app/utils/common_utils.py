@@ -1,20 +1,19 @@
 import os
 import datetime
-import hashlib
+import uuid
 import tomllib
 from app.schemas.enums import CompTemplate
 from app.utils.log_util import logger
 import re
 import pypandoc
 from app.config.setting import settings
-from icecream import ic
 
 
 def create_task_id() -> str:
     """生成任务ID"""
     # 生成时间戳和随机hash
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    random_hash = hashlib.md5(str(datetime.datetime.now()).encode()).hexdigest()[:8]
+    random_hash = uuid.uuid4().hex[:8]
     return f"{timestamp}-{random_hash}"
 
 

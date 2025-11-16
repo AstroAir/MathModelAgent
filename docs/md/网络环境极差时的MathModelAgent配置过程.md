@@ -96,19 +96,19 @@ cd MathModelAgent
     > [backend internal] load metadata for docker.io/library/python:3.12-slim:
    ------
    Dockerfile:2
-   
+
    --------------------
-   
+
       1 |     # 构建阶段
-   
+
       2 | >>> FROM node:20 AS build
-   
+
       3 |
-   
+
       4 |     WORKDIR /app
-   
+
    --------------------
-   
+
    target frontend: failed to solve: node:20: failed to resolve source metadata for docker.io/library/node:20: failed to do request: Head "https://registry-1.docker.io/v2/library/node/manifests/20": dialing registry-1.docker.io:443 container via direct connection because disabled has no HTTPS proxy: connecting to registry-1.docker.io:443: dial tcp 108.160.169.46:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
    ```
 
@@ -331,7 +331,7 @@ swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis          latest      fa
 
    ```yaml
    # docker-compose.yml
-   
+
    services:
      redis:
        image: redis:alpine
@@ -340,7 +340,7 @@ swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis          latest      fa
          - "6379:6379" # 将 Redis 容器的 6379 端口映射到主机的 6379 端口
        volumes:
          - redis_data:/data # Redis 数据的持久化存储卷
-   
+
      backend:
        build:
          context: ./backend # Dockerfile 的上下文路径
@@ -361,7 +361,7 @@ swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis          latest      fa
          - redis # 确保 Redis 在后端启动前启动
        stdin_open: true # 保持标准输入打开
        tty: true      # 分配一个伪终端
-   
+
      frontend:
        build:
          context: ./frontend
@@ -378,7 +378,7 @@ swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis          latest      fa
          - backend # 确保后端可用 (尽管前端通常只需要其 URL)
        stdin_open: true
        tty: true
-   
+
    volumes:
      redis_data: # 定义用于 Redis 持久化的命名卷
      backend_venv: # 定义用于后端 venv 的命名卷
@@ -502,4 +502,3 @@ docker logs mathmodelagent_redis
 ```powershell
 docker-compose down
 ```
-

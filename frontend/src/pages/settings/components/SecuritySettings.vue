@@ -1,134 +1,143 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useSettingsStore } from '@/stores/settings'
-import { changePassword, deleteAccount } from '@/apis/settingsApi'
-import type { PasswordChange, AccountDeletion } from '@/apis/settingsApi'
+import { changePassword, deleteAccount } from "@/apis/settingsApi";
+import type { AccountDeletion, PasswordChange } from "@/apis/settingsApi";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Loader2, Shield, Smartphone, Mail, Key, Trash2, Monitor } from 'lucide-vue-next'
-import { useToast } from '@/components/ui/toast/use-toast'
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/toast/use-toast";
+import { useSettingsStore } from "@/stores/settings";
+import {
+	Key,
+	Loader2,
+	Mail,
+	Monitor,
+	Shield,
+	Smartphone,
+	Trash2,
+} from "lucide-vue-next";
+import { reactive, ref } from "vue";
 
-const settingsStore = useSettingsStore()
-const { toast } = useToast()
+const settingsStore = useSettingsStore();
+const { toast } = useToast();
 
 // Password change state
 const passwordForm = reactive<PasswordChange>({
-  current_password: '',
-  new_password: '',
-  confirm_password: ''
-})
-const passwordDialogOpen = ref(false)
-const savingPassword = ref(false)
+	current_password: "",
+	new_password: "",
+	confirm_password: "",
+});
+const passwordDialogOpen = ref(false);
+const savingPassword = ref(false);
 
 // Account deletion state
 const deletionForm = reactive<AccountDeletion>({
-  password: '',
-  confirmation_text: '',
-  reason: ''
-})
-const deletionDialogOpen = ref(false)
-const deletingAccount = ref(false)
+	password: "",
+	confirmation_text: "",
+	reason: "",
+});
+const deletionDialogOpen = ref(false);
+const deletingAccount = ref(false);
 
 // Handle password change
 const handlePasswordChange = async () => {
-  if (passwordForm.new_password !== passwordForm.confirm_password) {
-    toast({
-      title: 'Error',
-      description: 'New passwords do not match',
-      variant: 'destructive'
-    })
-    return
-  }
+	if (passwordForm.new_password !== passwordForm.confirm_password) {
+		toast({
+			title: "Error",
+			description: "New passwords do not match",
+			variant: "destructive",
+		});
+		return;
+	}
 
-  if (passwordForm.new_password.length < 8) {
-    toast({
-      title: 'Error',
-      description: 'Password must be at least 8 characters long',
-      variant: 'destructive'
-    })
-    return
-  }
+	if (passwordForm.new_password.length < 8) {
+		toast({
+			title: "Error",
+			description: "Password must be at least 8 characters long",
+			variant: "destructive",
+		});
+		return;
+	}
 
-  try {
-    savingPassword.value = true
-    const response = await changePassword(passwordForm)
-    
-    toast({
-      title: 'Success',
-      description: response.data.message
-    })
-    
-    passwordDialogOpen.value = false
-    passwordForm.current_password = ''
-    passwordForm.new_password = ''
-    passwordForm.confirm_password = ''
-  } catch (error: any) {
-    toast({
-      title: 'Error',
-      description: error.response?.data?.detail || 'Failed to change password',
-      variant: 'destructive'
-    })
-  } finally {
-    savingPassword.value = false
-  }
-}
+	try {
+		savingPassword.value = true;
+		const response = await changePassword(passwordForm);
+
+		toast({
+			title: "Success",
+			description: response.data.message,
+		});
+
+		passwordDialogOpen.value = false;
+		passwordForm.current_password = "";
+		passwordForm.new_password = "";
+		passwordForm.confirm_password = "";
+	} catch (error: any) {
+		toast({
+			title: "Error",
+			description: error.response?.data?.detail || "Failed to change password",
+			variant: "destructive",
+		});
+	} finally {
+		savingPassword.value = false;
+	}
+};
 
 // Handle account deletion
 const handleAccountDeletion = async () => {
-  if (deletionForm.confirmation_text !== 'DELETE') {
-    toast({
-      title: 'Error',
-      description: 'Please type DELETE to confirm account deletion',
-      variant: 'destructive'
-    })
-    return
-  }
+	if (deletionForm.confirmation_text !== "DELETE") {
+		toast({
+			title: "Error",
+			description: "Please type DELETE to confirm account deletion",
+			variant: "destructive",
+		});
+		return;
+	}
 
-  try {
-    deletingAccount.value = true
-    const response = await deleteAccount(deletionForm)
-    
-    toast({
-      title: 'Account Deletion Requested',
-      description: response.data.message
-    })
-    
-    deletionDialogOpen.value = false
-    // In production, redirect to logout
-  } catch (error: any) {
-    toast({
-      title: 'Error',
-      description: error.response?.data?.detail || 'Failed to process account deletion',
-      variant: 'destructive'
-    })
-  } finally {
-    deletingAccount.value = false
-  }
-}
+	try {
+		deletingAccount.value = true;
+		const response = await deleteAccount(deletionForm);
+
+		toast({
+			title: "Account Deletion Requested",
+			description: response.data.message,
+		});
+
+		deletionDialogOpen.value = false;
+		// In production, redirect to logout
+	} catch (error: any) {
+		toast({
+			title: "Error",
+			description:
+				error.response?.data?.detail || "Failed to process account deletion",
+			variant: "destructive",
+		});
+	} finally {
+		deletingAccount.value = false;
+	}
+};
 
 // Handle session revoke
 const handleRevokeSession = async (sessionId: string) => {
-  await settingsStore.terminateSession(sessionId)
-}
+	await settingsStore.terminateSession(sessionId);
+};
 </script>
 
 <template>
@@ -233,7 +242,7 @@ const handleRevokeSession = async (sessionId: string) => {
 
         <div v-if="settingsStore.twoFactorAuth.enabled" class="space-y-3">
           <p class="text-sm font-medium">Authentication Method</p>
-          
+
           <div class="flex items-center gap-2 p-3 border rounded-lg">
             <Smartphone class="h-5 w-5 text-muted-foreground" />
             <div class="flex-1">
@@ -336,7 +345,7 @@ const handleRevokeSession = async (sessionId: string) => {
                   This action cannot be undone. This will permanently delete your account
                   and remove all your data from our servers.
                 </p>
-                
+
                 <div class="space-y-3">
                   <div>
                     <Label>Confirm Password</Label>
@@ -347,7 +356,7 @@ const handleRevokeSession = async (sessionId: string) => {
                       class="mt-2"
                     />
                   </div>
-                  
+
                   <div>
                     <Label>Type DELETE to confirm</Label>
                     <Input
@@ -357,7 +366,7 @@ const handleRevokeSession = async (sessionId: string) => {
                       class="mt-2"
                     />
                   </div>
-                  
+
                   <div>
                     <Label>Reason (optional)</Label>
                     <Input

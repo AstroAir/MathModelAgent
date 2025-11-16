@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import AgentWorkflowStatus from '@/components/AgentWorkflowStatus.vue'
-import { Network } from 'lucide-vue-next'
+import AgentWorkflowStatus from "@/components/AgentWorkflowStatus.vue";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Network } from "lucide-vue-next";
 
 interface AgentStatus {
-  name: string
-  status: 'pending' | 'running' | 'completed' | 'error'
-  icon: string
-  description: string
+	name: string;
+	status: "pending" | "running" | "completed" | "error";
+	icon: string;
+	description: string;
 }
 
 defineProps<{
-  open: boolean
-  agents: AgentStatus[]
-}>()
+	open: boolean;
+	agents: AgentStatus[];
+}>();
 
-defineEmits<{
-  (e: 'update:open', value: boolean): void
-}>()
+defineEmits<(e: "update:open", value: boolean) => void>();
 </script>
 
 <template>
@@ -31,10 +34,10 @@ defineEmits<{
           </span>
         </DialogTitle>
       </DialogHeader>
-      
+
       <div class="flex-1 overflow-y-auto px-2 py-4">
         <AgentWorkflowStatus :agents="agents" />
-        
+
         <!-- 工作流程说明 -->
         <div class="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
           <h4 class="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">

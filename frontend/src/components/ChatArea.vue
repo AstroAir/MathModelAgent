@@ -1,39 +1,78 @@
 <script setup lang="ts">
-import Bubble from './Bubble.vue'
-import SystemMessage from './SystemMessage.vue'
-import StepTimeline from './StepTimeline.vue'
-import { ref, computed, inject, type Ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Send, MessageSquare, ListTree } from 'lucide-vue-next'
-import type { Message, StepMessage as StepMessageType } from '@/utils/response'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import request from "@/utils/request";
+import type { Message, StepMessage as StepMessageType } from "@/utils/response";
+import { ListTree, MessageSquare, Send, Sparkles } from "lucide-vue-next";
+import { type Ref, computed, inject, ref } from "vue";
+import Bubble from "./Bubble.vue";
+import StepTimeline from "./StepTimeline.vue";
+import SystemMessage from "./SystemMessage.vue";
 
-const props = defineProps<{ messages: Message[] }>()
+const props = defineProps<{ messages: Message[] }>();
 
 // 注入调试模式
-const debugMode = inject<Ref<boolean>>('debugMode', ref(false))
+const debugMode = inject<Ref<boolean>>("debugMode", ref(false));
 
-const inputValue = ref('')
-const inputRef = ref<HTMLInputElement | null>(null)
-const scrollRef = ref<HTMLDivElement | null>(null)
+const inputValue = ref("");
+const inputRef = ref<HTMLInputElement | null>(null);
+const scrollRef = ref<HTMLDivElement | null>(null);
+const isOptimizing = ref(false);
 
 // 过滤出步骤消息
 const stepMessages = computed(() => {
-  return props.messages.filter(msg => msg.msg_type === 'step') as StepMessageType[]
-})
+	return props.messages.filter(
+		(msg) => msg.msg_type === "step",
+	) as StepMessageType[];
+});
 
 // 过滤出非步骤消息（用于显示在聊天区）
 const chatMessages = computed(() => {
-  return props.messages.filter(msg => msg.msg_type !== 'step')
-})
+	return props.messages.filter((msg) => msg.msg_type !== "step");
+});
 
 const sendMessage = () => {
-  // 这里只处理本地 user 消息输入，如需和后端交互请在父组件处理
-  if (!inputValue.value.trim()) return
-  // 可以通过 emit 事件让父组件处理 user 消息
-  inputValue.value = ''
-  inputRef.value?.focus()
-}
+	// 这里只处理本地 user 消息输入，如需和后端交互请在父组件处理
+	if (!inputValue.value.trim()) return;
+	// 可以通过 emit 事件让父组件处理 user 消息
+	inputValue.value = "";
+	inputRef.value?.focus();
+};
+
+const optimizePrompt = async () => {
+	if (!inputValue.value.trim() || isOptimizing.value) return;
+
+	isOptimizing.value = true;
+
+	try {
+		// Prepare context data
+		const context = {
+			conversation_history: props.messages.map((msg) => ({
+				type: msg.msg_type,
+				content: msg.content,
+				timestamp: msg.timestamp,
+			})),
+			current_time: new Date().toISOString(),
+			message_count: props.messages.length,
+		};
+
+		const response = await request.post("/api/prompt/optimize", {
+			original_prompt: inputValue.value,
+			context: context,
+		});
+
+		inputValue.value = response.data.optimized_prompt;
+
+		// Focus back to input after optimization
+		inputRef.value?.focus();
+	} catch (error) {
+		console.error("Prompt optimization failed:", error);
+		// You could add a toast notification here
+		alert("提示词优化失败，请稍后重试");
+	} finally {
+		isOptimizing.value = false;
+	}
+};
 </script>
 
 <template>
@@ -46,7 +85,7 @@ const sendMessage = () => {
           <span>对话</span>
           <span class="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{{ chatMessages.length }}</span>
         </h2>
-        
+
         <!-- 步骤数量提示（调试模式） -->
         <div v-if="debugMode && stepMessages.length > 0" class="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-destructive bg-destructive/10 px-2 sm:px-2.5 py-1 rounded-lg border border-destructive/20">
           <ListTree class="w-3 h-3" />
@@ -54,7 +93,7 @@ const sendMessage = () => {
         </div>
       </div>
     </div>
-    
+
     <!-- 消息列表 - Enhanced scroll and spacing with smooth transitions -->
     <div ref="scrollRef" class="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 space-y-2 scroll-smooth">
       <!-- Empty state with enhanced design -->
@@ -68,7 +107,7 @@ const sendMessage = () => {
         <p class="text-base sm:text-lg font-semibold text-foreground">暂无消息</p>
         <p class="text-xs sm:text-sm mt-2 text-muted-foreground">开始对话吧 ✨</p>
       </div>
-      
+
       <!-- Debug mode: Step timeline with enhanced design -->
       <div v-if="debugMode && stepMessages.length > 0" class="mb-4 animate-in slide-in-from-top-2 duration-300">
         <div class="bg-destructive/10 border-2 border-destructive/20 rounded-xl overflow-hidden shadow-sm">
@@ -82,7 +121,7 @@ const sendMessage = () => {
           <StepTimeline :steps="stepMessages" />
         </div>
       </div>
-      
+
       <!-- Messages with smooth animations -->
       <transition-group name="message-list" tag="div" class="space-y-2">
         <template v-for="message in chatMessages" :key="message.id">
@@ -97,7 +136,7 @@ const sendMessage = () => {
           </div>
           <!-- 工具消息 -->
           <div v-else-if="message.msg_type === 'tool'" class="message-animate">
-            <Bubble type="tool" 
+            <Bubble type="tool"
               :content="message.content || '工具调用'" :message="message" />
           </div>
           <!-- 系统消息 -->
@@ -108,7 +147,7 @@ const sendMessage = () => {
         </template>
       </transition-group>
     </div>
-    
+
     <!-- Input area - Enhanced mobile optimization -->
     <div class="border-t border-border bg-background p-2.5 sm:p-3 shadow-sm">
       <form class="w-full flex items-center gap-2" @submit.prevent="sendMessage">
@@ -120,6 +159,23 @@ const sendMessage = () => {
           class="flex-1 text-xs sm:text-sm h-8 sm:h-9 rounded-lg transition-all"
           autocomplete="off"
         />
+        <Button
+          type="button"
+          :disabled="!inputValue.trim() || isOptimizing"
+          @click="optimizePrompt"
+          class="h-8 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm shadow-sm hover:shadow transition-all"
+          size="sm"
+          variant="outline"
+          title="优化提示词"
+        >
+          <Sparkles
+            :class="[
+              'w-3.5 h-3.5 sm:w-4 sm:h-4',
+              isOptimizing ? 'animate-spin' : ''
+            ]"
+          />
+          <span class="hidden sm:inline ml-1.5 font-medium">优化</span>
+        </Button>
         <Button
           type="submit"
           :disabled="!inputValue.trim()"
@@ -133,4 +189,3 @@ const sendMessage = () => {
     </div>
   </div>
 </template>
-

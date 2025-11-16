@@ -256,4 +256,3 @@ $$
 [^5]: Aimee E. Maxted et al. (2005). Infant colic and maternal depression
 
 [^6]: SS Madlala, Sm Kassier (2017). Antenatal and postpartum depression: effects on infant and young child health and feeding practices
-

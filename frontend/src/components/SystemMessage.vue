@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { cn } from '@/lib/utils'
-import type { HTMLAttributes } from 'vue'
+import { cn } from "@/lib/utils";
+import type { HTMLAttributes } from "vue";
 
 interface SystemMessageProps {
-  class?: HTMLAttributes['class']
-  content: string
-  type?: 'info' | 'warning' | 'success' | 'error'
+	class?: HTMLAttributes["class"];
+	content: string;
+	type?: "info" | "warning" | "success" | "error";
 }
 
 const props = withDefaults(defineProps<SystemMessageProps>(), {
-  type: 'info'
-})
+	type: "info",
+});
 
 const typeStyles = {
-  info: 'text-primary bg-primary/10 border-primary/20',
-  warning: 'text-yellow-500 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-  success: 'text-green-500 dark:text-green-400 bg-green-500/10 border-green-500/20',
-  error: 'text-destructive bg-destructive/10 border-destructive/20'
-}
+	info: "text-primary bg-primary/10 border-primary/20",
+	warning:
+		"text-yellow-500 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
+	success:
+		"text-green-500 dark:text-green-400 bg-green-500/10 border-green-500/20",
+	error: "text-destructive bg-destructive/10 border-destructive/20",
+};
 </script>
 
 <template>
@@ -56,4 +58,3 @@ const typeStyles = {
     </div>
   </div>
 </template>
-

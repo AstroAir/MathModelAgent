@@ -10,26 +10,26 @@ jobs:
   backend-lint:
     name: Backend Linting
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install uv
         run: pip install uv
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: uv sync
-      
+
       - name: Run Ruff linter
         working-directory: ./backend
         run: uv run ruff check .
-      
+
       - name: Run Ruff formatter check
         working-directory: ./backend
         run: uv run ruff format --check .
@@ -37,7 +37,7 @@ jobs:
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
-    
+
     services:
       redis:
         image: redis:alpine
@@ -48,22 +48,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      
+
       - name: Install uv
         run: pip install uv
-      
+
       - name: Install dependencies
         working-directory: ./backend
         run: uv sync
-      
+
       - name: Run tests
         working-directory: ./backend
         run: |
@@ -76,24 +76,24 @@ jobs:
   frontend-lint:
     name: Frontend Linting
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
-      
+
       - name: Install dependencies
         working-directory: ./frontend
         run: pnpm install
-      
+
       - name: Run Biome linter
         working-directory: ./frontend
         run: pnpm exec biome check .
@@ -101,28 +101,28 @@ jobs:
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 10
-      
+
       - name: Install dependencies
         working-directory: ./frontend
         run: pnpm install
-      
+
       - name: Build
         working-directory: ./frontend
         run: pnpm run build
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -133,13 +133,13 @@ jobs:
   docker-build:
     name: Docker Build Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
@@ -148,7 +148,7 @@ jobs:
           tags: mathmodelagent-backend:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
+
       - name: Build frontend image
         uses: docker/build-push-action@v5
         with:

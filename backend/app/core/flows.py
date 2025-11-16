@@ -1,10 +1,16 @@
 from app.models.user_output import UserOutput
 from app.tools.base_interpreter import BaseCodeInterpreter
 from app.core.agents.modeler_agent import ModelerToCoder
+from app.utils.log_util import logger
 
 
 class Flows:
-    def __init__(self, questions: dict[str, str | int], language: str = "zh", work_dir: str | None = None):
+    def __init__(
+        self,
+        questions: dict[str, str | int],
+        language: str = "zh",
+        work_dir: str | None = None,
+    ):
         self.flows: dict[str, dict] = {}
         self.questions: dict[str, str | int] = questions
         self.language = language
@@ -33,7 +39,7 @@ class Flows:
             for key, value in questions.items()
             if key.startswith("ques") and key != "ques_count"
         }
-        
+
         # Bilingual prompts
         if self.language == "en":
             ques_template = "Refer to the solution provided by the modeler: {solution}\nComplete the following problem: {problem}"
@@ -47,39 +53,39 @@ class Flows:
             data_files_without = "请使用list_files工具查看当前目录下的数据文件"
             eda_template = "参考建模手给出的解决方案{solution}\n{data_info}\n对当前目录下数据进行EDA分析(数据清洗,可视化),清洗后的数据保存当前目录下,**不需要复杂的模型**"
             sensitivity_template = "参考建模手给出的解决方案{solution}\n完成敏感性分析"
-        
+
         ques_flow = {
             key: {
                 "coder_prompt": ques_template.format(
-                    solution=modeler_response.questions_solution[key],
-                    problem=value
+                    solution=modeler_response.questions_solution[key], problem=value
                 ),
             }
             for key, value in questions_quesx.items()
         }
-        
+
         # 获取当前目录下的数据集文件
         from app.utils.common_utils import get_current_files
         import os
+
         data_files = []
         try:
             work_dir = self.work_dir or os.path.join("project", "work_dir")
             if work_dir and os.path.exists(work_dir) and os.path.isdir(work_dir):
                 data_files = get_current_files(work_dir, "data")
-        except Exception:
+        except OSError as exc:
             # 如果获取失败，让agent自己去list_files
-            pass
-        
+            logger.warning("获取数据文件失败: %s", exc)
+
         if data_files:
-            data_files_info = data_files_with.format(files=', '.join(data_files))
+            data_files_info = data_files_with.format(files=", ".join(data_files))
         else:
             data_files_info = data_files_without
-        
+
         flows = {
             "eda": {
                 "coder_prompt": eda_template.format(
                     solution=modeler_response.questions_solution["eda"],
-                    data_info=data_files_info
+                    data_info=data_files_info,
                 ),
             },
             **ques_flow,

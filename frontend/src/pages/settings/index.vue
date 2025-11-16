@@ -1,45 +1,40 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useSettingsStore } from '@/stores/settings'
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { User, Bell, Shield, Lock, LogOut } from 'lucide-vue-next'
-import AccountSettings from './components/AccountSettings.vue'
-import NotificationSettings from './components/NotificationSettings.vue'
-import SecuritySettings from './components/SecuritySettings.vue'
-import PrivacySettings from './components/PrivacySettings.vue'
-import { useRouter } from 'vue-router'
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSettingsStore } from "@/stores/settings";
+import { Bell, Lock, LogOut, Shield, User } from "lucide-vue-next";
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import AccountSettings from "./components/AccountSettings.vue";
+import NotificationSettings from "./components/NotificationSettings.vue";
+import PrivacySettings from "./components/PrivacySettings.vue";
+import SecuritySettings from "./components/SecuritySettings.vue";
 
-const settingsStore = useSettingsStore()
-const router = useRouter()
-const activeTab = ref('account')
+const settingsStore = useSettingsStore();
+const router = useRouter();
+const activeTab = ref("account");
 
 onMounted(async () => {
-  // Load all settings on mount
-  await Promise.all([
-    settingsStore.loadProfile(),
-    settingsStore.loadNotifications(),
-    settingsStore.loadPrivacy(),
-    settingsStore.load2FAStatus(),
-    settingsStore.loadSessions()
-  ])
-})
+	// Load all settings on mount
+	await Promise.all([
+		settingsStore.loadProfile(),
+		settingsStore.loadNotifications(),
+		settingsStore.loadPrivacy(),
+		settingsStore.load2FAStatus(),
+		settingsStore.loadSessions(),
+	]);
+});
 
 const handleLogout = () => {
-  // In production, clear auth tokens and redirect to login
-  router.push('/login')
-}
+	// In production, clear auth tokens and redirect to login
+	router.push("/login");
+};
 </script>
 
 <template>

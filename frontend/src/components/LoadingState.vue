@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Loader2 } from 'lucide-vue-next'
+import { Loader2 } from "lucide-vue-next";
+import { computed } from "vue";
 
-const props = withDefaults(defineProps<{
-  size?: 'sm' | 'md' | 'lg'
-  text?: string
-  fullscreen?: boolean
-}>(), {
-  size: 'md',
-  fullscreen: false
-})
+const props = withDefaults(
+	defineProps<{
+		size?: "sm" | "md" | "lg";
+		text?: string;
+		fullscreen?: boolean;
+	}>(),
+	{
+		size: "md",
+		fullscreen: false,
+	},
+);
 
 const sizeClasses = computed(() => {
-  switch (props.size) {
-    case 'sm':
-      return 'w-4 h-4'
-    case 'lg':
-      return 'w-12 h-12'
-    default:
-      return 'w-8 h-8'
-  }
-})
+	switch (props.size) {
+		case "sm":
+			return "w-4 h-4";
+		case "lg":
+			return "w-12 h-12";
+		default:
+			return "w-8 h-8";
+	}
+});
 </script>
 
 <template>

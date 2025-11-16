@@ -1,13 +1,14 @@
 """Bilingual system messages for workflow"""
 
+
 def get_message(key: str, language: str = "zh", **kwargs) -> str:
     """Get bilingual system message
-    
+
     Args:
         key: Message key
         language: Language code ("zh" or "en")
         **kwargs: Format parameters
-    
+
     Returns:
         Formatted message in specified language
     """
@@ -39,12 +40,12 @@ def get_message(key: str, language: str = "zh", **kwargs) -> str:
             "writer_complete": "Writer agent completed {key} section",
             "subtask_failed": "Subtask {key} failed: {error}",
             "writer_failed": "Writer agent failed to process {key} section: {error}",
-        }
+        },
     }
-    
+
     lang = "en" if language == "en" else "zh"
     message = messages[lang].get(key, key)
-    
+
     if kwargs:
         return message.format(**kwargs)
     return message

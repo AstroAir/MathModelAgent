@@ -14,8 +14,10 @@ from app.core.llm.llm_factory import LLMFactory
 from app.utils.messages import get_message
 from app.utils.language_detector import detect_language_detailed
 
+
 class WorkFlow:
     """工作流基类，定义工作流的基本接口"""
+
     def __init__(self):
         """初始化工作流"""
         pass
@@ -34,7 +36,7 @@ class MathModelWorkFlow(WorkFlow):
     async def execute(self, problem: Problem):
         self.task_id = problem.task_id
         self.work_dir = create_work_dir(self.task_id)
-        
+
         # Auto-detect language if set to "auto"
         if problem.language == "auto":
             detected = detect_language_detailed(problem.ques_all)
@@ -55,7 +57,9 @@ class MathModelWorkFlow(WorkFlow):
         llm_factory = LLMFactory(self.task_id)
         coordinator_llm, modeler_llm, coder_llm, writer_llm = llm_factory.get_all_llms()
 
-        coordinator_agent = CoordinatorAgent(self.task_id, coordinator_llm, language=problem.language)
+        coordinator_agent = CoordinatorAgent(
+            self.task_id, coordinator_llm, language=problem.language
+        )
 
         await redis_manager.publish_message(
             self.task_id,
@@ -73,7 +77,9 @@ class MathModelWorkFlow(WorkFlow):
 
         await redis_manager.publish_message(
             self.task_id,
-            SystemMessage(content=get_message("coordinator_complete", problem.language)),
+            SystemMessage(
+                content=get_message("coordinator_complete", problem.language)
+            ),
         )
 
         await redis_manager.publish_message(
@@ -81,7 +87,9 @@ class MathModelWorkFlow(WorkFlow):
             SystemMessage(content=get_message("modeler_start", problem.language)),
         )
 
-        modeler_agent = ModelerAgent(self.task_id, modeler_llm, language=problem.language)
+        modeler_agent = ModelerAgent(
+            self.task_id, modeler_llm, language=problem.language
+        )
 
         modeler_response = await modeler_agent.run(coordinator_response)
 
@@ -100,7 +108,7 @@ class MathModelWorkFlow(WorkFlow):
             notebook_serializer=notebook_serializer,
             timeout=3000,
         )
-        
+
         scholar = OpenAlexScholar(task_id=self.task_id, email=settings.OPENALEX_EMAIL)
 
         await redis_manager.publish_message(
@@ -149,12 +157,14 @@ class MathModelWorkFlow(WorkFlow):
                         step_type="agent",
                         status="processing",
                         agent_type="CoderAgent",
-                        content=f"代码手开始求解{key}"
+                        content=f"代码手开始求解{key}",
                     ),
                 )
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("coder_start", problem.language, key=key)),
+                    SystemMessage(
+                        content=get_message("coder_start", problem.language, key=key)
+                    ),
                 )
 
                 coder_response = await coder_agent.run(
@@ -169,16 +179,22 @@ class MathModelWorkFlow(WorkFlow):
                         step_type="agent",
                         status="completed",
                         agent_type="CoderAgent",
-                        content=f"代码手求解成功{key}"
+                        content=f"代码手求解成功{key}",
                     ),
                 )
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("coder_success", problem.language, key=key), type="success"),
+                    SystemMessage(
+                        content=get_message("coder_success", problem.language, key=key),
+                        type="success",
+                    ),
                 )
 
                 writer_prompt = flows.get_writer_prompt(
-                    key, coder_response.coder_response, code_interpreter, config_template
+                    key,
+                    coder_response.coder_response,
+                    code_interpreter,
+                    config_template,
                 )
 
                 # 发送步骤消息：论文手开始写作
@@ -189,12 +205,14 @@ class MathModelWorkFlow(WorkFlow):
                         step_type="agent",
                         status="processing",
                         agent_type="WriterAgent",
-                        content=f"论文手开始写{key}部分"
+                        content=f"论文手开始写{key}部分",
                     ),
                 )
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("writer_start", problem.language, key=key)),
+                    SystemMessage(
+                        content=get_message("writer_start", problem.language, key=key)
+                    ),
                 )
 
                 # 传递创建的图片给writer，用于引用
@@ -212,16 +230,20 @@ class MathModelWorkFlow(WorkFlow):
                         step_type="agent",
                         status="completed",
                         agent_type="WriterAgent",
-                        content=f"论文手完成{key}部分"
+                        content=f"论文手完成{key}部分",
                     ),
                 )
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("writer_complete", problem.language, key=key)),
+                    SystemMessage(
+                        content=get_message(
+                            "writer_complete", problem.language, key=key
+                        )
+                    ),
                 )
 
                 user_output.set_res(key, writer_response)
-                
+
             except Exception as e:
                 error_msg = f"处理子任务 {key} 时发生错误: {str(e)}"
                 logger.error(error_msg)
@@ -233,12 +255,17 @@ class MathModelWorkFlow(WorkFlow):
                         step_type="task",
                         status="failed",
                         content=f"子任务 {key} 失败: {str(e)}",
-                        details={"error": str(e)}
+                        details={"error": str(e)},
                     ),
                 )
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("subtask_failed", problem.language, key=key, error=str(e)), type="error"),
+                    SystemMessage(
+                        content=get_message(
+                            "subtask_failed", problem.language, key=key, error=str(e)
+                        ),
+                        type="error",
+                    ),
                 )
                 # 继续处理其他子任务而不是完全停止
                 continue
@@ -257,19 +284,26 @@ class MathModelWorkFlow(WorkFlow):
             try:
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("writer_start", problem.language, key=key)),
+                    SystemMessage(
+                        content=get_message("writer_start", problem.language, key=key)
+                    ),
                 )
 
                 writer_response = await writer_agent.run(prompt=value, sub_title=key)
 
                 user_output.set_res(key, writer_response)
-                
+
             except Exception as e:
                 error_msg = f"论文手处理 {key} 部分时发生错误: {str(e)}"
                 logger.error(error_msg)
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=get_message("writer_failed", problem.language, key=key, error=str(e)), type="error"),
+                    SystemMessage(
+                        content=get_message(
+                            "writer_failed", problem.language, key=key, error=str(e)
+                        ),
+                        type="error",
+                    ),
                 )
                 # 继续处理其他部分
                 continue

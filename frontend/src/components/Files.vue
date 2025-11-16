@@ -1,40 +1,46 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import Tree from '@/components/Tree.vue'
-import { File } from 'lucide-vue-next'
-import { useTaskStore } from '@/stores/task'
-import { Sidebar, SidebarContent, SidebarGroup, SidebarFooter, SidebarProvider } from '@/components/ui/sidebar'
-const taskStore = useTaskStore()
-const isLoading = ref(true)
+import Tree from "@/components/Tree.vue";
+import {
+	Sidebar,
+	SidebarContent,
+	SidebarFooter,
+	SidebarGroup,
+	SidebarProvider,
+} from "@/components/ui/sidebar";
+import { useTaskStore } from "@/stores/task";
+import { File } from "lucide-vue-next";
+import { computed, onMounted, ref } from "vue";
+const taskStore = useTaskStore();
+const isLoading = ref(true);
 // 从消息中提取最新的文件列表
-const files = taskStore.files as string[]
+const files = taskStore.files as string[];
 
 // 将文件列表转换为树形结构
 const fileTree = computed(() => {
-  // 无论files是否为空，只要计算属性被触发，就认为数据已加载完成
-  isLoading.value = false
+	// 无论files是否为空，只要计算属性被触发，就认为数据已加载完成
+	isLoading.value = false;
 
-  // 直接返回文件列表，不做转换，因为Tree组件期望接收string或数组
-  return files
-})
+	// 直接返回文件列表，不做转换，因为Tree组件期望接收string或数组
+	return files;
+});
 
 // 添加超时机制，确保即使数据没有加载也会在一定时间后显示内容
 onMounted(() => {
-  // 3秒后无论如何都取消加载状态
-  setTimeout(() => {
-    isLoading.value = false
-  }, 3000)
-})
+	// 3秒后无论如何都取消加载状态
+	setTimeout(() => {
+		isLoading.value = false;
+	}, 3000);
+});
 
 const handleFileClick = (file: string) => {
-  // 处理文件点击
-  console.log('File clicked:', file)
-}
+	// 处理文件点击
+	console.log("File clicked:", file);
+};
 
 const handleFileDownload = (file: string) => {
-  // 处理文件下载
-  console.log('Download file:', file)
-}
+	// 处理文件下载
+	console.log("Download file:", file);
+};
 </script>
 
 <template>

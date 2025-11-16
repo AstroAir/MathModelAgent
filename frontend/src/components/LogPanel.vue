@@ -1,308 +1,328 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { useLogStore } from '@/stores/log'
-import type { LogLevel } from '@/types/log'
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  Trash2, 
-  Play, 
-  Pause, 
-  ChevronDown,
-  ChevronUp,
+import { useLogStore } from "@/stores/log";
+import type { LogLevel } from "@/types/log";
+import {
+	AlertTriangle,
+	Bug,
+	ChevronDown,
+	ChevronUp,
+	Clock,
+	Download,
+	Filter,
+	Info,
+	Pause,
+	Play,
+	RotateCcw,
+	Search,
+	Trash2,
+	X,
+} from "lucide-vue-next";
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
 
-  Clock,
-  Bug,
-  Info,
-  AlertTriangle,
-  X,
-  RotateCcw
-} from 'lucide-vue-next'
-
-const logStore = useLogStore()
+const logStore = useLogStore();
 
 // Component state
-const isAutoScroll = ref(true)
-const searchQuery = ref('')
-const selectedLevels = ref<LogLevel[]>(['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'])
-const selectedSource = ref('')
-const startDate = ref('')
-const endDate = ref('')
-const expandedLogId = ref<string | null>(null)
-const sortBy = ref<'timestamp' | 'level' | 'source'>('timestamp')
-const sortOrder = ref<'asc' | 'desc'>('desc')
-const isRegexSearch = ref(false)
-const showFilters = ref(false)
-const pageSize = ref(50)
-const currentPage = ref(0)
-const isLoading = ref(false)
+const isAutoScroll = ref(true);
+const searchQuery = ref("");
+const selectedLevels = ref<LogLevel[]>([
+	"DEBUG",
+	"INFO",
+	"WARN",
+	"ERROR",
+	"FATAL",
+]);
+const selectedSource = ref("");
+const startDate = ref("");
+const endDate = ref("");
+const expandedLogId = ref<string | null>(null);
+const sortBy = ref<"timestamp" | "level" | "source">("timestamp");
+const sortOrder = ref<"asc" | "desc">("desc");
+const isRegexSearch = ref(false);
+const showFilters = ref(false);
+const pageSize = ref(50);
+const currentPage = ref(0);
+const isLoading = ref(false);
 
 // Refs for DOM elements
-const logContainer = ref<HTMLElement>()
-const searchInput = ref<HTMLInputElement>()
+const logContainer = ref<HTMLElement>();
+const searchInput = ref<HTMLInputElement>();
 
 // Log level colors and icons
 const logLevelConfig = {
-  DEBUG: { color: 'text-muted-foreground bg-muted', icon: Bug },
-  INFO: { color: 'text-primary bg-primary/10', icon: Info },
-  WARN: { color: 'text-yellow-600 bg-yellow-500/10', icon: AlertTriangle },
-  ERROR: { color: 'text-destructive bg-destructive/10', icon: X },
-  FATAL: { color: 'text-destructive-foreground bg-destructive', icon: X }
-}
+	DEBUG: { color: "text-muted-foreground bg-muted", icon: Bug },
+	INFO: { color: "text-primary bg-primary/10", icon: Info },
+	WARN: { color: "text-yellow-600 bg-yellow-500/10", icon: AlertTriangle },
+	ERROR: { color: "text-destructive bg-destructive/10", icon: X },
+	FATAL: { color: "text-destructive-foreground bg-destructive", icon: X },
+};
 
 // Computed properties
 const filteredLogs = computed(() => {
-  let logs = [...logStore.logs]
+	let logs = [...logStore.logs];
 
-  // Filter by log levels
-  logs = logs.filter(log => selectedLevels.value.includes(log.level))
+	// Filter by log levels
+	logs = logs.filter((log) => selectedLevels.value.includes(log.level));
 
-  // Filter by source
-  if (selectedSource.value) {
-    logs = logs.filter(log => log.source === selectedSource.value)
-  }
+	// Filter by source
+	if (selectedSource.value) {
+		logs = logs.filter((log) => log.source === selectedSource.value);
+	}
 
-  // Filter by date range
-  if (startDate.value) {
-    const start = new Date(startDate.value).getTime()
-    logs = logs.filter(log => log.timestamp >= start)
-  }
-  if (endDate.value) {
-    const end = new Date(endDate.value).getTime() + 24 * 60 * 60 * 1000 - 1 // End of day
-    logs = logs.filter(log => log.timestamp <= end)
-  }
+	// Filter by date range
+	if (startDate.value) {
+		const start = new Date(startDate.value).getTime();
+		logs = logs.filter((log) => log.timestamp >= start);
+	}
+	if (endDate.value) {
+		const end = new Date(endDate.value).getTime() + 24 * 60 * 60 * 1000 - 1; // End of day
+		logs = logs.filter((log) => log.timestamp <= end);
+	}
 
-  // Filter by search query
-  if (searchQuery.value.trim()) {
-    const query = searchQuery.value.trim()
-    if (isRegexSearch.value) {
-      try {
-        const regex = new RegExp(query, 'i')
-        logs = logs.filter(log => regex.test(log.message))
-      } catch (e) {
-        // Invalid regex, fall back to simple search
-        logs = logs.filter(log => log.message.toLowerCase().includes(query.toLowerCase()))
-      }
-    } else {
-      logs = logs.filter(log => log.message.toLowerCase().includes(query.toLowerCase()))
-    }
-  }
+	// Filter by search query
+	if (searchQuery.value.trim()) {
+		const query = searchQuery.value.trim();
+		if (isRegexSearch.value) {
+			try {
+				const regex = new RegExp(query, "i");
+				logs = logs.filter((log) => regex.test(log.message));
+			} catch (e) {
+				// Invalid regex, fall back to simple search
+				logs = logs.filter((log) =>
+					log.message.toLowerCase().includes(query.toLowerCase()),
+				);
+			}
+		} else {
+			logs = logs.filter((log) =>
+				log.message.toLowerCase().includes(query.toLowerCase()),
+			);
+		}
+	}
 
-  // Sort logs
-  logs.sort((a, b) => {
-    let comparison = 0
-    
-    switch (sortBy.value) {
-      case 'timestamp':
-        comparison = a.timestamp - b.timestamp
-        break
-      case 'level':
-        const levelOrder = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, FATAL: 4 }
-        comparison = levelOrder[a.level] - levelOrder[b.level]
-        break
-      case 'source':
-        comparison = a.source.localeCompare(b.source)
-        break
-    }
+	// Sort logs
+	logs.sort((a, b) => {
+		let comparison = 0;
 
-    return sortOrder.value === 'desc' ? -comparison : comparison
-  })
+		switch (sortBy.value) {
+			case "timestamp":
+				comparison = a.timestamp - b.timestamp;
+				break;
+			case "level":
+				const levelOrder = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, FATAL: 4 };
+				comparison = levelOrder[a.level] - levelOrder[b.level];
+				break;
+			case "source":
+				comparison = a.source.localeCompare(b.source);
+				break;
+		}
 
-  return logs
-})
+		return sortOrder.value === "desc" ? -comparison : comparison;
+	});
+
+	return logs;
+});
 
 const uniqueSources = computed(() => {
-  const sources = new Set(logStore.logs.map(log => log.source))
-  return Array.from(sources).sort()
-})
+	const sources = new Set(logStore.logs.map((log) => log.source));
+	return Array.from(sources).sort();
+});
 
 const logStats = computed(() => {
-  const stats = { DEBUG: 0, INFO: 0, WARN: 0, ERROR: 0, FATAL: 0 }
-  filteredLogs.value.forEach(log => {
-    stats[log.level]++
-  })
-  return stats
-})
+	const stats = { DEBUG: 0, INFO: 0, WARN: 0, ERROR: 0, FATAL: 0 };
+	filteredLogs.value.forEach((log) => {
+		stats[log.level]++;
+	});
+	return stats;
+});
 
 // Paginated logs for performance
 const paginatedLogs = computed(() => {
-  const start = currentPage.value * pageSize.value
-  const end = start + pageSize.value
-  return filteredLogs.value.slice(start, end)
-})
+	const start = currentPage.value * pageSize.value;
+	const end = start + pageSize.value;
+	return filteredLogs.value.slice(start, end);
+});
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredLogs.value.length / pageSize.value)
-})
+	return Math.ceil(filteredLogs.value.length / pageSize.value);
+});
 
 const hasNextPage = computed(() => {
-  return currentPage.value < totalPages.value - 1
-})
+	return currentPage.value < totalPages.value - 1;
+});
 
 const hasPrevPage = computed(() => {
-  return currentPage.value > 0
-})
+	return currentPage.value > 0;
+});
 
 // Methods
 const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp)
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  }) + '.' + String(date.getMilliseconds()).padStart(3, '0')
-}
+	const date = new Date(timestamp);
+	return (
+		date.toLocaleString("zh-CN", {
+			month: "2-digit",
+			day: "2-digit",
+			hour: "2-digit",
+			minute: "2-digit",
+			second: "2-digit",
+		}) +
+		"." +
+		String(date.getMilliseconds()).padStart(3, "0")
+	);
+};
 
 const toggleLogExpansion = (logId: string) => {
-  expandedLogId.value = expandedLogId.value === logId ? null : logId
-}
+	expandedLogId.value = expandedLogId.value === logId ? null : logId;
+};
 
 const clearLogs = () => {
-  logStore.clearLogs()
-  expandedLogId.value = null
-}
+	logStore.clearLogs();
+	expandedLogId.value = null;
+};
 
 const toggleAutoScroll = () => {
-  isAutoScroll.value = !isAutoScroll.value
-  if (isAutoScroll.value) {
-    scrollToBottom()
-  }
-}
+	isAutoScroll.value = !isAutoScroll.value;
+	if (isAutoScroll.value) {
+		scrollToBottom();
+	}
+};
 
 const scrollToBottom = async () => {
-  if (!logContainer.value) return
-  await nextTick()
-  logContainer.value.scrollTop = logContainer.value.scrollHeight
-}
+	if (!logContainer.value) return;
+	await nextTick();
+	logContainer.value.scrollTop = logContainer.value.scrollHeight;
+};
 
 const nextPage = () => {
-  if (hasNextPage.value) {
-    currentPage.value++
-  }
-}
+	if (hasNextPage.value) {
+		currentPage.value++;
+	}
+};
 
 const prevPage = () => {
-  if (hasPrevPage.value) {
-    currentPage.value--
-  }
-}
+	if (hasPrevPage.value) {
+		currentPage.value--;
+	}
+};
 
 const goToPage = (page: number) => {
-  if (page >= 0 && page < totalPages.value) {
-    currentPage.value = page
-  }
-}
+	if (page >= 0 && page < totalPages.value) {
+		currentPage.value = page;
+	}
+};
 
 const resetFilters = () => {
-  searchQuery.value = ''
-  selectedLevels.value = ['DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL']
-  selectedSource.value = ''
-  startDate.value = ''
-  endDate.value = ''
-  isRegexSearch.value = false
-}
+	searchQuery.value = "";
+	selectedLevels.value = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"];
+	selectedSource.value = "";
+	startDate.value = "";
+	endDate.value = "";
+	isRegexSearch.value = false;
+};
 
-const exportLogs = (format: 'json' | 'csv' | 'txt') => {
-  const logs = filteredLogs.value
-  let content = ''
-  let filename = ''
-  let mimeType = ''
+const exportLogs = (format: "json" | "csv" | "txt") => {
+	const logs = filteredLogs.value;
+	let content = "";
+	let filename = "";
+	let mimeType = "";
 
-  switch (format) {
-    case 'json':
-      content = JSON.stringify(logs, null, 2)
-      filename = `logs_${Date.now()}.json`
-      mimeType = 'application/json'
-      break
-    case 'csv':
-      const headers = ['Timestamp', 'Level', 'Source', 'Message']
-      const csvRows = [
-        headers.join(','),
-        ...logs.map(log => [
-          new Date(log.timestamp).toISOString(),
-          log.level,
-          log.source,
-          `"${log.message.replace(/"/g, '""')}"`
-        ].join(','))
-      ]
-      content = csvRows.join('\n')
-      filename = `logs_${Date.now()}.csv`
-      mimeType = 'text/csv'
-      break
-    case 'txt':
-      content = logs.map(log => 
-        `[${formatTimestamp(log.timestamp)}] ${log.level} ${log.source}: ${log.message}`
-      ).join('\n')
-      filename = `logs_${Date.now()}.txt`
-      mimeType = 'text/plain'
-      break
-  }
+	switch (format) {
+		case "json":
+			content = JSON.stringify(logs, null, 2);
+			filename = `logs_${Date.now()}.json`;
+			mimeType = "application/json";
+			break;
+		case "csv":
+			const headers = ["Timestamp", "Level", "Source", "Message"];
+			const csvRows = [
+				headers.join(","),
+				...logs.map((log) =>
+					[
+						new Date(log.timestamp).toISOString(),
+						log.level,
+						log.source,
+						`"${log.message.replace(/"/g, '""')}"`,
+					].join(","),
+				),
+			];
+			content = csvRows.join("\n");
+			filename = `logs_${Date.now()}.csv`;
+			mimeType = "text/csv";
+			break;
+		case "txt":
+			content = logs
+				.map(
+					(log) =>
+						`[${formatTimestamp(log.timestamp)}] ${log.level} ${log.source}: ${log.message}`,
+				)
+				.join("\n");
+			filename = `logs_${Date.now()}.txt`;
+			mimeType = "text/plain";
+			break;
+	}
 
-  const blob = new Blob([content], { type: mimeType })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
+	const blob = new Blob([content], { type: mimeType });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = filename;
+	a.click();
+	URL.revokeObjectURL(url);
+};
 
 // Quick filter presets
 const applyQuickFilter = (preset: string) => {
-  switch (preset) {
-    case 'errors':
-      selectedLevels.value = ['ERROR', 'FATAL']
-      break
-    case 'lastHour':
-      startDate.value = new Date(Date.now() - 60 * 60 * 1000).toISOString().slice(0, 16)
-      break
-    case 'currentSession':
-      // Assuming session starts when component mounts
-      startDate.value = new Date().toISOString().slice(0, 16)
-      break
-  }
-}
+	switch (preset) {
+		case "errors":
+			selectedLevels.value = ["ERROR", "FATAL"];
+			break;
+		case "lastHour":
+			startDate.value = new Date(Date.now() - 60 * 60 * 1000)
+				.toISOString()
+				.slice(0, 16);
+			break;
+		case "currentSession":
+			// Assuming session starts when component mounts
+			startDate.value = new Date().toISOString().slice(0, 16);
+			break;
+	}
+};
 
 // Keyboard shortcuts
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.ctrlKey || event.metaKey) {
-    switch (event.key) {
-      case 'k':
-        event.preventDefault()
-        searchInput.value?.focus()
-        break
-      case 'l':
-        event.preventDefault()
-        clearLogs()
-        break
-      case 's':
-        event.preventDefault()
-        toggleAutoScroll()
-        break
-    }
-  }
-}
+	if (event.ctrlKey || event.metaKey) {
+		switch (event.key) {
+			case "k":
+				event.preventDefault();
+				searchInput.value?.focus();
+				break;
+			case "l":
+				event.preventDefault();
+				clearLogs();
+				break;
+			case "s":
+				event.preventDefault();
+				toggleAutoScroll();
+				break;
+		}
+	}
+};
 
 // Auto-scroll when new logs are added
 const handleLogUpdate = () => {
-  if (isAutoScroll.value) {
-    scrollToBottom()
-  }
-}
+	if (isAutoScroll.value) {
+		scrollToBottom();
+	}
+};
 
 // Lifecycle
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-  // Watch for new logs and auto-scroll if enabled
-  logStore.$subscribe(handleLogUpdate)
-})
+	document.addEventListener("keydown", handleKeydown);
+	// Watch for new logs and auto-scroll if enabled
+	logStore.$subscribe(handleLogUpdate);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+	document.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
@@ -587,5 +607,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
-

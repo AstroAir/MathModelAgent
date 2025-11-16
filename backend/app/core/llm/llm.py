@@ -17,6 +17,7 @@ from icecream import ic
 
 litellm.callbacks = [agent_metrics]
 
+
 class LLM:
     def __init__(
         self,
@@ -67,7 +68,7 @@ class LLM:
 
         if self.base_url:
             kwargs["base_url"] = self.base_url
-        litellm.enable_json_schema_validation = True #加入json格式验证
+        litellm.enable_json_schema_validation = True  # 加入json格式验证
 
         # 当前使用非流式输出，确保完整响应后再处理
         for attempt in range(max_retries):
@@ -81,7 +82,9 @@ class LLM:
                 await self.send_message(response, agent_name, sub_title)
                 return response
             except Exception as e:
-                logger.error(f"LLM调用失败，第{attempt + 1}/{max_retries}次重试: {str(e)}")
+                logger.error(
+                    f"LLM调用失败，第{attempt + 1}/{max_retries}次重试: {str(e)}"
+                )
                 if attempt < max_retries - 1:  # 如果不是最后一次尝试
                     await asyncio.sleep(retry_delay * (attempt + 1))  # 指数退避
                     continue
@@ -147,9 +150,9 @@ class LLM:
                     cleaned_msg = {k: v for k, v in msg.items() if k != "tool_calls"}
                     if cleaned_msg.get("content"):
                         fixed_history.append(cleaned_msg)
-                        ic(f"  🔧 移除所有tool_calls，保留消息内容")
+                        ic("  🔧 移除所有tool_calls，保留消息内容")
                     else:
-                        ic(f"  🗑️ 完全移除空的tool_calls消息")
+                        ic("  🗑️ 完全移除空的tool_calls消息")
 
             # 如果是tool响应消息，检查是否是孤立的
             elif isinstance(msg, dict) and msg.get("role") == "tool":
@@ -168,7 +171,7 @@ class LLM:
 
                 if found_call:
                     fixed_history.append(msg)
-                    ic(f"  ✅ 保留有效的tool响应")
+                    ic("  ✅ 保留有效的tool响应")
                 else:
                     ic(f"  🗑️ 移除孤立的tool响应: {tool_call_id}")
 
@@ -181,7 +184,7 @@ class LLM:
         if len(fixed_history) != len(history):
             ic(f"🔧 修复完成: {len(history)} -> {len(fixed_history)} 条消息")
         else:
-            ic(f"✅ 验证通过，无需修复")
+            ic("✅ 验证通过，无需修复")
 
         return fixed_history
 

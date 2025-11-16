@@ -38,3 +38,13 @@ class LLMFactory:
         )
 
         return coordinator_llm, modeler_llm, coder_llm, writer_llm
+
+    @staticmethod
+    def create_llm(api_key: str, model: str, base_url: str, task_id: str) -> LLM:
+        """Create a single LLM instance with specified parameters"""
+        return LLM(
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+            task_id=task_id,
+        )

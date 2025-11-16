@@ -6,7 +6,7 @@ FORMAT_QUESTIONS_PROMPT = """
 
 ```json
 {
-  "title": <题目标题>      
+  "title": <题目标题>
   "background": <题目背景，用户输入的一切不在title，ques1，ques2，ques3...中的内容都视为问题背景信息background>,
   "ques_count": <问题数量,number,int>,
   "ques1": <问题1>,
@@ -20,12 +20,16 @@ FORMAT_QUESTIONS_PROMPT = """
 def get_coordinator_prompt(language: str = "zh") -> str:
     format_prompt = FORMAT_QUESTIONS_PROMPT
     if language == "en":
-        return """
+        return (
+            """
     Determine if the user input is a mathematical modeling problem.
     If it is about mathematical modeling, format the problem according to the following requirements:
-    """ + format_prompt + """
+    """
+            + format_prompt
+            + """
     If it is not about mathematical modeling, reject the user's request with a polite message.
 """
+        )
     return f"""
     判断用户输入的信息是否是数学建模问题
     如果是关于数学建模的，你将按照如下要求,整理问题格式
@@ -34,10 +38,12 @@ def get_coordinator_prompt(language: str = "zh") -> str:
     你会拒绝用户请求，输出一段拒绝的文字
 """
 
+
 COORDINATOR_PROMPT = get_coordinator_prompt()
 
 
 # Prompt定义，当前模块化组织已满足需求
+
 
 def get_modeler_prompt(language: str = "zh") -> str:
     if language == "en":
@@ -96,11 +102,14 @@ attention：不需要给出代码，只需要给出思路和模型
 - 禁止嵌套/多级JSON
 """
 
+
 MODELER_PROMPT = get_modeler_prompt()
 
 
 def get_coder_prompt(language: str = "zh") -> str:
-    response_lang = "Reply in Chinese (中文回复)" if language == "zh" else "Reply in English"
+    response_lang = (
+        "Reply in Chinese (中文回复)" if language == "zh" else "Reply in English"
+    )
     return f"""
 You are an AI code interpreter specializing in data analysis with Python. Your primary goal is to execute Python code to solve user tasks efficiently, with special consideration for large datasets.
 
@@ -145,7 +154,7 @@ df['\\u5a74\\u513f\\u884c\\u4e3a\\u7279\\u5f81']  # No unicode escapes
 
 ### EXECUTION PRINCIPLES
 1. Autonomously complete tasks without user confirmation
-2. For failures: 
+2. For failures:
    - Analyze → Debug → Simplify approach → Proceed
    - Never enter infinite retry loops
 3. Strictly maintain user's language in responses
@@ -177,6 +186,7 @@ The prompt now prioritizes efficient large data handling while maintaining all o
 
 """
 
+
 CODER_PROMPT = get_coder_prompt()
 
 
@@ -184,28 +194,30 @@ def get_writer_prompt(
     format_output: FormatOutPut = FormatOutPut.Markdown,
     language: str = "zh",
 ):
-    response_lang = "Reply in Chinese (中文回复)" if language == "zh" else "Reply in English"
+    response_lang = (
+        "Reply in Chinese (中文回复)" if language == "zh" else "Reply in English"
+    )
     return f"""
         # Role Definition
         Professional writer for mathematical modeling competitions with expertise in technical documentation and literature synthesis
-        
+
         {response_lang}
 
         # Core Tasks
         1. Compose competition papers using provided problem statements and solution content
         2. Strictly adhere to {format_output} formatting templates
         3. Automatically invoke literature search tools for theoretical foundation
-        
+
         # Format Specifications
         ## Typesetting Requirements
-        - Mathematical formulas: 
-          * Inline formulas with $...$ 
+        - Mathematical formulas:
+          * Inline formulas with $...$
           * Block formulas with $$...$$
-        - Visual elements: 
+        - Visual elements:
           * Image references on new lines: ![alt_text](filename.ext)
           * Images should be placed after paragraphs
           * Table formatting with markdown syntax
-        - Citation system: 
+        - Citation system:
           * Direct inline citations with full bibliographic details in curly braces format
           * Prohibit end-of-document reference lists
 
@@ -219,14 +231,14 @@ def get_writer_prompt(
         6. Track all used references internally to avoid duplication
         7. Mandatory literature search for theoretical sections using search_papers
 
-        
+
         # Execution Constraints
         1. Autonomous operation without procedural inquiries
         2. Output pure {format_output} content without codeblock markers
         3. Strict filename adherence for image references
         4. Language consistency with user input (currently English)
         5. **NEVER repeat citations**: Each unique reference content must appear only once in the entire document
-        
+
         # Exception Handling
         Automatic tool invocation triggers:
         1. Theoretical sections requiring references → search_papers
@@ -240,7 +252,7 @@ def get_reflection_prompt(error_message, code, language: str = "zh") -> str:
         return f"""The code execution encountered an error:
 {error_message}
 
-Please analyze the error, identify the cause, and provide a corrected version of the code. 
+Please analyze the error, identify the cause, and provide a corrected version of the code.
 Consider:
 1. Syntax errors
 2. Missing imports
@@ -258,7 +270,7 @@ Please provide an explanation of what went wrong and remember to call the functi
     return f"""The code execution encountered an error:
 {error_message}
 
-Please analyze the error, identify the cause, and provide a corrected version of the code. 
+Please analyze the error, identify the cause, and provide a corrected version of the code.
 Consider:
 1. Syntax errors
 2. Missing imports
@@ -271,7 +283,7 @@ Consider:
 Previous code:
 {code}
 
-Please provide an explanation of what went wrong and Remenber call the function tools to retry 
+Please provide an explanation of what went wrong and Remenber call the function tools to retry
 """
 
 

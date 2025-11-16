@@ -45,21 +45,23 @@ class CoordinatorAgent(Agent):
                 ques_count = questions["ques_count"]
                 logger.info(f"questions:{questions}")
                 return CoordinatorToModeler(questions=questions, ques_count=ques_count)
-                
+
             except (json.JSONDecodeError, ValueError, KeyError) as e:
                 attempt += 1
                 logger.warning(f"解析失败 (尝试 {attempt}/{max_retries}): {str(e)}")
-                
+
                 if attempt > max_retries:
-                    logger.error(f"超过最大重试次数，放弃解析")
+                    logger.error("超过最大重试次数，放弃解析")
                     raise RuntimeError(f"无法解析模型响应: {str(e)}")
-                    
+
                 # 添加错误反馈提示
                 error_prompt = f"⚠️ 上次响应格式错误: {str(e)}。请严格输出JSON格式"
-                await self.append_chat_history({
-                    "role": "system", 
-                    "content": self.system_prompt + "\n" + error_prompt
-                })
-        
+                await self.append_chat_history(
+                    {
+                        "role": "system",
+                        "content": self.system_prompt + "\n" + error_prompt,
+                    }
+                )
+
         # 永远不会执行到这里
         raise RuntimeError("意外的流程终止")

@@ -11,7 +11,7 @@
 
 ## 🌟 愿景：
 
-3 天的比赛时间变为 1 小时 <br> 
+3 天的比赛时间变为 1 小时 <br>
 自动完整一份可以获奖级别的建模论文
 
 <p align="center">
@@ -140,7 +140,7 @@ set ENV=DEV ; uvicorn app.main:app --host 0.0.0.0 --port 8000 --ws-ping-interval
 ```bash
 cd frontend # 切换到 frontend 目录下
 npm install -g pnpm
-pnpm i #确保电脑安装了 pnpm 
+pnpm i #确保电脑安装了 pnpm
 pnpm run dev
 ```
 修改 backend/.env.dev 的环境变量 **REDIS_URL**
@@ -181,7 +181,7 @@ Prompt Inject : [prompt](./backend/app/config/md_template.toml)
 
 - 项目处于**开发实验阶段**（我有时间就会更新），变更较多，还存在许多 Bug，我正着手修复。
 - 希望大家一起参与，让这个项目变得更好
-- 非常欢迎使用和提交  **PRs** 和 issues 
+- 非常欢迎使用和提交  **PRs** 和 issues
 - 需求参考 后期计划
 
 clone 项目后，下载 **Todo Tree** 插件，可以查看代码中所有具体位置的 todo

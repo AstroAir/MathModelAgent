@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Info, FileText, Wand2 } from 'lucide-vue-next'
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { FileText, Info, Wand2 } from "lucide-vue-next";
 
 const modelValue = defineModel({
-  type: Boolean,
-  default: false,
-})
-
+	type: Boolean,
+	default: false,
+});
 </script>
 
 <template>

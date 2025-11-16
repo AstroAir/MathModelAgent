@@ -1,46 +1,45 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { TabsList } from '@/components/ui/tabs'
-import { useDraggableTabs, type TabItem } from '@/composables/useDraggableTabs'
-import { cn } from '@/lib/utils'
-import type { HTMLAttributes } from 'vue'
+import { TabsList } from "@/components/ui/tabs";
+import { type TabItem, useDraggableTabs } from "@/composables/useDraggableTabs";
+import { cn } from "@/lib/utils";
+import { ref } from "vue";
+import type { HTMLAttributes } from "vue";
 
-const props = withDefaults(defineProps<{
-  tabs: TabItem[]
-  modelValue?: string
-  class?: HTMLAttributes['class']
-  enableDrag?: boolean
-  orientation?: 'horizontal' | 'vertical'
-}>(), {
-  enableDrag: true,
-  orientation: 'horizontal'
-})
+const props = withDefaults(
+	defineProps<{
+		tabs: TabItem[];
+		modelValue?: string;
+		class?: HTMLAttributes["class"];
+		enableDrag?: boolean;
+		orientation?: "horizontal" | "vertical";
+	}>(),
+	{
+		enableDrag: true,
+		orientation: "horizontal",
+	},
+);
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'reorder': [tabs: TabItem[]]
-}>()
+	"update:modelValue": [value: string];
+	reorder: [tabs: TabItem[]];
+}>();
 
-const containerRef = ref<HTMLElement | null>(null)
-const localTabs = ref<TabItem[]>([...props.tabs])
+const containerRef = ref<HTMLElement | null>(null);
+const localTabs = ref<TabItem[]>([...props.tabs]);
 
-const { isDragging } = useDraggableTabs(
-  containerRef,
-  localTabs,
-  (newOrder) => {
-    emit('reorder', newOrder)
-  }
-)
+const { isDragging } = useDraggableTabs(containerRef, localTabs, (newOrder) => {
+	emit("reorder", newOrder);
+});
 
 const handleTabClick = (value: string, disabled?: boolean) => {
-  if (!disabled && !isDragging.value) {
-    emit('update:modelValue', value)
-  }
-}
+	if (!disabled && !isDragging.value) {
+		emit("update:modelValue", value);
+	}
+};
 </script>
 
 <template>
-  <TabsList 
+  <TabsList
     ref="containerRef"
     :class="cn(
       'flex gap-0',

@@ -31,7 +31,7 @@ coder_tools = [
                 "properties": {
                     "packages": {
                         "type": "string",
-                        "description": "Package name(s) to install, e.g., 'requests' or 'beautifulsoup4 lxml'"
+                        "description": "Package name(s) to install, e.g., 'requests' or 'beautifulsoup4 lxml'",
                     }
                 },
                 "required": ["packages"],
@@ -50,7 +50,7 @@ coder_tools = [
                 "properties": {
                     "extension": {
                         "type": "string",
-                        "description": "Optional file extension filter (e.g., '.csv', '.xlsx'). If not provided, lists all files."
+                        "description": "Optional file extension filter (e.g., '.csv', '.xlsx'). If not provided, lists all files.",
                     }
                 },
                 "additionalProperties": False,
@@ -69,7 +69,7 @@ coder_tools = [
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "Name of the file to read (e.g., 'data.csv', 'readme.txt')"
+                        "description": "Name of the file to read (e.g., 'data.csv', 'readme.txt')",
                     }
                 },
                 "required": ["filename"],

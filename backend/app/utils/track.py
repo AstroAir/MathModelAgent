@@ -1,5 +1,4 @@
 from litellm.integrations.custom_logger import CustomLogger
-import litellm
 
 
 class AgentMetrics(CustomLogger):
@@ -10,13 +9,13 @@ class AgentMetrics(CustomLogger):
             # response_cost = kwargs.get("response_cost", 0)
             # print("streaming response_cost", response_cost)
             print("agent_name", kwargs["litellm_params"]["metadata"]["agent_name"])
-        except Exception as e:
+        except (KeyError, TypeError) as exc:
             # 静默处理异常，避免影响主流程
-            pass
+            print("agent_name 元数据缺失", exc)
 
     async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
         # 记录异步调用失败事件
-        print(f"On Async Failure")
+        print("On Async Failure")
 
 
 # 全局指标收集器实例

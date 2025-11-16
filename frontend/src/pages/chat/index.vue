@@ -1,34 +1,30 @@
 <script setup lang="ts">
-
-
-import AppSidebar from '@/components/AppSidebar.vue'
-import UserStepper from '@/components/UserStepper.vue'
-import ModelingExamples from '@/components/ModelingExamples.vue'
-import { onMounted, ref } from 'vue'
+import { getHelloWorld } from "@/apis/commonApi";
+import AppSidebar from "@/components/AppSidebar.vue";
+import ModelingExamples from "@/components/ModelingExamples.vue";
+import ServiceStatus from "@/components/ServiceStatus.vue";
+import UserStepper from "@/components/UserStepper.vue";
+import Button from "@/components/ui/button/Button.vue";
 import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar'
-import { getHelloWorld } from '@/apis/commonApi'
-import MoreDetail from '@/pages/chat/components/MoreDetail.vue'
-import Button from '@/components/ui/button/Button.vue'
-import ServiceStatus from '@/components/ServiceStatus.vue'
-import { AppWindow, CircleEllipsis, Sparkles } from 'lucide-vue-next'
+	SidebarInset,
+	SidebarProvider,
+	SidebarTrigger,
+} from "@/components/ui/sidebar";
+import MoreDetail from "@/pages/chat/components/MoreDetail.vue";
+import { AppWindow, CircleEllipsis, Sparkles } from "lucide-vue-next";
+import { onMounted, ref } from "vue";
 onMounted(() => {
-  getHelloWorld().then((res) => {
-    console.log(res.data)
-  })
-})
+	getHelloWorld().then((res) => {
+		console.log(res.data);
+	});
+});
 
-
-const isMoreDetailOpen = ref(false)
-const showExamples = ref(false)
+const isMoreDetailOpen = ref(false);
+const showExamples = ref(false);
 
 const toggleExamples = () => {
-  showExamples.value = !showExamples.value
-}
-
+	showExamples.value = !showExamples.value;
+};
 </script>
 
 <template>
@@ -70,7 +66,7 @@ const toggleExamples = () => {
       <!-- 优化的主内容区 -->
       <div class="relative h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] overflow-hidden">
         <!-- 主内容 -->
-        <div 
+        <div
           class="h-full py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 overflow-y-auto transition-all duration-300"
           :class="showExamples ? 'blur-sm scale-95 pointer-events-none' : ''"
         >
@@ -87,7 +83,7 @@ const toggleExamples = () => {
 
             <!-- UserStepper组件 -->
             <UserStepper />
-            
+
             <!-- 提示信息 -->
             <div class="text-center text-[10px] sm:text-xs text-muted-foreground mt-6 sm:mt-8 px-4">
               项目处于内测阶段，欢迎进群反馈
@@ -114,9 +110,9 @@ const toggleExamples = () => {
                       浏览历年数模竞赛优秀案例，快速开始你的建模任务
                     </p>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     @click="showExamples = false"
                     class="shrink-0"
                   >

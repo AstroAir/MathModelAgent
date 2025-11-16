@@ -2,7 +2,6 @@ from app.core.agents.agent import Agent
 from app.core.llm.llm import LLM
 from app.core.prompts import get_modeler_prompt
 from app.schemas.A2A import CoordinatorToModeler, ModelerToCoder
-from app.utils.log_util import logger
 import json
 from icecream import ic
 

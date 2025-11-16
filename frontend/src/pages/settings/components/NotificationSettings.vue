@@ -1,48 +1,61 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import { useSettingsStore } from '@/stores/settings'
-import type { NotificationPreferences } from '@/apis/settingsApi'
+import type { NotificationPreferences } from "@/apis/settingsApi";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Loader2, Save, Mail, Bell, MessageSquare, Clock } from 'lucide-vue-next'
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useSettingsStore } from "@/stores/settings";
+import {
+	Bell,
+	Clock,
+	Loader2,
+	Mail,
+	MessageSquare,
+	Save,
+} from "lucide-vue-next";
+import { reactive, watch } from "vue";
 
-const settingsStore = useSettingsStore()
+const settingsStore = useSettingsStore();
 
 // Form state
-const formData = reactive<NotificationPreferences>({ ...settingsStore.notifications })
+const formData = reactive<NotificationPreferences>({
+	...settingsStore.notifications,
+});
 
 // Watch for store updates
-watch(() => settingsStore.notifications, (newNotifications) => {
-  Object.assign(formData, newNotifications)
-}, { deep: true })
+watch(
+	() => settingsStore.notifications,
+	(newNotifications) => {
+		Object.assign(formData, newNotifications);
+	},
+	{ deep: true },
+);
 
 const onSubmit = async () => {
-  await settingsStore.saveNotifications(formData)
-}
+	await settingsStore.saveNotifications(formData);
+};
 
 const notificationFrequencies = [
-  { value: 'instant', label: 'Instant' },
-  { value: 'hourly', label: 'Hourly Digest' },
-  { value: 'daily', label: 'Daily Digest' },
-  { value: 'weekly', label: 'Weekly Digest' },
-]
+	{ value: "instant", label: "Instant" },
+	{ value: "hourly", label: "Hourly Digest" },
+	{ value: "daily", label: "Daily Digest" },
+	{ value: "weekly", label: "Weekly Digest" },
+];
 </script>
 
 <template>

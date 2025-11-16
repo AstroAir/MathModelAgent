@@ -57,10 +57,10 @@ body:
       label: Environment (if relevant)
       description: Provide environment details if your question is related to setup or configuration
       placeholder: |
-        - OS: 
-        - Python Version: 
-        - Node.js Version: 
-        - Deployment Method: 
+        - OS:
+        - Python Version:
+        - Node.js Version:
+        - Deployment Method:
 
   - type: checkboxes
     id: terms

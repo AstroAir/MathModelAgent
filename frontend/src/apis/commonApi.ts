@@ -9,7 +9,6 @@ export function getWriterSeque() {
 	return request.get<{ writer_seque: string[] }>("/writer_seque");
 }
 
-
 export function openFolderAPI(task_id: string) {
 	return request.get<{ message: string }>("/open_folder", {
 		params: {
@@ -17,7 +16,6 @@ export function openFolderAPI(task_id: string) {
 		},
 	});
 }
-
 
 export function exampleAPI(example_id: string, source: string) {
 	return request.post<{

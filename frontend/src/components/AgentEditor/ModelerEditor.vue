@@ -1,69 +1,75 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useTaskStore } from '@/stores/task'
-import { Separator } from '@/components/ui/separator'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { useTaskStore } from "@/stores/task";
+import { computed } from "vue";
 
-const taskStore = useTaskStore()
+const taskStore = useTaskStore();
 
 // 获取最新的CoordinatorMessage
 const latestCoordinatorMessage = computed(() => {
-  const messages = taskStore.coordinatorMessages
-  return messages.length > 0 ? messages[messages.length - 1] : null
-})
+	const messages = taskStore.coordinatorMessages;
+	return messages.length > 0 ? messages[messages.length - 1] : null;
+});
 
 // 解析CoordinatorMessage的JSON内容
 const coordinatorData = computed(() => {
-  if (!latestCoordinatorMessage.value?.content) return null
+	if (!latestCoordinatorMessage.value?.content) return null;
 
-  try {
-    const content = latestCoordinatorMessage.value.content
-    // 移除可能的```json标记
-    const cleanContent = content.replace(/```json\n?/, '').replace(/```$/, '').trim()
-    return JSON.parse(cleanContent)
-  } catch (error) {
-    console.error('解析CoordinatorMessage失败:', error)
-    return null
-  }
-})
+	try {
+		const content = latestCoordinatorMessage.value.content;
+		// 移除可能的```json标记
+		const cleanContent = content
+			.replace(/```json\n?/, "")
+			.replace(/```$/, "")
+			.trim();
+		return JSON.parse(cleanContent);
+	} catch (error) {
+		console.error("解析CoordinatorMessage失败:", error);
+		return null;
+	}
+});
 
 // 获取最新的ModelerMessage
 const latestModelerMessage = computed(() => {
-  const messages = taskStore.modelerMessages
-  return messages.length > 0 ? messages[messages.length - 1] : null
-})
+	const messages = taskStore.modelerMessages;
+	return messages.length > 0 ? messages[messages.length - 1] : null;
+});
 
 // 解析ModelerMessage的JSON内容
 const modelerData = computed(() => {
-  if (!latestModelerMessage.value?.content) return null
+	if (!latestModelerMessage.value?.content) return null;
 
-  try {
-    const content = latestModelerMessage.value.content
-    // 移除可能的```json标记
-    const cleanContent = content.replace(/```json\n?/, '').replace(/```$/, '').trim()
-    return JSON.parse(cleanContent)
-  } catch (error) {
-    console.error('解析ModelerMessage失败:', error)
-    return null
-  }
-})
+	try {
+		const content = latestModelerMessage.value.content;
+		// 移除可能的```json标记
+		const cleanContent = content
+			.replace(/```json\n?/, "")
+			.replace(/```$/, "")
+			.trim();
+		return JSON.parse(cleanContent);
+	} catch (error) {
+		console.error("解析ModelerMessage失败:", error);
+		return null;
+	}
+});
 
 // 生成问题列表
 const questionsList = computed(() => {
-  if (!coordinatorData.value) return []
+	if (!coordinatorData.value) return [];
 
-  const questions = []
-  for (let i = 1; i <= coordinatorData.value.ques_count; i++) {
-    const quesKey = `ques${i}`
-    if (coordinatorData.value[quesKey]) {
-      questions.push({
-        number: i,
-        content: coordinatorData.value[quesKey]
-      })
-    }
-  }
-  return questions
-})
+	const questions = [];
+	for (let i = 1; i <= coordinatorData.value.ques_count; i++) {
+		const quesKey = `ques${i}`;
+		if (coordinatorData.value[quesKey]) {
+			questions.push({
+				number: i,
+				content: coordinatorData.value[quesKey],
+			});
+		}
+	}
+	return questions;
+});
 </script>
 
 <template>

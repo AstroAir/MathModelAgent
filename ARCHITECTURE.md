@@ -314,7 +314,7 @@ class TaskRepository:
     async def create(self, task: Task) -> Task:
         # Save to database/storage
         pass
-    
+
     async def get(self, task_id: str) -> Optional[Task]:
         # Retrieve from storage
         pass
@@ -328,7 +328,7 @@ Business logic is encapsulated in services:
 class ModelingService:
     def __init__(self, llm_service: LLMService):
         self.llm = llm_service
-    
+
     async def analyze_problem(self, problem: str) -> ModelAnalysis:
         # Complex business logic
         pass

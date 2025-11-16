@@ -92,7 +92,7 @@ If you're deploying MathModelAgent, follow these best practices:
    ```bash
    # Good
    export OPENAI_API_KEY="your-key-here"
-   
+
    # Bad - Don't do this!
    OPENAI_API_KEY = "sk-..." # in code
    ```

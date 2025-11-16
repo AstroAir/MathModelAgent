@@ -47,7 +47,7 @@
         <component :is="currentIcon" :size="iconSize" />
         <ChevronDown :size="14" class="ml-1 transition-transform" :class="{ 'rotate-180': isDropdownOpen }" />
       </button>
-      
+
       <transition name="dropdown-fade">
         <div v-if="isDropdownOpen" class="dropdown-menu" :class="dropdownMenuClasses">
           <button
@@ -69,124 +69,127 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { Sun, Moon, Monitor, ChevronDown, Check } from 'lucide-vue-next'
-import { useTheme } from '@/composables/useTheme'
-import type { ThemeMode } from '@/stores/theme'
+import { useTheme } from "@/composables/useTheme";
+import type { ThemeMode } from "@/stores/theme";
+import { Check, ChevronDown, Monitor, Moon, Sun } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 interface Props {
-  variant?: 'button' | 'switch' | 'dropdown'
-  size?: 'sm' | 'md' | 'lg'
-  showLabel?: boolean
-  iconSize?: number
+	variant?: "button" | "switch" | "dropdown";
+	size?: "sm" | "md" | "lg";
+	showLabel?: boolean;
+	iconSize?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  variant: 'button',
-  size: 'md',
-  showLabel: false,
-  iconSize: 20
-})
+	variant: "button",
+	size: "md",
+	showLabel: false,
+	iconSize: 20,
+});
 
-const { isDark, themeMode, toggleTheme, setTheme } = useTheme()
+const { isDark, themeMode, toggleTheme, setTheme } = useTheme();
 
 // Dropdown state
-const isDropdownOpen = ref(false)
+const isDropdownOpen = ref(false);
 
 // Theme options for dropdown
 const themeOptions = [
-  { value: 'light' as ThemeMode, label: 'Light', icon: Sun },
-  { value: 'dark' as ThemeMode, label: 'Dark', icon: Moon },
-  { value: 'system' as ThemeMode, label: 'System', icon: Monitor }
-]
+	{ value: "light" as ThemeMode, label: "Light", icon: Sun },
+	{ value: "dark" as ThemeMode, label: "Dark", icon: Moon },
+	{ value: "system" as ThemeMode, label: "System", icon: Monitor },
+];
 
 // Computed properties
 const currentIcon = computed(() => {
-  if (themeMode.value === 'system') return Monitor
-  return isDark.value ? Moon : Sun
-})
+	if (themeMode.value === "system") return Monitor;
+	return isDark.value ? Moon : Sun;
+});
 
 const toggleAriaLabel = computed(() => {
-  return `Switch to ${isDark.value ? 'light' : 'dark'} theme`
-})
+	return `Switch to ${isDark.value ? "light" : "dark"} theme`;
+});
 
 // Size classes
 const sizeClasses = computed(() => {
-  const sizes = {
-    sm: 'h-8 w-8 text-sm',
-    md: 'h-10 w-10 text-base',
-    lg: 'h-12 w-12 text-lg'
-  }
-  return sizes[props.size]
-})
+	const sizes = {
+		sm: "h-8 w-8 text-sm",
+		md: "h-10 w-10 text-base",
+		lg: "h-12 w-12 text-lg",
+	};
+	return sizes[props.size];
+});
 
 // Button variant classes
 const themeButtonClasses = computed(() => [
-  sizeClasses.value,
-  'inline-flex items-center justify-center rounded-lg border border-input bg-background',
-  'hover:bg-accent hover:text-accent-foreground',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-  'transition-all duration-200 ease-in-out',
-  'disabled:pointer-events-none disabled:opacity-50'
-])
+	sizeClasses.value,
+	"inline-flex items-center justify-center rounded-lg border border-input bg-background",
+	"hover:bg-accent hover:text-accent-foreground",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+	"transition-all duration-200 ease-in-out",
+	"disabled:pointer-events-none disabled:opacity-50",
+]);
 
 // Switch variant classes
 const switchTrackClasses = computed(() => [
-  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-  'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
-  isDark.value ? 'bg-primary' : 'bg-input'
-])
+	"relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+	"focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+	isDark.value ? "bg-primary" : "bg-input",
+]);
 
 const switchThumbClasses = computed(() => [
-  'inline-flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-lg',
-  'transition-transform duration-200 ease-in-out',
-  isDark.value ? 'translate-x-5' : 'translate-x-0'
-])
+	"inline-flex h-5 w-5 items-center justify-center rounded-full bg-background shadow-lg",
+	"transition-transform duration-200 ease-in-out",
+	isDark.value ? "translate-x-5" : "translate-x-0",
+]);
 
 // Dropdown variant classes
 const dropdownTriggerClasses = computed(() => [
-  sizeClasses.value,
-  'inline-flex items-center justify-center rounded-lg border border-input bg-background px-3',
-  'hover:bg-accent hover:text-accent-foreground',
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-  'transition-all duration-200 ease-in-out'
-])
+	sizeClasses.value,
+	"inline-flex items-center justify-center rounded-lg border border-input bg-background px-3",
+	"hover:bg-accent hover:text-accent-foreground",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+	"transition-all duration-200 ease-in-out",
+]);
 
 const dropdownMenuClasses = computed(() => [
-  'absolute top-full right-0 mt-2 w-48 rounded-md border bg-popover p-1 shadow-md z-50'
-])
+	"absolute top-full right-0 mt-2 w-48 rounded-md border bg-popover p-1 shadow-md z-50",
+]);
 
 const dropdownItemClasses = computed(() => [
-  'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm',
-  'hover:bg-accent hover:text-accent-foreground',
-  'focus-visible:outline-none focus-visible:bg-accent focus-visible:text-accent-foreground',
-  'transition-colors duration-150'
-])
+	"flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm",
+	"hover:bg-accent hover:text-accent-foreground",
+	"focus-visible:outline-none focus-visible:bg-accent focus-visible:text-accent-foreground",
+	"transition-colors duration-150",
+]);
 
 // Methods
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+	isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const selectTheme = (mode: ThemeMode) => {
-  setTheme(mode)
-  isDropdownOpen.value = false
-}
+	setTheme(mode);
+	isDropdownOpen.value = false;
+};
 
 // Close dropdown when clicking outside
 const handleClickOutside = (event: Event) => {
-  if (isDropdownOpen.value && !event.target?.closest?.('.theme-toggle-dropdown')) {
-    isDropdownOpen.value = false
-  }
-}
+	if (
+		isDropdownOpen.value &&
+		!event.target?.closest?.(".theme-toggle-dropdown")
+	) {
+		isDropdownOpen.value = false;
+	}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+	document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+	document.removeEventListener("click", handleClickOutside);
+});
 </script>
 
 <style scoped>

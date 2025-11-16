@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { CheckCircle2, Clock, Loader2, AlertCircle } from 'lucide-vue-next'
+import { AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-vue-next";
+import { computed } from "vue";
 
 interface AgentStatus {
-  name: string
-  status: 'pending' | 'running' | 'completed' | 'error'
-  icon: string
-  description: string
+	name: string;
+	status: "pending" | "running" | "completed" | "error";
+	icon: string;
+	description: string;
 }
 
 const props = defineProps<{
-  agents: AgentStatus[]
-}>()
+	agents: AgentStatus[];
+}>();
 
 const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-500/10 border-green-500/20 text-green-600'
-    case 'running':
-      return 'bg-primary/10 border-primary/20 text-primary animate-pulse'
-    case 'error':
-      return 'bg-destructive/10 border-destructive/20 text-destructive'
-    default:
-      return 'bg-muted border-border text-muted-foreground'
-  }
-}
+	switch (status) {
+		case "completed":
+			return "bg-green-500/10 border-green-500/20 text-green-600";
+		case "running":
+			return "bg-primary/10 border-primary/20 text-primary animate-pulse";
+		case "error":
+			return "bg-destructive/10 border-destructive/20 text-destructive";
+		default:
+			return "bg-muted border-border text-muted-foreground";
+	}
+};
 
 const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'completed':
-      return CheckCircle2
-    case 'running':
-      return Loader2
-    case 'error':
-      return AlertCircle
-    default:
-      return Clock
-  }
-}
+	switch (status) {
+		case "completed":
+			return CheckCircle2;
+		case "running":
+			return Loader2;
+		case "error":
+			return AlertCircle;
+		default:
+			return Clock;
+	}
+};
 </script>
 
 <template>
@@ -80,5 +80,3 @@ const getStatusIcon = (status: string) => {
     </div>
   </div>
 </template>
-
-

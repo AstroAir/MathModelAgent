@@ -143,7 +143,8 @@ async def validate_openalex_email(request: ValidateOpenalexEmailRequest):
     """
     try:
         response = requests.get(
-            f"https://api.openalex.org/works?mailto={request.email}"
+            f"https://api.openalex.org/works?mailto={request.email}",
+            timeout=10,
         )
         logger.debug(f"OpenAlex Email 验证响应: {response}")
         response.raise_for_status()
@@ -174,20 +175,22 @@ async def exampleModeling(
         dst_file = os.path.join(work_dir, file)
         with open(src_file, "rb") as src, open(dst_file, "wb") as dst:
             dst.write(src.read())
-    
+
     # 创建任务历史记录
     title = ques_all[:50].strip() + "..." if len(ques_all) > 50 else ques_all.strip()
     task_history = TaskHistoryItem(
         task_id=task_id,
         title=title,
-        description=ques_all[:200].strip() + "..." if len(ques_all) > 200 else ques_all.strip(),
+        description=ques_all[:200].strip() + "..."
+        if len(ques_all) > 200
+        else ques_all.strip(),
         task_type="example",
         comp_template=CompTemplate.CHINA,
         status="processing",
-        file_count=len(current_files)
+        file_count=len(current_files),
     )
     task_history_manager.add_task(task_history)
-    
+
     # 存储任务ID
     await redis_manager.set(f"task_id:{task_id}", task_id)
 
@@ -216,7 +219,7 @@ async def modeling(
 
     file_count = 0
     archive_files = []  # 记录压缩包文件
-    
+
     # 如果有上传文件，保存文件
     if files:
         logger.info(f"开始处理上传的文件，工作目录: {work_dir}")
@@ -234,7 +237,7 @@ async def modeling(
 
                 # 处理文件路径（支持文件夹结构）
                 # 如果文件名包含路径分隔符，创建对应的目录结构
-                file_path_parts = file.filename.replace('\\', '/').split('/')
+                file_path_parts = file.filename.replace("\\", "/").split("/")
                 if len(file_path_parts) > 1:
                     # 有子目录
                     sub_dir = os.path.join(work_dir, *file_path_parts[:-1])
@@ -243,14 +246,14 @@ async def modeling(
                 else:
                     # 直接在工作目录下
                     data_file_path = os.path.join(work_dir, file.filename)
-                
+
                 logger.info(f"保存文件: {file.filename} -> {data_file_path}")
 
                 # 保存文件
                 with open(data_file_path, "wb") as f:
                     f.write(content)
                 logger.info(f"成功保存文件: {data_file_path}")
-                
+
                 # 检查是否为压缩包
                 if is_archive_file(file.filename):
                     logger.info(f"检测到压缩包: {file.filename}")
@@ -263,17 +266,21 @@ async def modeling(
                 raise HTTPException(
                     status_code=500, detail=f"保存文件 {file.filename} 失败: {str(e)}"
                 )
-        
+
         # 处理压缩包
         if archive_files:
             logger.info(f"开始解压 {len(archive_files)} 个压缩包")
             for archive_path in archive_files:
-                success, error_msg, extracted_files = extract_archive(archive_path, work_dir)
-                
+                success, error_msg, extracted_files = extract_archive(
+                    archive_path, work_dir
+                )
+
                 if success:
-                    logger.info(f"成功解压 {archive_path}: {len(extracted_files)} 个文件")
+                    logger.info(
+                        f"成功解压 {archive_path}: {len(extracted_files)} 个文件"
+                    )
                     file_count += len(extracted_files)
-                    
+
                     # 删除原始压缩包（可选）
                     try:
                         os.remove(archive_path)
@@ -284,11 +291,11 @@ async def modeling(
                     logger.error(f"解压失败 {archive_path}: {error_msg}")
                     # 如果解压失败，至少保留压缩包本身
                     file_count += 1
-        
+
         # 如果没有压缩包，统计实际文件数
         if not archive_files and file_count == 0:
             file_count = count_files_in_directory(work_dir)
-        
+
         logger.info(f"文件处理完成，共 {file_count} 个文件")
     else:
         logger.warning("没有上传文件")
@@ -298,11 +305,13 @@ async def modeling(
     task_history = TaskHistoryItem(
         task_id=task_id,
         title=title,
-        description=ques_all[:200].strip() + "..." if len(ques_all) > 200 else ques_all.strip(),
+        description=ques_all[:200].strip() + "..."
+        if len(ques_all) > 200
+        else ques_all.strip(),
         task_type="custom",
         comp_template=comp_template,
         status="processing",
-        file_count=file_count
+        file_count=file_count,
     )
     task_history_manager.add_task(task_history)
 
@@ -354,10 +363,10 @@ async def run_modeling_task_async(
         )
         # 转换md为docx
         md_2_docx(task_id)
-        
+
         # 更新任务历史状态为完成
         task_history_manager.update_task(task_id, status="completed")
-        
+
     except asyncio.TimeoutError:
         error_msg = "任务执行超时（超过5小时）"
         logger.error(f"Task {task_id} timeout: {error_msg}")

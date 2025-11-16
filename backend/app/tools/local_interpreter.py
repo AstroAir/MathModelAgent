@@ -74,7 +74,7 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
                 step_type="tool",
                 status="processing",
                 content="开始执行代码",
-                details={"tool": "execute_code"}
+                details={"tool": "execute_code"},
             ),
         )
         await redis_manager.publish_message(
@@ -94,7 +94,7 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
                 step_type="tool",
                 status="completed",
                 content="代码执行完成",
-                details={"tool": "execute_code"}
+                details={"tool": "execute_code"},
             ),
         )
         await redis_manager.publish_message(
@@ -164,7 +164,7 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
         start_time = time.time()
         timeout_count = 0
         max_timeout_count = 5  # 连续超时最大次数
-        
+
         while True:
             # 检查是否超过最大等待时间
             if time.time() - start_time > max_wait_time:
@@ -175,12 +175,12 @@ class LocalCodeInterpreter(BaseCodeInterpreter):
                 except Exception as e:
                     logger.error(f"中断内核失败: {e}")
                 break
-            
+
             try:
                 iopub_msg = self.kc.get_iopub_msg(timeout=1)
                 msg_list.append(iopub_msg)
                 timeout_count = 0  # 重置超时计数
-                
+
                 if (
                     iopub_msg["msg_type"] == "status"
                     and iopub_msg["content"].get("execution_state") == "idle"

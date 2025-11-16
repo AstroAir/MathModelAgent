@@ -1,127 +1,129 @@
 <script setup lang="ts">
-import type { CodeExecutionResult } from '@/utils/response'
-import { renderMarkdown } from '@/utils/markdown'
-import type { NoteCell, CodeCell, ResultCell } from '@/utils/interface'
-import { ref, computed, onMounted } from 'vue'
-import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-vue-next'
-import hljs from 'highlight.js/lib/core'
-import python from 'highlight.js/lib/languages/python'
-import 'highlight.js/styles/github.css'
+import type { CodeCell, NoteCell, ResultCell } from "@/utils/interface";
+import { renderMarkdown } from "@/utils/markdown";
+import type { CodeExecutionResult } from "@/utils/response";
+import hljs from "highlight.js/lib/core";
+import python from "highlight.js/lib/languages/python";
+import { Check, ChevronDown, ChevronRight, Copy } from "lucide-vue-next";
+import { computed, onMounted, ref } from "vue";
+import "highlight.js/styles/github.css";
 
 // 注册Python语言支持
-hljs.registerLanguage('python', python)
+hljs.registerLanguage("python", python);
 
 const props = defineProps<{
-  cell: NoteCell
-}>()
+	cell: NoteCell;
+}>();
 
-const isCodeCollapsed = ref(false)
-const isResultCollapsed = ref(false)
-const isCopied = ref(false)
-const codeRef = ref<HTMLElement | null>(null)
+const isCodeCollapsed = ref(false);
+const isResultCollapsed = ref(false);
+const isCopied = ref(false);
+const codeRef = ref<HTMLElement | null>(null);
 
 // 获取结果格式的CSS类
 const getResultClass = (result: CodeExecutionResult) => {
-  switch (result.res_type) {
-    case 'stdout':
-      return 'text-gray-600'
-    case 'stderr':
-      return 'text-orange-600'
-    case 'error':
-      return 'text-red-600'
-    default:
-      return 'text-gray-800'
-  }
-}
+	switch (result.res_type) {
+		case "stdout":
+			return "text-gray-600";
+		case "stderr":
+			return "text-orange-600";
+		case "error":
+			return "text-red-600";
+		default:
+			return "text-gray-800";
+	}
+};
 
 // 判断结果是否为图片
 const isImageResult = (result: CodeExecutionResult) => {
-  return result.res_type === 'result' && 
-    ['png', 'jpeg', 'svg'].includes(result.format as string)
-}
+	return (
+		result.res_type === "result" &&
+		["png", "jpeg", "svg"].includes(result.format as string)
+	);
+};
 
 // 判断结果是否为LaTeX
 const isLatexResult = (result: CodeExecutionResult) => {
-  return result.res_type === 'result' && result.format === 'latex'
-}
+	return result.res_type === "result" && result.format === "latex";
+};
 
 // 判断结果是否为JSON
 const isJsonResult = (result: CodeExecutionResult) => {
-  return result.res_type === 'result' && result.format === 'json'
-}
+	return result.res_type === "result" && result.format === "json";
+};
 
 // 格式化JSON显示
 const formatJson = (jsonString: string) => {
-  try {
-    const parsed = JSON.parse(jsonString)
-    return JSON.stringify(parsed, null, 2)
-  } catch (e) {
-    return jsonString
-  }
-}
+	try {
+		const parsed = JSON.parse(jsonString);
+		return JSON.stringify(parsed, null, 2);
+	} catch (e) {
+		return jsonString;
+	}
+};
 
 // 渲染Markdown内容
 const renderMarkdownContent = (content: string) => {
-  return renderMarkdown(content)
-}
+	return renderMarkdown(content);
+};
 
 // 类型守卫函数，用于区分单元格类型
 const isCodeCell = (cell: NoteCell): cell is CodeCell => {
-  return cell.type === 'code'
-}
+	return cell.type === "code";
+};
 
 const isResultCell = (cell: NoteCell): cell is ResultCell => {
-  return cell.type === 'result'
-}
+	return cell.type === "result";
+};
 
 // 语法高亮
 const highlightedCode = computed(() => {
-  if (isCodeCell(props.cell)) {
-    try {
-      return hljs.highlight(props.cell.content, { language: 'python' }).value
-    } catch (e) {
-      return props.cell.content
-    }
-  }
-  return ''
-})
+	if (isCodeCell(props.cell)) {
+		try {
+			return hljs.highlight(props.cell.content, { language: "python" }).value;
+		} catch (e) {
+			return props.cell.content;
+		}
+	}
+	return "";
+});
 
 // 复制代码
 const copyCode = async () => {
-  if (isCodeCell(props.cell)) {
-    try {
-      await navigator.clipboard.writeText(props.cell.content)
-      isCopied.value = true
-      setTimeout(() => {
-        isCopied.value = false
-      }, 2000)
-    } catch (e) {
-      console.error('Failed to copy code:', e)
-    }
-  }
-}
+	if (isCodeCell(props.cell)) {
+		try {
+			await navigator.clipboard.writeText(props.cell.content);
+			isCopied.value = true;
+			setTimeout(() => {
+				isCopied.value = false;
+			}, 2000);
+		} catch (e) {
+			console.error("Failed to copy code:", e);
+		}
+	}
+};
 
 // 切换折叠
 const toggleCodeCollapse = () => {
-  isCodeCollapsed.value = !isCodeCollapsed.value
-}
+	isCodeCollapsed.value = !isCodeCollapsed.value;
+};
 
 const toggleResultCollapse = () => {
-  isResultCollapsed.value = !isResultCollapsed.value
-}
+	isResultCollapsed.value = !isResultCollapsed.value;
+};
 
 // 代码行数
 const codeLines = computed(() => {
-  if (isCodeCell(props.cell)) {
-    return props.cell.content.split('\n').length
-  }
-  return 0
-})
+	if (isCodeCell(props.cell)) {
+		return props.cell.content.split("\n").length;
+	}
+	return 0;
+});
 
 // 是否应该显示折叠按钮（代码超过10行）
 const shouldShowCollapseButton = computed(() => {
-  return codeLines.value > 10
-})
+	return codeLines.value > 10;
+});
 </script>
 
 <template>
@@ -145,7 +147,7 @@ const shouldShowCollapseButton = computed(() => {
           {{ codeLines }} {{ codeLines === 1 ? 'line' : 'lines' }}
         </span>
       </div>
-      
+
       <!-- 操作按钮 -->
       <div class="flex items-center gap-2">
         <!-- 复制按钮（仅代码单元格） -->
@@ -158,7 +160,7 @@ const shouldShowCollapseButton = computed(() => {
           <Check v-if="isCopied" class="w-4 h-4 text-green-600" />
           <Copy v-else class="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
         </button>
-        
+
         <!-- 折叠按钮 -->
         <button
           v-if="shouldShowCollapseButton || cell.type === 'result'"
@@ -181,7 +183,7 @@ const shouldShowCollapseButton = computed(() => {
           <div class="flex">
             <!-- 行号列 -->
             <div class="select-none bg-gray-50 px-3 py-4 text-right border-r border-gray-200">
-              <div v-for="(_, index) in cell.content.split('\n')" :key="index" 
+              <div v-for="(_, index) in cell.content.split('\n')" :key="index"
                 class="text-xs text-gray-400 leading-6 font-mono">
                 {{ index + 1 }}
               </div>
@@ -201,7 +203,7 @@ const shouldShowCollapseButton = computed(() => {
       <!-- 结果单元格 -->
       <template v-else-if="isResultCell(cell)">
         <div v-if="!isResultCollapsed" class="px-4 py-3 bg-gray-50">
-          
+
           <!-- 遍历所有执行结果 -->
           <div v-for="(result, index) in cell.code_results" :key="index" class="mb-2 last:mb-0">
             <!-- 标准输出/错误 -->
@@ -210,7 +212,7 @@ const shouldShowCollapseButton = computed(() => {
                 {{ result.msg }}
               </div>
             </template>
-            
+
             <!-- 执行错误 -->
             <template v-else-if="result.res_type === 'error'">
               <div class="text-sm text-red-600 font-mono whitespace-pre-wrap">
@@ -218,33 +220,33 @@ const shouldShowCollapseButton = computed(() => {
                 <div>{{ result.traceback }}</div>
               </div>
             </template>
-            
+
             <!-- 执行结果 - 图片 (PNG, JPEG, SVG) -->
             <template v-else-if="isImageResult(result)">
-              <img :src="`data:image/${result.format};base64,${result.msg}`" 
+              <img :src="`data:image/${result.format};base64,${result.msg}`"
                    class="max-w-full rounded-lg shadow-sm" />
             </template>
-            
+
             <!-- 执行结果 - HTML -->
             <template v-else-if="result.res_type === 'result' && result.format === 'html'">
               <div class="prose prose-sm max-w-none" v-html="result.msg || ''"></div>
             </template>
-            
+
             <!-- 执行结果 - Markdown -->
             <template v-else-if="result.res_type === 'result' && result.format === 'markdown'">
               <div class="prose prose-sm max-w-none" v-html="renderMarkdownContent(result.msg || '')"></div>
             </template>
-            
+
             <!-- 执行结果 - LaTeX -->
             <template v-else-if="isLatexResult(result)">
               <div class="katex-display" v-html="result.msg || ''"></div>
             </template>
-            
+
             <!-- 执行结果 - JSON -->
             <template v-else-if="isJsonResult(result)">
               <pre class="text-sm bg-gray-50 p-2 rounded overflow-x-auto">{{ formatJson(result.msg || '') }}</pre>
             </template>
-            
+
             <!-- 执行结果 - 默认文本 -->
             <template v-else>
               <div class="text-sm text-gray-600 font-mono whitespace-pre-wrap">

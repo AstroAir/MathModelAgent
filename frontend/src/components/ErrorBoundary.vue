@@ -1,37 +1,37 @@
 <script setup lang="ts">
-import { ref, onErrorCaptured } from 'vue'
-import { AlertTriangle, RefreshCw } from 'lucide-vue-next'
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, RefreshCw } from "lucide-vue-next";
+import { onErrorCaptured, ref } from "vue";
 
 interface Props {
-  fallbackMessage?: string
+	fallbackMessage?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  fallbackMessage: '组件发生错误'
-})
+	fallbackMessage: "组件发生错误",
+});
 
-const hasError = ref(false)
-const errorMessage = ref('')
-const errorDetails = ref('')
+const hasError = ref(false);
+const errorMessage = ref("");
+const errorDetails = ref("");
 
 const resetError = () => {
-  hasError.value = false
-  errorMessage.value = ''
-  errorDetails.value = ''
-}
+	hasError.value = false;
+	errorMessage.value = "";
+	errorDetails.value = "";
+};
 
 onErrorCaptured((error: Error) => {
-  hasError.value = true
-  errorMessage.value = error.message || '未知错误'
-  errorDetails.value = error.stack || ''
-  
-  // Log error for debugging
-  console.error('ErrorBoundary caught error:', error)
-  
-  // Return false to prevent the error from propagating further
-  return false
-})
+	hasError.value = true;
+	errorMessage.value = error.message || "未知错误";
+	errorDetails.value = error.stack || "";
+
+	// Log error for debugging
+	console.error("ErrorBoundary caught error:", error);
+
+	// Return false to prevent the error from propagating further
+	return false;
+});
 </script>
 
 <template>
@@ -60,5 +60,3 @@ onErrorCaptured((error: Error) => {
 
   <slot v-else />
 </template>
-
-

@@ -1,62 +1,69 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { CheckCircle2, XCircle, Loader2, Info, Code2, Wrench } from 'lucide-vue-next'
-import type { StepMessage } from '@/utils/response'
+import type { StepMessage } from "@/utils/response";
+import {
+	CheckCircle2,
+	Code2,
+	Info,
+	Loader2,
+	Wrench,
+	XCircle,
+} from "lucide-vue-next";
+import { computed } from "vue";
 
 interface Props {
-  steps: StepMessage[]
+	steps: StepMessage[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // 按时间戳排序步骤
 const sortedSteps = computed(() => {
-  return [...props.steps].sort((a, b) => {
-    const timeA = a.timestamp || 0
-    const timeB = b.timestamp || 0
-    return timeA - timeB
-  })
-})
+	return [...props.steps].sort((a, b) => {
+		const timeA = a.timestamp || 0;
+		const timeB = b.timestamp || 0;
+		return timeA - timeB;
+	});
+});
 
 // 获取步骤图标
 const getStepIcon = (step: StepMessage) => {
-  if (step.status === 'completed') return CheckCircle2
-  if (step.status === 'failed') return XCircle
-  if (step.status === 'processing') return Loader2
-  return Info
-}
+	if (step.status === "completed") return CheckCircle2;
+	if (step.status === "failed") return XCircle;
+	if (step.status === "processing") return Loader2;
+	return Info;
+};
 
 // 获取步骤颜色类
 const getStepColor = (step: StepMessage) => {
-  const colors = {
-    completed: 'text-green-600 bg-green-500/10 border-green-500/20',
-    failed: 'text-destructive bg-destructive/10 border-destructive/20',
-    processing: 'text-primary bg-primary/10 border-primary/20'
-  }
-  return colors[step.status] || 'text-muted-foreground bg-muted border-border'
-}
+	const colors = {
+		completed: "text-green-600 bg-green-500/10 border-green-500/20",
+		failed: "text-destructive bg-destructive/10 border-destructive/20",
+		processing: "text-primary bg-primary/10 border-primary/20",
+	};
+	return colors[step.status] || "text-muted-foreground bg-muted border-border";
+};
 
 // 获取Agent类型颜色
 const getAgentColor = (agentType?: string) => {
-  const colors: Record<string, string> = {
-    CoderAgent: 'text-green-600 bg-green-500/10',
-    WriterAgent: 'text-purple-600 bg-purple-500/10',
-    ModelerAgent: 'text-blue-600 bg-blue-500/10',
-    CoordinatorAgent: 'text-orange-600 bg-orange-500/10'
-  }
-  return colors[agentType || ''] || 'text-muted-foreground bg-muted'
-}
+	const colors: Record<string, string> = {
+		CoderAgent: "text-green-600 bg-green-500/10",
+		WriterAgent: "text-purple-600 bg-purple-500/10",
+		ModelerAgent: "text-blue-600 bg-blue-500/10",
+		CoordinatorAgent: "text-orange-600 bg-orange-500/10",
+	};
+	return colors[agentType || ""] || "text-muted-foreground bg-muted";
+};
 
 // 格式化时间
 const formatTime = (timestamp?: number) => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp * 1000) // 后端时间戳是秒
-  return date.toLocaleTimeString('zh-CN', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
+	if (!timestamp) return "";
+	const date = new Date(timestamp * 1000); // 后端时间戳是秒
+	return date.toLocaleTimeString("zh-CN", {
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	});
+};
 </script>
 
 <template>
@@ -120,12 +127,10 @@ const formatTime = (timestamp?: number) => {
         </div>
       </div>
     </div>
-    
+
     <!-- 空状态 -->
     <div v-if="sortedSteps.length === 0" class="text-center py-4 text-muted-foreground text-xs">
       暂无执行步骤
     </div>
   </div>
 </template>
-
-

@@ -1,32 +1,43 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import { useSettingsStore } from '@/stores/settings'
-import type { PrivacySettings } from '@/apis/settingsApi'
+import type { PrivacySettings } from "@/apis/settingsApi";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
-import { Separator } from '@/components/ui/separator'
-import { Loader2, Save, Lock, Database, BarChart, Sparkles } from 'lucide-vue-next'
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { useSettingsStore } from "@/stores/settings";
+import {
+	BarChart,
+	Database,
+	Loader2,
+	Lock,
+	Save,
+	Sparkles,
+} from "lucide-vue-next";
+import { reactive, watch } from "vue";
 
-const settingsStore = useSettingsStore()
+const settingsStore = useSettingsStore();
 
 // Form state
-const formData = reactive<PrivacySettings>({ ...settingsStore.privacy })
+const formData = reactive<PrivacySettings>({ ...settingsStore.privacy });
 
 // Watch for store updates
-watch(() => settingsStore.privacy, (newPrivacy) => {
-  Object.assign(formData, newPrivacy)
-}, { deep: true })
+watch(
+	() => settingsStore.privacy,
+	(newPrivacy) => {
+		Object.assign(formData, newPrivacy);
+	},
+	{ deep: true },
+);
 
 const onSubmit = async () => {
-  await settingsStore.savePrivacy(formData)
-}
+	await settingsStore.savePrivacy(formData);
+};
 </script>
 
 <template>

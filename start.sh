@@ -52,7 +52,7 @@ echo ""
 if [ "$1" = "docker" ]; then
     echo -e "${YELLOW}Starting in Docker mode...${NC}"
     echo ""
-    
+
     # Check Docker
     echo "Checking Docker installation..."
     if ! command -v docker &> /dev/null; then
@@ -61,7 +61,7 @@ if [ "$1" = "docker" ]; then
         exit 1
     fi
     echo -e "${GREEN}✓ Docker $(docker --version)${NC}"
-    
+
     # Check Docker Compose
     echo "Checking Docker Compose..."
     if ! docker compose version &> /dev/null; then
@@ -69,11 +69,11 @@ if [ "$1" = "docker" ]; then
         exit 1
     fi
     echo -e "${GREEN}✓ Docker Compose $(docker compose version)${NC}"
-    
+
     echo ""
     echo -e "${YELLOW}Starting services with Docker Compose...${NC}"
     docker compose up --build
-    
+
     exit 0
 fi
 

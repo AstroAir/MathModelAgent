@@ -85,7 +85,12 @@ class OpenAlexScholar:
         # 让 requests 处理参数编码和 URL 构建
         try:
             print(f"请求 URL: {base_url} 参数: {params}")
-            response = requests.get(base_url, params=params, headers=headers)
+            response = requests.get(
+                base_url,
+                params=params,
+                headers=headers,
+                timeout=10,
+            )
             print(f"响应状态: {response.status_code}")
 
             response.raise_for_status()

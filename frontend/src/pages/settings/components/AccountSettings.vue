@@ -1,88 +1,91 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
-import { useSettingsStore } from '@/stores/settings'
-import type { UserProfile } from '@/apis/settingsApi'
+import type { UserProfile } from "@/apis/settingsApi";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Loader2, Save } from 'lucide-vue-next'
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useSettingsStore } from "@/stores/settings";
+import { Loader2, Save } from "lucide-vue-next";
+import { reactive, ref, watch } from "vue";
 
-const settingsStore = useSettingsStore()
+const settingsStore = useSettingsStore();
 
 // Form state
-const formData = reactive<UserProfile>({ ...settingsStore.profile })
-const errors = ref<Partial<Record<keyof UserProfile, string>>>({})
+const formData = reactive<UserProfile>({ ...settingsStore.profile });
+const errors = ref<Partial<Record<keyof UserProfile, string>>>({});
 
 // Watch for store updates
-watch(() => settingsStore.profile, (newProfile) => {
-  Object.assign(formData, newProfile)
-}, { deep: true })
+watch(
+	() => settingsStore.profile,
+	(newProfile) => {
+		Object.assign(formData, newProfile);
+	},
+	{ deep: true },
+);
 
 // Validation
 const validateForm = (): boolean => {
-  errors.value = {}
-  
-  if (!formData.name || formData.name.trim().length === 0) {
-    errors.value.name = 'Name is required'
-    return false
-  }
-  
-  if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    errors.value.email = 'Invalid email address'
-    return false
-  }
-  
-  if (formData.bio && formData.bio.length > 500) {
-    errors.value.bio = 'Bio must be 500 characters or less'
-    return false
-  }
-  
-  return true
-}
+	errors.value = {};
+
+	if (!formData.name || formData.name.trim().length === 0) {
+		errors.value.name = "Name is required";
+		return false;
+	}
+
+	if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+		errors.value.email = "Invalid email address";
+		return false;
+	}
+
+	if (formData.bio && formData.bio.length > 500) {
+		errors.value.bio = "Bio must be 500 characters or less";
+		return false;
+	}
+
+	return true;
+};
 
 const onSubmit = async () => {
-  if (!validateForm()) return
-  
-  await settingsStore.saveProfile(formData)
-}
+	if (!validateForm()) return;
+
+	await settingsStore.saveProfile(formData);
+};
 
 const timezones = [
-  { value: 'UTC', label: 'UTC' },
-  { value: 'America/New_York', label: 'Eastern Time' },
-  { value: 'America/Chicago', label: 'Central Time' },
-  { value: 'America/Denver', label: 'Mountain Time' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time' },
-  { value: 'Europe/London', label: 'London' },
-  { value: 'Europe/Paris', label: 'Paris' },
-  { value: 'Asia/Shanghai', label: 'Shanghai' },
-  { value: 'Asia/Tokyo', label: 'Tokyo' },
-]
+	{ value: "UTC", label: "UTC" },
+	{ value: "America/New_York", label: "Eastern Time" },
+	{ value: "America/Chicago", label: "Central Time" },
+	{ value: "America/Denver", label: "Mountain Time" },
+	{ value: "America/Los_Angeles", label: "Pacific Time" },
+	{ value: "Europe/London", label: "London" },
+	{ value: "Europe/Paris", label: "Paris" },
+	{ value: "Asia/Shanghai", label: "Shanghai" },
+	{ value: "Asia/Tokyo", label: "Tokyo" },
+];
 
 const languages = [
-  { value: 'en', label: 'English' },
-  { value: 'zh', label: '中文' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'ja', label: '日本語' },
-]
-
+	{ value: "en", label: "English" },
+	{ value: "zh", label: "中文" },
+	{ value: "es", label: "Español" },
+	{ value: "fr", label: "Français" },
+	{ value: "de", label: "Deutsch" },
+	{ value: "ja", label: "日本語" },
+];
 </script>
 
 <template>

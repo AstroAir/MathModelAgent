@@ -20,8 +20,6 @@ COORDINATOR_MODEL=openai/DeepSeek-V3-Fast
 COORDINATOR_BASE_URL=xxx
 ```
 
-为什么使用 litellm 
+为什么使用 litellm
 因为各个厂家 api 格式各不相同
 litellm 方便开发者将所有模型格式全都集成
-
-

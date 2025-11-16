@@ -43,7 +43,7 @@ Write-ColorOutput ""
 if ($Docker) {
     Write-ColorOutput "Starting in Docker mode..." "Yellow"
     Write-ColorOutput ""
-    
+
     # Check Docker
     Write-ColorOutput "Checking Docker installation..." "White"
     try {
@@ -54,7 +54,7 @@ if ($Docker) {
         Write-ColorOutput "Please install Docker from https://www.docker.com/" "Red"
         exit 1
     }
-    
+
     # Check Docker Compose
     Write-ColorOutput "Checking Docker Compose..." "White"
     try {
@@ -64,11 +64,11 @@ if ($Docker) {
         Write-ColorOutput "✗ Error: Docker Compose is not available" "Red"
         exit 1
     }
-    
+
     Write-ColorOutput ""
     Write-ColorOutput "Starting services with Docker Compose..." "Yellow"
     docker compose up --build
-    
+
     exit 0
 }
 
@@ -212,7 +212,7 @@ try {
             if ($output) {
                 Write-Host "[$($job.Name)] $output"
             }
-            
+
             if ($job.State -eq "Failed" -or $job.State -eq "Stopped") {
                 Write-ColorOutput "✗ $($job.Name) has stopped" "Red"
             }

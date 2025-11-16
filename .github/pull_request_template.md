@@ -28,9 +28,9 @@ Fixes #(issue number)
 
 <!-- List the main changes made in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -38,10 +38,10 @@ Fixes #(issue number)
 
 ### Test Environment
 
-- OS: 
-- Python Version: 
-- Node.js Version: 
-- Deployment Method: 
+- OS:
+- Python Version:
+- Node.js Version:
+- Deployment Method:
 
 ### Test Cases
 
