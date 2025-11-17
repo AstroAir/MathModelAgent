@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { AlertCircle, CheckCircle2, Clock, Loader2 } from "lucide-vue-next";
-import { computed } from "vue";
 
 interface AgentStatus {
 	name: string;
@@ -9,7 +8,7 @@ interface AgentStatus {
 	description: string;
 }
 
-const props = defineProps<{
+defineProps<{
 	agents: AgentStatus[];
 }>();
 

@@ -1,4 +1,4 @@
-import type { Component, VNode } from "vue";
+import type { Component, VNode, ComputedRef } from "vue";
 import { computed, ref } from "vue";
 import type { ToastProps } from ".";
 
@@ -50,6 +50,16 @@ type Action =
 
 interface State {
 	toasts: ToasterToast[];
+}
+
+interface UseToastReturn {
+	toasts: ComputedRef<ToasterToast[]>;
+	toast: (props: Toast) => {
+		id: string;
+		dismiss: () => void;
+		update: (props: ToasterToast) => void;
+	};
+	dismiss: (toastId?: string) => void;
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -120,7 +130,8 @@ function dispatch(action: Action) {
 	}
 }
 
-function useToast() {
+
+function useToast(): UseToastReturn {
 	return {
 		toasts: computed(() => state.value.toasts),
 		toast,

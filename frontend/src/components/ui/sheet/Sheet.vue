@@ -9,7 +9,7 @@ import {
 const props = defineProps<DialogRootProps>();
 const emits = defineEmits<DialogRootEmits>();
 
-const forwarded = useForwardPropsEmits(props, emits);
+const forwarded: any = useForwardPropsEmits(props, emits);
 </script>
 
 <template>

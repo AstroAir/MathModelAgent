@@ -20,7 +20,7 @@ import { FileArchive, FileUp, FolderUp } from "lucide-vue-next";
 import { Rocket } from "lucide-vue-next";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import type FileConfirmDialog from "./FileConfirmDialog.vue";
+import FileConfirmDialog from "./FileConfirmDialog.vue";
 
 const taskStore = useTaskStore();
 const { toast } = useToast();

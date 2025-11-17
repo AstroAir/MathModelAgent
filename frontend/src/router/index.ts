@@ -22,12 +22,12 @@ const routes = [
 		props: true,
 	},
 	{
-		path: "/settings",
-		component: () => import("@/pages/settings/index.vue"),
+		path: "/history",
+		component: () => import("@/pages/history/index.vue"),
 	},
 	{
-		path: "/test/theme",
-		component: () => import("@/pages/test/theme-test.vue"),
+		path: "/settings",
+		component: () => import("@/pages/settings/index.vue"),
 	},
 ];
 

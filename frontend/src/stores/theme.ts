@@ -197,7 +197,7 @@ export const useThemeStore = defineStore(
 			theme: "light" | "dark",
 			colors: Partial<Record<string, string>>,
 		) => {
-			config.value.colors[theme] = { ...config.value.colors[theme], ...colors };
+			config.value.colors[theme] = { ...config.value.colors[theme], ...colors } as Record<string, string>;
 			if (currentTheme.value === theme) {
 				applyTheme();
 			}
@@ -234,7 +234,7 @@ export const useThemeStore = defineStore(
 		persist: {
 			key: "theme-store",
 			storage: localStorage,
-			paths: ["config.mode"],
+
 		},
 	},
 );

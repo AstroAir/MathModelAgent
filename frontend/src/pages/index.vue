@@ -395,11 +395,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
 	ArrowRight,
 	Award,
-	BarChart2,
 	Calendar,
 	Check,
 	CheckCircle,
@@ -411,7 +410,6 @@ import {
 	Github,
 	Heart,
 	Layers,
-	Mail,
 	MessageCircle,
 	Play,
 	Rocket,

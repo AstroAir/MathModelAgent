@@ -10,6 +10,7 @@ from app.routers import (
     history_router,
     settings_router,
     prompt_router,
+    search_router,
 )
 from app.utils.log_util import logger
 from fastapi.staticfiles import StaticFiles
@@ -43,6 +44,7 @@ app.include_router(files_router.router)
 app.include_router(history_router.router)
 app.include_router(settings_router.router)
 app.include_router(prompt_router.router)
+app.include_router(search_router.router)
 
 
 # 跨域 CORS

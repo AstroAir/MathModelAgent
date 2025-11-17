@@ -45,6 +45,19 @@ class Settings(BaseSettings):
     SERVER_HOST: str = "http://localhost:8000"
     OPENALEX_EMAIL: Optional[str] = None
 
+    # Search Provider Configuration
+    TAVILY_API_KEY: Optional[str] = None
+    EXA_API_KEY: Optional[str] = None
+
+    # Search Configuration
+    SEARCH_DEFAULT_PROVIDER: str = "tavily"
+    SEARCH_MAX_RESULTS: int = 10
+    SEARCH_TIMEOUT: int = 30
+    SEARCH_ENABLE_FALLBACK: bool = True
+    SEARCH_FALLBACK_PROVIDERS: Annotated[
+        list[str] | str, BeforeValidator(parse_cors)
+    ] = "exa"
+
     model_config = SettingsConfigDict(
         env_file=".env.dev",
         env_file_encoding="utf-8",

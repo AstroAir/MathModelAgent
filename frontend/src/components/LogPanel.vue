@@ -41,7 +41,6 @@ const isRegexSearch = ref(false);
 const showFilters = ref(false);
 const pageSize = ref(50);
 const currentPage = ref(0);
-const isLoading = ref(false);
 
 // Refs for DOM elements
 const logContainer = ref<HTMLElement>();
@@ -200,12 +199,6 @@ const nextPage = () => {
 const prevPage = () => {
 	if (hasPrevPage.value) {
 		currentPage.value--;
-	}
-};
-
-const goToPage = (page: number) => {
-	if (page >= 0 && page < totalPages.value) {
-		currentPage.value = page;
 	}
 };
 

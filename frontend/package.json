@@ -9,9 +9,11 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@tanstack/vue-table": "^8.21.3",
 		"@types/sortablejs": "^1.15.9",
 		"@vueuse/core": "^12.7.0",
 		"axios": "^1.8.4",
+		"date-fns": "^4.1.0",
 		"highlight.js": "^11.11.1",
 		"katex": "^0.16.22",
 		"lucide": "^0.475.0",
@@ -37,6 +39,7 @@
 		"@types/marked": "^6.0.0",
 		"@types/node": "^22.13.5",
 		"@vitejs/plugin-vue": "^5.2.1",
+		"@vue/test-utils": "^2.4.6",
 		"@vue/tsconfig": "^0.7.0",
 		"autoprefixer": "^10.4.20",
 		"class-variance-authority": "^0.7.1",
@@ -46,6 +49,7 @@
 		"tailwindcss-animate": "^1.0.7",
 		"typescript": "~5.7.2",
 		"vite": "^6.1.0",
+		"vitest": "^4.0.9",
 		"vue-tsc": "^2.2.0"
 	},
 	"packageManager": "pnpm@10.6.3"

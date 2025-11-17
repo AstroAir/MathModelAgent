@@ -61,7 +61,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	// 计算属性
 	const chatMessages = computed(() =>
-		messages.value.filter((msg) => {
+		messages.value.filter((msg: any) => {
 			if (
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.CODER &&
@@ -85,7 +85,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const coordinatorMessages = computed(() =>
 		messages.value.filter(
-			(msg): msg is CoordinatorMessage =>
+			(msg: any): msg is CoordinatorMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.COORDINATOR &&
 				msg.content != null,
@@ -94,7 +94,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const modelerMessages = computed(() =>
 		messages.value.filter(
-			(msg): msg is ModelerMessage =>
+			(msg: any): msg is ModelerMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.MODELER &&
 				msg.content != null,
@@ -103,7 +103,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const coderMessages = computed(() =>
 		messages.value.filter(
-			(msg): msg is CoderMessage =>
+			(msg: any): msg is CoderMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.CODER &&
 				msg.content != null,
@@ -112,7 +112,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const writerMessages = computed(() =>
 		messages.value.filter(
-			(msg): msg is WriterMessage =>
+			(msg: any): msg is WriterMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.WRITER &&
 				msg.content != null,
@@ -122,7 +122,7 @@ export const useTaskStore = defineStore("task", () => {
 	// 添加代码执行工具消息的计算属性
 	const interpreterMessage = computed(() =>
 		messages.value.filter(
-			(msg): msg is InterpreterMessage =>
+			(msg: any): msg is InterpreterMessage =>
 				msg.msg_type === "tool" &&
 				"tool_name" in msg &&
 				msg.tool_name === "execute_code",

@@ -4,6 +4,7 @@ from app.utils.log_util import logger
 from app.services.redis_manager import redis_manager
 from app.schemas.response import SystemMessage, InterpreterMessage
 from app.tools.base_interpreter import BaseCodeInterpreter
+from app.tools.web_search_tool import WebSearchTool
 from app.core.llm.llm import LLM
 from app.schemas.A2A import CoderToWriter
 from app.core.prompts import get_coder_prompt, get_reflection_prompt
@@ -36,6 +37,7 @@ class CoderAgent(Agent):  # 同样继承自Agent类
         self.language = language
         self.system_prompt = get_coder_prompt(language)
         self.code_interpreter = code_interpreter
+        self.web_search_tool = WebSearchTool()
 
     async def run(self, prompt: str, subtask_title: str) -> CoderToWriter:
         logger.info(f"{self.__class__.__name__}:开始:执行子任务: {subtask_title}")
@@ -252,6 +254,46 @@ class CoderAgent(Agent):  # 同样继承自Agent类
                             "role": "tool",
                             "tool_call_id": tool_id,
                             "name": "read_file",
+                            "content": content,
+                        }
+                    )
+                    continue
+
+                elif tool_name == "web_search":
+                    # 解析参数
+                    args = json.loads(tool_call.function.arguments)
+                    query = args["query"]
+                    search_type = args.get("search_type", "general")
+                    provider = args.get("provider")
+                    max_results = args.get("max_results", 10)
+
+                    logger.info(f"网络搜索: {query}")
+
+                    try:
+                        # 调用web搜索工具
+                        search_result = await self.web_search_tool.search(
+                            query=query,
+                            search_type=search_type,
+                            provider=provider,
+                            max_results=max_results,
+                        )
+
+                        if search_result.error:
+                            content = f"搜索失败: {search_result.error}"
+                        else:
+                            content = search_result.result
+
+                        logger.info(f"搜索结果: {content[:200]}...")
+
+                    except Exception as e:
+                        content = f"搜索失败: {str(e)}"
+                        logger.error(f"网络搜索失败: {str(e)}")
+
+                    await self.append_chat_history(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_id,
+                            "name": "web_search",
                             "content": content,
                         }
                     )

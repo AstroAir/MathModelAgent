@@ -54,7 +54,7 @@ export function cleanupThemeOptimization(delay = 300) {
  */
 export function preloadThemeAssets() {
 	// Preload any theme-specific images or assets
-	const themeAssets = [
+	const themeAssets: string[] = [
 		// Add any theme-specific assets here
 	];
 

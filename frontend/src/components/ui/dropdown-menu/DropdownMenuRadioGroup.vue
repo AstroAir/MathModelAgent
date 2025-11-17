@@ -9,7 +9,7 @@ import {
 const props = defineProps<DropdownMenuRadioGroupProps>();
 const emits = defineEmits<DropdownMenuRadioGroupEmits>();
 
-const forwarded = useForwardPropsEmits(props, emits);
+const forwarded: any = useForwardPropsEmits(props, emits);
 </script>
 
 <template>

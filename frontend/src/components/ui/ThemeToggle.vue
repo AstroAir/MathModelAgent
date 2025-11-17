@@ -177,7 +177,7 @@ const selectTheme = (mode: ThemeMode) => {
 const handleClickOutside = (event: Event) => {
 	if (
 		isDropdownOpen.value &&
-		!event.target?.closest?.(".theme-toggle-dropdown")
+		!(event.target as Element)?.closest?.(".theme-toggle-dropdown")
 	) {
 		isDropdownOpen.value = false;
 	}

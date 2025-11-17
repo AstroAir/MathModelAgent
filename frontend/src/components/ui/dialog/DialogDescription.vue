@@ -11,7 +11,7 @@ const props = defineProps<
 
 const delegatedProps = reactiveOmit(props, "class");
 
-const forwardedProps = useForwardProps(delegatedProps);
+const forwardedProps: any = useForwardProps(delegatedProps);
 </script>
 
 <template>

@@ -3,6 +3,7 @@ from app.core.llm.llm import LLM
 from app.core.prompts import get_writer_prompt
 from app.schemas.enums import CompTemplate, FormatOutPut
 from app.tools.openalex_scholar import OpenAlexScholar
+from app.tools.web_search_tool import WebSearchTool
 from app.utils.log_util import logger
 from app.services.redis_manager import redis_manager
 from app.schemas.response import SystemMessage, WriterMessage
@@ -36,6 +37,7 @@ class WriterAgent(Agent):
         self.is_first_run = True
         self.system_prompt = get_writer_prompt(format_output, language)
         self.available_images: list[str] = []
+        self.web_search_tool = WebSearchTool()
 
     async def run(
         self,
@@ -89,6 +91,7 @@ class WriterAgent(Agent):
             logger.info("检测到工具调用")
             tool_call = response.choices[0].message.tool_calls[0]
             tool_id = tool_call.id
+
             if tool_call.function.name == "search_papers":
                 logger.info("调用工具: search_papers")
                 await redis_manager.publish_message(
@@ -128,6 +131,63 @@ class WriterAgent(Agent):
                         "name": "search_papers",
                     }
                 )
+            elif tool_call.function.name == "web_search":
+                logger.info("调用工具: web_search")
+                await redis_manager.publish_message(
+                    self.task_id,
+                    SystemMessage(content=f"写作手调用{tool_call.function.name}工具"),
+                )
+
+                # 解析参数
+                args = json.loads(tool_call.function.arguments)
+                query = args["query"]
+                search_type = args.get("search_type", "general")
+                provider = args.get("provider")
+                max_results = args.get("max_results", 10)
+
+                await redis_manager.publish_message(
+                    self.task_id,
+                    WriterMessage(
+                        input={"query": query, "search_type": search_type},
+                    ),
+                )
+
+                # 更新对话历史 - 添加助手的响应
+                await self.append_chat_history(response.choices[0].message.model_dump())
+                ic(response.choices[0].message.model_dump())
+
+                try:
+                    # 调用web搜索工具
+                    search_result = await self.web_search_tool.search(
+                        query=query,
+                        search_type=search_type,
+                        provider=provider,
+                        max_results=max_results,
+                    )
+
+                    if search_result.error:
+                        error_msg = f"网络搜索失败: {search_result.error}"
+                        logger.error(error_msg)
+                        return WriterResponse(
+                            response_content=error_msg, footnotes=footnotes
+                        )
+
+                    search_content = search_result.result
+                    logger.info(f"网络搜索结果\n{search_content}")
+                    await self.append_chat_history(
+                        {
+                            "role": "tool",
+                            "content": search_content,
+                            "tool_call_id": tool_id,
+                            "name": "web_search",
+                        }
+                    )
+                except Exception as e:
+                    error_msg = f"网络搜索失败: {str(e)}"
+                    logger.error(error_msg)
+                    return WriterResponse(
+                        response_content=error_msg, footnotes=footnotes
+                    )
                 next_response = await self.model.chat(
                     history=self.chat_history,
                     tools=writer_tools,

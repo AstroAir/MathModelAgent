@@ -20,10 +20,16 @@ const scrollRef = ref<HTMLDivElement | null>(null);
 const isOptimizing = ref(false);
 
 // 过滤出步骤消息
-const stepMessages = computed(() => {
-	return props.messages.filter(
-		(msg) => msg.msg_type === "step",
-	) as StepMessageType[];
+const stepMessages = computed<StepMessageType[]>(() => {
+	return props.messages
+		.filter((msg): msg is StepMessageType & Message => msg.msg_type === "step")
+		.map((msg) => ({
+			id: msg.id,
+			step: "",
+			status: "processing",
+			content: msg.content,
+			timestamp: msg.timestamp,
+		}));
 });
 
 // 过滤出非步骤消息（用于显示在聊天区）
@@ -141,8 +147,17 @@ const optimizePrompt = async () => {
           </div>
           <!-- 系统消息 -->
           <div v-else-if="message.msg_type === 'system'" class="message-animate">
-            <SystemMessage :content="message.content || ''"
-              :type="message.type" />
+            <SystemMessage
+              :content="message.content || ''"
+              :type="
+                message.type === 'error' ||
+                message.type === 'info' ||
+                message.type === 'warning' ||
+                message.type === 'success'
+                  ? message.type
+                  : 'info'
+              "
+            />
           </div>
         </template>
       </transition-group>

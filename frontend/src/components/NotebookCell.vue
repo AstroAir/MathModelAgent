@@ -1,59 +1,64 @@
 <script setup lang="ts">
 import type { CodeCell, NoteCell, ResultCell } from "@/utils/interface";
 import { renderMarkdown } from "@/utils/markdown";
-import type { CodeExecutionResult } from "@/utils/response";
+import type { OutputItem } from "@/utils/response";
 import hljs from "highlight.js/lib/core";
 import python from "highlight.js/lib/languages/python";
 import { Check, ChevronDown, ChevronRight, Copy } from "lucide-vue-next";
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import "highlight.js/styles/github.css";
 
 // 注册Python语言支持
 hljs.registerLanguage("python", python);
 
 const props = defineProps<{
-	cell: NoteCell;
+  cell: NoteCell;
 }>();
 
 const isCodeCollapsed = ref(false);
 const isResultCollapsed = ref(false);
 const isCopied = ref(false);
-const codeRef = ref<HTMLElement | null>(null);
 
 // 获取结果格式的CSS类
-const getResultClass = (result: CodeExecutionResult) => {
-	switch (result.res_type) {
-		case "stdout":
-			return "text-gray-600";
-		case "stderr":
-			return "text-orange-600";
-		case "error":
-			return "text-red-600";
-		default:
-			return "text-gray-800";
-	}
+const getResultClass = (result: OutputItem) => {
+  switch (result.res_type) {
+    case "stdout":
+      return "text-gray-600";
+    case "stderr":
+      return "text-orange-600";
+    case "error":
+      return "text-red-600";
+    default:
+      return "text-gray-800";
+  }
 };
 
 // 判断结果是否为图片
-const isImageResult = (result: CodeExecutionResult) => {
-	return (
-		result.res_type === "result" &&
-		["png", "jpeg", "svg"].includes(result.format as string)
-	);
+const isImageResult = (result: OutputItem) => {
+  return (
+    result.res_type === "result" &&
+    ["png", "jpeg", "svg"].includes(result.format as string)
+  );
 };
 
 // 判断结果是否为LaTeX
-const isLatexResult = (result: CodeExecutionResult) => {
-	return result.res_type === "result" && result.format === "latex";
+const isLatexResult = (result: OutputItem) => {
+  return result.res_type === "result" && result.format === "latex";
 };
 
 // 判断结果是否为JSON
-const isJsonResult = (result: CodeExecutionResult) => {
-	return result.res_type === "result" && result.format === "json";
+const isJsonResult = (result: OutputItem) => {
+  return result.res_type === "result" && result.format === "json";
 };
 
 // 格式化JSON显示
 const formatJson = (jsonString: string) => {
+  try {
+    const parsed = JSON.parse(jsonString);
+    return JSON.stringify(parsed, null, 2);
+  } catch (e) {
+    return jsonString;
+  }
 	try {
 		const parsed = JSON.parse(jsonString);
 		return JSON.stringify(parsed, null, 2);

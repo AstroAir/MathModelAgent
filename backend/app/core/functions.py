@@ -77,6 +77,39 @@ coder_tools = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Performs a web search using a configured provider (Tavily or Exa). Use this to find up-to-date information, code examples, documentation, or research papers.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query string.",
+                    },
+                    "search_type": {
+                        "type": "string",
+                        "description": "The type of search to perform. Options: 'general', 'academic', 'code', 'news', 'research'. Defaults to 'general'.",
+                        "enum": ["general", "academic", "code", "news", "research"],
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "The preferred search provider. Options: 'tavily', 'exa'. Defaults to the system's configured default.",
+                        "enum": ["tavily", "exa"],
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "The maximum number of results to return. Defaults to 10.",
+                    },
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
+        },
+    },
 ]
 
 # have installed: numpy scipy pandas matplotlib seaborn scikit-learn xgboost
@@ -98,6 +131,39 @@ writer_tools = [
             },
             "required": ["query"],
             "additionalProperties": False,
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Performs a web search using a configured provider (Tavily or Exa). Use this to find up-to-date information, code examples, documentation, or research papers.",
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The search query string.",
+                    },
+                    "search_type": {
+                        "type": "string",
+                        "description": "The type of search to perform. Options: 'general', 'academic', 'code', 'news', 'research'. Defaults to 'general'.",
+                        "enum": ["general", "academic", "code", "news", "research"],
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "The preferred search provider. Options: 'tavily', 'exa'. Defaults to the system's configured default.",
+                        "enum": ["tavily", "exa"],
+                    },
+                    "max_results": {
+                        "type": "integer",
+                        "description": "The maximum number of results to return. Defaults to 10.",
+                    },
+                },
+                "required": ["query"],
+                "additionalProperties": False,
+            },
         },
     },
 ]
