@@ -11,7 +11,7 @@ export interface ValidationRule {
 	pattern?: RegExp;
 	email?: boolean;
 	url?: boolean;
-	custom?: (value: any) => boolean | string;
+	custom?: (value: unknown) => boolean | string;
 	message?: string;
 }
 
@@ -24,7 +24,7 @@ export interface ValidationResult {
  * 验证单个字段
  */
 export function validateField(
-	value: any,
+	value: unknown,
 	rules: ValidationRule,
 ): ValidationResult {
 	// 必填验证
@@ -139,7 +139,7 @@ export function validateField(
  * 验证表单对象
  */
 export function validateForm(
-	data: Record<string, any>,
+	data: Record<string, unknown>,
 	rules: Record<string, ValidationRule>,
 ): Record<string, ValidationResult> {
 	const results: Record<string, ValidationResult> = {};
@@ -208,8 +208,7 @@ export const commonRules = {
 	password: (message?: string): ValidationRule => ({
 		minLength: 8,
 		pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
-		message:
-			message || "密码至少8位，包含大小写字母和数字",
+		message: message || "密码至少8位，包含大小写字母和数字",
 	}),
 };
 
@@ -217,5 +216,9 @@ export const commonRules = {
  * 组合多个验证规则
  */
 export function combineRules(...rules: ValidationRule[]): ValidationRule {
-	return rules.reduce((combined, rule) => ({ ...combined, ...rule }), {});
+	const combined: ValidationRule = {};
+	for (const rule of rules) {
+		Object.assign(combined, rule);
+	}
+	return combined;
 }

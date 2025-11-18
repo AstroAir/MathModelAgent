@@ -1,32 +1,24 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
-import { useRouter } from "vue-router";
-import { useHistoryStore } from "@/stores/history";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Pagination } from "@/components/ui/pagination";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Search,
-  FileText,
-  AlertCircle,
-} from "lucide-vue-next";
 import TaskHistoryCard from "@/components/TaskHistoryCard.vue";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useHistoryStore } from "@/stores/history";
+import { AlertCircle, FileText, Search } from "lucide-vue-next";
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 const historyStore = useHistoryStore();
@@ -39,91 +31,89 @@ const taskToDelete = ref<string | null>(null);
 
 // Computed properties
 const displayTasks = computed(() => {
-  // Use paginated tasks from the store
-  return historyStore.paginatedTasks;
+	// Use paginated tasks from the store
+	return historyStore.paginatedTasks;
 });
 
 const totalFilteredTasks = computed(() => {
-  switch (activeTab.value) {
-    case "pinned":
-      return historyStore.pinnedTasks.length;
-    case "custom":
-      return historyStore.customTasks.length;
-    case "example":
-      return historyStore.exampleTasks.length;
-    default:
-      return historyStore.filteredTasks.length;
-  }
+	switch (activeTab.value) {
+		case "pinned":
+			return historyStore.pinnedTasks.length;
+		case "custom":
+			return historyStore.customTasks.length;
+		case "example":
+			return historyStore.exampleTasks.length;
+		default:
+			return historyStore.filteredTasks.length;
+	}
 });
 
 // Methods
 const handleSearch = (value: string | number) => {
-  const strValue = String(value);
-  searchQuery.value = strValue;
-  historyStore.setSearchFilter(strValue);
+	const strValue = String(value);
+	searchQuery.value = strValue;
+	historyStore.setSearchFilter(strValue);
 };
 
 const handleTabChange = async (tab: string | number) => {
-  const strTab = String(tab);
-  activeTab.value = strTab;
+	const strTab = String(tab);
+	activeTab.value = strTab;
 
-  const filters: any = {};
-  if (strTab === "pinned") {
-    filters.pinned_only = true;
-  } else if (strTab === "custom") {
-    filters.task_type = "custom";
-  } else if (strTab === "example") {
-    filters.task_type = "example";
-  }
+	const filters: {
+		pinned_only?: boolean;
+		task_type?: "custom" | "example";
+	} = {};
+	if (strTab === "pinned") {
+		filters.pinned_only = true;
+	} else if (strTab === "custom") {
+		filters.task_type = "custom";
+	} else if (strTab === "example") {
+		filters.task_type = "example";
+	}
 
-  await historyStore.loadTasks(filters);
+	await historyStore.loadTasks(filters);
 };
 
 const handleTogglePin = async (taskId: string) => {
-  try {
-    await historyStore.togglePin(taskId);
-  } catch (error) {
-    console.error("Failed to toggle pin:", error);
-  }
+	try {
+		await historyStore.togglePin(taskId);
+	} catch (error) {
+		console.error("Failed to toggle pin:", error);
+	}
 };
 
 const handleDeleteTask = async (taskId: string) => {
-  taskToDelete.value = taskId;
-  deleteDialogOpen.value = true;
+	taskToDelete.value = taskId;
+	deleteDialogOpen.value = true;
 };
 
 const confirmDelete = async () => {
-  if (taskToDelete.value) {
-    try {
-      await historyStore.deleteTask(taskToDelete.value);
-      deleteDialogOpen.value = false;
-      taskToDelete.value = null;
-    } catch (error) {
-      console.error("Failed to delete task:", error);
-    }
-  }
+	if (taskToDelete.value) {
+		try {
+			await historyStore.deleteTask(taskToDelete.value);
+			deleteDialogOpen.value = false;
+			taskToDelete.value = null;
+		} catch (error) {
+			console.error("Failed to delete task:", error);
+		}
+	}
 };
 
 const navigateToTask = (taskId: string) => {
-  router.push(`/task/${taskId}`);
+	router.push(`/task/${taskId}`);
 };
 
 const handlePageChange = (page: number) => {
-  historyStore.setCurrentPage(page);
+	historyStore.setCurrentPage(page);
 };
 
 const handlePageSizeChange = (size: number) => {
-  historyStore.setItemsPerPage(size);
+	historyStore.setItemsPerPage(size);
 };
-
-
 
 // Lifecycle
 onMounted(async () => {
-  await Promise.all([
-    historyStore.loadTasks(),
-    historyStore.loadTaskCount(),
-  ]);
+	await Promise.all([historyStore.loadTasks(), historyStore.loadTaskCount()]);
 });
 </script>
 

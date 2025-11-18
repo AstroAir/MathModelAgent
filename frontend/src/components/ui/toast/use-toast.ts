@@ -1,4 +1,4 @@
-import type { Component, VNode, ComputedRef } from "vue";
+import type { Component, ComputedRef, VNode } from "vue";
 import { computed, ref } from "vue";
 import type { ToastProps } from ".";
 
@@ -103,9 +103,9 @@ function dispatch(action: Action) {
 			if (toastId) {
 				addToRemoveQueue(toastId);
 			} else {
-				state.value.toasts.forEach((toast) => {
+				for (const toast of state.value.toasts) {
 					addToRemoveQueue(toast.id);
-				});
+				}
 			}
 
 			state.value.toasts = state.value.toasts.map((t) =>
@@ -129,7 +129,6 @@ function dispatch(action: Action) {
 			break;
 	}
 }
-
 
 function useToast(): UseToastReturn {
 	return {

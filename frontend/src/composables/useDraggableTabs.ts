@@ -1,10 +1,11 @@
 import Sortable from "sortablejs";
+import type { Component } from "vue";
 import { type Ref, onBeforeUnmount, onMounted, ref } from "vue";
 
 export interface TabItem {
 	value: string;
 	label: string;
-	icon?: any;
+	icon?: Component;
 	disabled?: boolean;
 }
 

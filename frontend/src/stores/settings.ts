@@ -21,6 +21,14 @@ import { useToast } from "@/components/ui/toast/use-toast";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
+interface ApiError {
+	response?: {
+		data?: {
+			detail?: string;
+		};
+	};
+}
+
 export const useSettingsStore = defineStore("settings", () => {
 	const { toast } = useToast();
 
@@ -80,10 +88,12 @@ export const useSettingsStore = defineStore("settings", () => {
 			loading.value = true;
 			const response = await getProfile();
 			profile.value = response.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
-				description: error.response?.data?.detail || "Failed to load profile",
+				description:
+					apiError.response?.data?.detail || "Failed to load profile",
 				variant: "destructive",
 			});
 		} finally {
@@ -101,10 +111,12 @@ export const useSettingsStore = defineStore("settings", () => {
 				description: response.data.message,
 			});
 			return true;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
-				description: error.response?.data?.detail || "Failed to update profile",
+				description:
+					apiError.response?.data?.detail || "Failed to update profile",
 				variant: "destructive",
 			});
 			return false;
@@ -118,11 +130,12 @@ export const useSettingsStore = defineStore("settings", () => {
 			loading.value = true;
 			const response = await getNotificationPreferences();
 			notifications.value = response.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail ||
+					apiError.response?.data?.detail ||
 					"Failed to load notification preferences",
 				variant: "destructive",
 			});
@@ -141,11 +154,12 @@ export const useSettingsStore = defineStore("settings", () => {
 				description: response.data.message,
 			});
 			return true;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail ||
+					apiError.response?.data?.detail ||
 					"Failed to update notification preferences",
 				variant: "destructive",
 			});
@@ -160,11 +174,12 @@ export const useSettingsStore = defineStore("settings", () => {
 			loading.value = true;
 			const response = await getPrivacySettings();
 			privacy.value = response.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail || "Failed to load privacy settings",
+					apiError.response?.data?.detail || "Failed to load privacy settings",
 				variant: "destructive",
 			});
 		} finally {
@@ -182,11 +197,13 @@ export const useSettingsStore = defineStore("settings", () => {
 				description: response.data.message,
 			});
 			return true;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail || "Failed to update privacy settings",
+					apiError.response?.data?.detail ||
+					"Failed to update privacy settings",
 				variant: "destructive",
 			});
 			return false;
@@ -199,11 +216,12 @@ export const useSettingsStore = defineStore("settings", () => {
 		try {
 			const response = await get2FAStatus();
 			twoFactorAuth.value = response.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail || "Failed to load 2FA status",
+					apiError.response?.data?.detail || "Failed to load 2FA status",
 				variant: "destructive",
 			});
 		}
@@ -219,10 +237,11 @@ export const useSettingsStore = defineStore("settings", () => {
 				description: response.data.message,
 			});
 			return true;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
-				description: error.response?.data?.detail || "Failed to update 2FA",
+				description: apiError.response?.data?.detail || "Failed to update 2FA",
 				variant: "destructive",
 			});
 			return false;
@@ -236,10 +255,12 @@ export const useSettingsStore = defineStore("settings", () => {
 			loading.value = true;
 			const response = await getActiveSessions();
 			sessions.value = response.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
-				description: error.response?.data?.detail || "Failed to load sessions",
+				description:
+					apiError.response?.data?.detail || "Failed to load sessions",
 				variant: "destructive",
 			});
 		} finally {
@@ -256,11 +277,12 @@ export const useSettingsStore = defineStore("settings", () => {
 				description: "Session terminated successfully",
 			});
 			return true;
-		} catch (error: any) {
+		} catch (error: unknown) {
+			const apiError = error as ApiError;
 			toast({
 				title: "Error",
 				description:
-					error.response?.data?.detail || "Failed to terminate session",
+					apiError.response?.data?.detail || "Failed to terminate session",
 				variant: "destructive",
 			});
 			return false;

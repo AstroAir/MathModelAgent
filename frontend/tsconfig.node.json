@@ -12,5 +12,11 @@
 		"noEmit": true,
 		"types": ["node"]
 	},
-	"include": ["vite.config.*", "vitest.config.*", "cypress.config.*", "nightwatch.conf.*", "playwright.config.*"]
+	"include": [
+		"vite.config.*",
+		"vitest.config.*",
+		"cypress.config.*",
+		"nightwatch.conf.*",
+		"playwright.config.*"
+	]
 }

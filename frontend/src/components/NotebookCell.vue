@@ -12,7 +12,7 @@ import "highlight.js/styles/github.css";
 hljs.registerLanguage("python", python);
 
 const props = defineProps<{
-  cell: NoteCell;
+	cell: NoteCell;
 }>();
 
 const isCodeCollapsed = ref(false);
@@ -21,44 +21,38 @@ const isCopied = ref(false);
 
 // 获取结果格式的CSS类
 const getResultClass = (result: OutputItem) => {
-  switch (result.res_type) {
-    case "stdout":
-      return "text-gray-600";
-    case "stderr":
-      return "text-orange-600";
-    case "error":
-      return "text-red-600";
-    default:
-      return "text-gray-800";
-  }
+	switch (result.res_type) {
+		case "stdout":
+			return "text-gray-600";
+		case "stderr":
+			return "text-orange-600";
+		case "error":
+			return "text-red-600";
+		default:
+			return "text-gray-800";
+	}
 };
 
 // 判断结果是否为图片
 const isImageResult = (result: OutputItem) => {
-  return (
-    result.res_type === "result" &&
-    ["png", "jpeg", "svg"].includes(result.format as string)
-  );
+	return (
+		result.res_type === "result" &&
+		["png", "jpeg", "svg"].includes(result.format as string)
+	);
 };
 
 // 判断结果是否为LaTeX
 const isLatexResult = (result: OutputItem) => {
-  return result.res_type === "result" && result.format === "latex";
+	return result.res_type === "result" && result.format === "latex";
 };
 
 // 判断结果是否为JSON
 const isJsonResult = (result: OutputItem) => {
-  return result.res_type === "result" && result.format === "json";
+	return result.res_type === "result" && result.format === "json";
 };
 
 // 格式化JSON显示
 const formatJson = (jsonString: string) => {
-  try {
-    const parsed = JSON.parse(jsonString);
-    return JSON.stringify(parsed, null, 2);
-  } catch (e) {
-    return jsonString;
-  }
 	try {
 		const parsed = JSON.parse(jsonString);
 		return JSON.stringify(parsed, null, 2);

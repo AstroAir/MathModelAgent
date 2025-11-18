@@ -1,12 +1,18 @@
 <script setup lang="ts">
+import type { FileInfo } from "@/apis/filesApi";
 import {
+	deleteFile,
 	getAllFilesDownloadUrl,
 	getFileContent,
 	getFileDownloadUrl,
 	getFiles,
-		uploadFile,
-		deleteFile,
+	uploadFile,
 } from "@/apis/filesApi";
+
+interface ExtendedFileInfo extends FileInfo {
+	is_image?: boolean;
+	mime_type?: string;
+}
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -64,7 +70,7 @@ const { toast } = useToast();
 
 // 文件列表相关
 const fileListVisible = ref(false);
-const fileList = ref<any[]>([]);
+const fileList = ref<FileInfo[]>([]);
 const loadingFiles = ref(false);
 const downloadingFile = ref<string | null>(null);
 const downloadingAll = ref(false);
@@ -77,7 +83,7 @@ const sortOrder = ref<"asc" | "desc">("asc"); // 排序顺序
 
 // 文件预览
 const previewVisible = ref(false);
-const previewFile = ref<any>(null);
+const previewFile = ref<ExtendedFileInfo | null>(null);
 const previewContent = ref("");
 const loadingPreview = ref(false);
 
@@ -216,24 +222,20 @@ const downloadSingleFile = async (filename: string) => {
 const downloadAll = async () => {
 	try {
 		downloadingAll.value = true;
-		const res = await getAllFilesDownloadUrl(taskId as string);
-		if (res.data?.download_url) {
-			// 创建隐藏的链接元素并触发下载
-			const link = document.createElement("a");
-			link.href = res.data.download_url;
-			link.download = `task_${taskId}_files.zip`;
-			link.target = "_blank";
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+		const downloadUrl = getAllFilesDownloadUrl(taskId as string);
+		// 创建隐藏的链接元素并触发下载
+		const link = document.createElement("a");
+		link.href = downloadUrl;
+		link.download = `task_${taskId}_files.zip`;
+		link.target = "_blank";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
 
-			toast({
-				title: "下载成功",
-				description: "所有文件压缩包开始下载",
-			});
-		} else {
-			throw new Error("获取下载链接失败");
-		}
+		toast({
+			title: "下载成功",
+			description: "所有文件压缩包开始下载",
+		});
 	} catch (error) {
 		console.error("下载所有文件失败:", error);
 		toast({
@@ -244,6 +246,7 @@ const downloadAll = async () => {
 	} finally {
 		downloadingAll.value = false;
 	}
+};
 
 // 文件上传和删除
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -252,68 +255,81 @@ const deletingFile = ref<string | null>(null);
 
 // 触发文件选择
 const triggerFileUpload = () => {
-  fileInput.value?.click();
+	fileInput.value?.click();
 };
 
 // 处理文件上传
 const handleFileUpload = async (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (!input.files || input.files.length === 0) {
-    return;
-  }
-  const file = input.files[0];
+	const input = event.target as HTMLInputElement;
+	if (!input.files || input.files.length === 0) {
+		return;
+	}
+	const file = input.files[0];
 
-  try {
-    uploadingFile.value = true;
-    const res = await uploadFile(taskId as string, file);
-    toast({
-      title: "上传成功",
-      description: `文件 ${res.data.filename} 已上传`,
-    });
-    // Refresh file list by re-fetching
-    await openFolder();
-  } catch (error: any) {
-    const errorMsg = error.response?.data?.detail || error.message || "未知错误";
-    toast({
-      title: "上传失败",
-      description: `上传文件时出错: ${errorMsg}`,
-      variant: "destructive",
-    });
-  } finally {
-    uploadingFile.value = false;
-    if (fileInput.value) {
-      fileInput.value.value = "";
-    }
-  }
+	try {
+		uploadingFile.value = true;
+		const res = await uploadFile(taskId as string, file);
+		toast({
+			title: "上传成功",
+			description: `文件 ${res.data.filename} 已上传`,
+		});
+		// Refresh file list by re-fetching
+		await openFolder();
+	} catch (error: unknown) {
+		const maybeError = error as {
+			response?: { data?: { detail?: string } };
+			message?: string;
+		};
+		const errorMsg =
+			maybeError.response?.data?.detail || maybeError.message || "未知错误";
+		toast({
+			title: "上传失败",
+			description: `上传文件时出错: ${errorMsg}`,
+			variant: "destructive",
+		});
+	} finally {
+		uploadingFile.value = false;
+		if (fileInput.value) {
+			fileInput.value.value = "";
+		}
+	}
 };
 
 // 删除文件
 const handleDeleteFile = async (filename: string) => {
-  const confirmDelete = confirm(`确定要删除文件 "${filename}" 吗？此操作不可撤销。`);
-  if (!confirmDelete) {
-    return;
-  }
+	const confirmDelete = confirm(
+		`确定要删除文件 "${filename}" 吗？此操作不可撤销。`,
+	);
+	if (!confirmDelete) {
+		return;
+	}
 
-  try {
-    deletingFile.value = filename;
-    await deleteFile(taskId as string, filename);
-    toast({
-      title: "删除成功",
-      description: `文件 ${filename} 已被删除`,
-    });
-    // Optimistically update UI
-    fileList.value = fileList.value.filter(f => (f.name || f.filename) !== filename);
-  } catch (error: any) {
-    const errorMsg = error.response?.data?.detail || error.message || "未知错误";
-    toast({
-      title: "删除失败",
-      description: `删除文件时出错: ${errorMsg}`,
-      variant: "destructive",
-    });
-  } finally {
-    deletingFile.value = null;
-  }
-};
+	try {
+		deletingFile.value = filename;
+		await deleteFile(taskId as string, filename);
+		toast({
+			title: "删除成功",
+			description: `文件 ${filename} 已被删除`,
+		});
+		// Optimistically update UI
+		fileList.value = fileList.value.filter(
+			(f) => (f.name || f.filename) !== filename,
+		);
+	} catch (error: unknown) {
+		const maybeError = error as {
+			response?: { data?: { detail?: string } };
+			message?: string;
+		};
+		const errorMsg =
+			maybeError.response?.data?.detail || maybeError.message || "未知错误";
+		toast({
+			title: "删除失败",
+			description: `删除文件时出错: ${errorMsg}`,
+			variant: "destructive",
+		});
+	} finally {
+		deletingFile.value = null;
+	}
 };
 
 // 判断文件是否可预览
@@ -346,7 +362,7 @@ const isPreviewable = (fileName: string) => {
 };
 
 // 预览文件
-const previewFileContent = async (file: any) => {
+const previewFileContent = async (file: FileInfo) => {
 	const fileName = file.name || file.filename || "";
 	if (!isPreviewable(fileName)) {
 		toast({
@@ -383,7 +399,7 @@ const previewFileContent = async (file: any) => {
 			previewContent.value = res.data.content;
 
 			// 保存图片信息到 previewFile
-			if (res.data.is_image) {
+			if (res.data.is_image && previewFile.value) {
 				previewFile.value.is_image = true;
 				previewFile.value.mime_type = res.data.mime_type;
 			}
@@ -399,10 +415,14 @@ const previewFileContent = async (file: any) => {
 		} else {
 			throw new Error("获取文件内容失败");
 		}
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("预览文件失败:", error);
+		const apiError = error as {
+			response?: { data?: { detail?: string } };
+			message?: string;
+		};
 		const errorMsg =
-			error.response?.data?.detail || error.message || "未知错误";
+			apiError.response?.data?.detail || apiError.message || "未知错误";
 		toast({
 			title: "预览失败",
 			description: `预览文件 ${fileName} 时出现错误: ${errorMsg}`,

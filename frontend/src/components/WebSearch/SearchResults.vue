@@ -123,36 +123,44 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { SearchResult } from "@/types/search";
 import {
-  Download, RefreshCw, ExternalLink, FileText, Copy, Calendar,
-  User, Highlighter as Highlight, ChevronDown, MoreHorizontal
-} from 'lucide-vue-next';
-import type { SearchResult } from '@/types/search';
+	Calendar,
+	ChevronDown,
+	Copy,
+	Download,
+	ExternalLink,
+	FileText,
+	Highlighter as Highlight,
+	MoreHorizontal,
+	RefreshCw,
+	User,
+} from "lucide-vue-next";
+import { ref } from "vue";
 
 // Props
 interface Props {
-  results: SearchResult[];
-  query: string;
-  searchTime: number;
-  totalResults: number;
-  canLoadMore?: boolean;
-  isLoadingMore?: boolean;
+	results: SearchResult[];
+	query: string;
+	searchTime: number;
+	totalResults: number;
+	canLoadMore?: boolean;
+	isLoadingMore?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  canLoadMore: false,
-  isLoadingMore: false
+	canLoadMore: false,
+	isLoadingMore: false,
 });
 
 // Emits
 defineEmits<{
-  'open-url': [url: string];
-  'get-content': [url: string];
-  'refresh': [];
-  'load-more': [];
+	"open-url": [url: string];
+	"get-content": [url: string];
+	refresh: [];
+	"load-more": [];
 }>();
 
 // State
@@ -160,71 +168,71 @@ const expandedResults = ref(new Set<number>());
 
 // Methods
 const getDomain = (url: string): string => {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url;
-  }
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return url;
+	}
 };
 
 const formatDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch {
-    return dateString;
-  }
+	try {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	} catch {
+		return dateString;
+	}
 };
 
 const copyUrl = async (url: string) => {
-  try {
-    await navigator.clipboard.writeText(url);
-    // Could add a toast notification here
-  } catch (err) {
-    console.error('Failed to copy URL:', err);
-  }
+	try {
+		await navigator.clipboard.writeText(url);
+		// Could add a toast notification here
+	} catch (err) {
+		console.error("Failed to copy URL:", err);
+	}
 };
 
 const toggleHighlights = (index: number) => {
-  if (expandedResults.value.has(index)) {
-    expandedResults.value.delete(index);
-  } else {
-    expandedResults.value.add(index);
-  }
+	if (expandedResults.value.has(index)) {
+		expandedResults.value.delete(index);
+	} else {
+		expandedResults.value.add(index);
+	}
 };
 
 const exportResults = () => {
-  const exportData = {
-    query: props.query,
-    searchTime: props.searchTime,
-    totalResults: props.totalResults,
-    timestamp: new Date().toISOString(),
-    results: props.results.map(result => ({
-      title: result.title,
-      url: result.url,
-      content: result.content,
-      source: result.source,
-      published_date: result.published_date,
-      score: result.score
-    }))
-  };
+	const exportData = {
+		query: props.query,
+		searchTime: props.searchTime,
+		totalResults: props.totalResults,
+		timestamp: new Date().toISOString(),
+		results: props.results.map((result) => ({
+			title: result.title,
+			url: result.url,
+			content: result.content,
+			source: result.source,
+			published_date: result.published_date,
+			score: result.score,
+		})),
+	};
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: 'application/json'
-  });
+	const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+		type: "application/json",
+	});
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `search-results-${props.query.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `search-results-${props.query.replace(/[^a-z0-9]/gi, "-")}-${Date.now()}.json`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 };
 </script>
 

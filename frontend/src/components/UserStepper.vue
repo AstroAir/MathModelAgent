@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { saveApiConfig } from "@/apis/apiKeyApi";
-import { submitModelingTask, type UploadProgressCallback } from "@/apis/submitModelingApi";
+import {
+	type UploadProgressCallback,
+	submitModelingTask,
+} from "@/apis/submitModelingApi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +23,7 @@ import { FileArchive, FileUp, FolderUp } from "lucide-vue-next";
 import { Rocket } from "lucide-vue-next";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import FileConfirmDialog from "./FileConfirmDialog.vue";
+import type FileConfirmDialog from "./FileConfirmDialog.vue";
 
 const taskStore = useTaskStore();
 const { toast } = useToast();
@@ -190,7 +193,7 @@ const handleSubmit = async () => {
 		router.push(`/task/${taskId.value}`);
 		toast({
 			title: "任务提交成功",
-			description: "任务提交成功，编号为：" + taskId.value,
+			description: `任务提交成功，编号为：${taskId.value}`,
 		});
 	} catch (error) {
 		isUploading.value = false;

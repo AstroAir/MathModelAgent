@@ -2,6 +2,14 @@
 import { changePassword, deleteAccount } from "@/apis/settingsApi";
 import type { AccountDeletion, PasswordChange } from "@/apis/settingsApi";
 import { Button } from "@/components/ui/button";
+
+interface ApiError {
+	response?: {
+		data?: {
+			detail?: string;
+		};
+	};
+}
 import {
 	Card,
 	CardContent,
@@ -89,10 +97,12 @@ const handlePasswordChange = async () => {
 		passwordForm.current_password = "";
 		passwordForm.new_password = "";
 		passwordForm.confirm_password = "";
-	} catch (error: any) {
+	} catch (error: unknown) {
+		const apiError = error as ApiError;
 		toast({
 			title: "Error",
-			description: error.response?.data?.detail || "Failed to change password",
+			description:
+				apiError.response?.data?.detail || "Failed to change password",
 			variant: "destructive",
 		});
 	} finally {
@@ -122,11 +132,12 @@ const handleAccountDeletion = async () => {
 
 		deletionDialogOpen.value = false;
 		// In production, redirect to logout
-	} catch (error: any) {
+	} catch (error: unknown) {
+		const apiError = error as ApiError;
 		toast({
 			title: "Error",
 			description:
-				error.response?.data?.detail || "Failed to process account deletion",
+				apiError.response?.data?.detail || "Failed to process account deletion",
 			variant: "destructive",
 		});
 	} finally {

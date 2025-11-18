@@ -19,7 +19,7 @@ const emits = defineEmits<DialogContentEmits>();
 
 const delegatedProps = reactiveOmit(props, "class");
 
-const forwarded: any = useForwardPropsEmits(delegatedProps, emits);
+const forwarded = useForwardPropsEmits(delegatedProps, emits);
 </script>
 
 <template>

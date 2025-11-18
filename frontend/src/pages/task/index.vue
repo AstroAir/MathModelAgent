@@ -1,42 +1,51 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { type TaskLog, getTaskLogs, getTaskStatus } from "@/apis/commonApi";
+import {
+	getAllFilesDownloadUrl,
+	getFileContent,
+	getFiles,
+} from "@/apis/filesApi";
+import type { FileInfo } from "@/apis/filesApi";
+import AgentWorkflowStatus from "@/components/AgentWorkflowStatus.vue";
 import AppSidebar from "@/components/AppSidebar.vue";
 import ServiceStatus from "@/components/ServiceStatus.vue";
-import AgentWorkflowStatus from "@/components/AgentWorkflowStatus.vue";
 import StepTimeline from "@/components/StepTimeline.vue";
 import TaskCostCard from "@/components/TaskCostCard.vue";
-import type { StepMessage } from "@/utils/response";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import FileSheet from "@/pages/task/components/FileSheet.vue";
 import {
-  ArrowLeft,
-  Calendar,
-  Clock,
-  Download,
-  FileText,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  PlayCircle,
-
-} from "lucide-vue-next";
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import {
+	SidebarInset,
+	SidebarProvider,
+	SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/toast";
+import FileSheet from "@/pages/task/components/FileSheet.vue";
+import { useTaskStore } from "@/stores/task";
+import type { Message, StepMessage } from "@/utils/response";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { useTaskStore } from "@/stores/task";
-import { getTaskLogs, getTaskStatus, type TaskLog } from "@/apis/commonApi";
-import { getAllFilesDownloadUrl, getFiles, getFileContent } from "@/apis/filesApi";
-import type { FileInfo } from "@/apis/filesApi";
-import { useToast } from "@/components/ui/toast";
+import {
+	AlertCircle,
+	ArrowLeft,
+	Calendar,
+	CheckCircle2,
+	Clock,
+	Download,
+	FileText,
+	Loader2,
+	PlayCircle,
+	XCircle,
+} from "lucide-vue-next";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 const route = useRoute();
 const router = useRouter();
@@ -65,113 +74,125 @@ interface AgentStatus {
 	description: string;
 }
 
-const taskStatus = ref<"pending" | "running" | "completed" | "failed">("pending");
+const taskStatus = ref<"pending" | "running" | "completed" | "failed">(
+	"pending",
+);
 const taskProgress = ref(0);
 const taskStartTime = ref<Date | null>(null);
 const taskEndTime = ref<Date | null>(null);
 
 // 工作流状态数据（基于实时消息动态计算）
 const agentStatuses = computed<AgentStatus[]>(() => {
-  const msgs = taskStore.messages as any[];
-  const hasCoderProcessing = msgs.some(
-    (m: any) =>
-      m.msg_type === "step" &&
-      m.agent_type === "CoderAgent" &&
-      m.status === "processing",
-  );
-  const hasCoderCompleted = msgs.some(
-    (m: any) =>
-      m.msg_type === "step" &&
-      m.agent_type === "CoderAgent" &&
-      m.status === "completed",
-  );
-  const hasWriterProcessing = msgs.some(
-    (m: any) =>
-      m.msg_type === "step" &&
-      m.agent_type === "WriterAgent" &&
-      m.status === "processing",
-  );
-  const hasWriterCompleted = msgs.some(
-    (m: any) =>
-      m.msg_type === "step" &&
-      m.agent_type === "WriterAgent" &&
-      m.status === "completed",
-  );
+	const msgs = taskStore.messages;
+	const hasCoderProcessing = msgs.some(
+		(m: Message) =>
+			m.msg_type === "step" &&
+			m.agent_type === "CoderAgent" &&
+			m.status === "processing",
+	);
+	const hasCoderCompleted = msgs.some(
+		(m: Message) =>
+			m.msg_type === "step" &&
+			m.agent_type === "CoderAgent" &&
+			m.status === "completed",
+	);
+	const hasWriterProcessing = msgs.some(
+		(m: Message) =>
+			m.msg_type === "step" &&
+			m.agent_type === "WriterAgent" &&
+			m.status === "processing",
+	);
+	const hasWriterCompleted = msgs.some(
+		(m: Message) =>
+			m.msg_type === "step" &&
+			m.agent_type === "WriterAgent" &&
+			m.status === "completed",
+	);
 
-  const modelerDone =
-    hasCoderProcessing || hasCoderCompleted || hasWriterProcessing || hasWriterCompleted;
+	const modelerDone =
+		hasCoderProcessing ||
+		hasCoderCompleted ||
+		hasWriterProcessing ||
+		hasWriterCompleted;
 
-  const modelerStatus: AgentStatus["status"] = modelerDone
-    ? "completed"
-    : msgs.length > 0
-      ? "running"
-      : "pending";
+	const modelerStatus: AgentStatus["status"] = modelerDone
+		? "completed"
+		: msgs.length > 0
+			? "running"
+			: "pending";
 
-  const coderStatus: AgentStatus["status"] = hasCoderCompleted
-    ? "completed"
-    : hasCoderProcessing
-      ? "running"
-      : "pending";
+	const coderStatus: AgentStatus["status"] = hasCoderCompleted
+		? "completed"
+		: hasCoderProcessing
+			? "running"
+			: "pending";
 
-  const writerStatus: AgentStatus["status"] = hasWriterCompleted
-    ? "completed"
-    : hasWriterProcessing
-      ? "running"
-      : "pending";
+	const writerStatus: AgentStatus["status"] = hasWriterCompleted
+		? "completed"
+		: hasWriterProcessing
+			? "running"
+			: "pending";
 
-  return [
-    {
-      name: "建模智能体",
-      status: modelerStatus,
-      icon: "🧮",
-      description: "问题分析和数学建模",
-    },
-    {
-      name: "代码智能体",
-      status: coderStatus,
-      icon: "💻",
-      description: "代码生成和执行",
-    },
-    {
-      name: "写作智能体",
-      status: writerStatus,
-      icon: "✍️",
-      description: "论文生成",
-    },
-  ];
+	return [
+		{
+			name: "建模智能体",
+			status: modelerStatus,
+			icon: "🧮",
+			description: "问题分析和数学建模",
+		},
+		{
+			name: "代码智能体",
+			status: coderStatus,
+			icon: "💻",
+			description: "代码生成和执行",
+		},
+		{
+			name: "写作智能体",
+			status: writerStatus,
+			icon: "✍️",
+			description: "论文生成",
+		},
+	];
 });
 
 // 步骤时间线数据（从实时 Step 消息映射）
+const mapStepStatus = (status?: string): StepMessage["status"] => {
+	if (status === "processing" || status === "completed" || status === "failed") {
+		return status;
+	}
+	return "processing";
+};
+
 const stepMessages = computed<StepMessage[]>(() => {
-  return (taskStore.messages as any[])
-    .filter((msg: any) => msg.msg_type === "step")
-    .map((msg: any) => ({
-      id: msg.id,
-      step: "",
-      status: msg.status ?? "processing",
-      content: msg.content ?? "",
-      timestamp: msg.timestamp,
-      step_name: msg.step_name,
-      agent_type: msg.agent_type,
-      step_type: msg.step_type,
-      details: msg.details,
-    }));
+	return taskStore.messages
+		.filter((msg: Message) => msg.msg_type === "step")
+		.map((msg: Message) => ({
+			id: msg.id,
+			step: "",
+			status: mapStepStatus(msg.status),
+			content: msg.content ?? "",
+			timestamp: msg.timestamp,
+			step_name: msg.step_name,
+			agent_type: msg.agent_type,
+			step_type: msg.step_type,
+			details: msg.details,
+		}));
 });
 
 // 获取状态图标
 const getStatusIcon = (status: string) => {
-  switch (status) {
-    case "running":
-      return Loader2;
-    case "completed":
-      return CheckCircle2;
-    case "failed":
-      return XCircle;
-    case "pending":
-      return AlertCircle;
-    default:
-      return PlayCircle;
-  }
+	switch (status) {
+		case "running":
+			return Loader2;
+		case "completed":
+			return CheckCircle2;
+		case "failed":
+			return XCircle;
+		case "pending":
+			return AlertCircle;
+		default:
+			return PlayCircle;
+	}
 };
 
 // 获取状态文本
@@ -191,7 +212,9 @@ const getStatusText = (status: string) => {
 };
 
 // 获取状态变体
-const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+const getStatusVariant = (
+	status: string,
+): "default" | "secondary" | "destructive" | "outline" => {
 	switch (status) {
 		case "running":
 			return "default";
@@ -215,11 +238,11 @@ const taskDuration = computed(() => {
 
 	if (hours > 0) {
 		return `${hours}小时${minutes % 60}分钟`;
-	} else if (minutes > 0) {
-		return `${minutes}分钟${seconds % 60}秒`;
-	} else {
-		return `${seconds}秒`;
 	}
+	if (minutes > 0) {
+		return `${minutes}分钟${seconds % 60}秒`;
+	}
+	return `${seconds}秒`;
 });
 
 // 格式化时间
@@ -333,7 +356,6 @@ const getLogLevelClass = (level: string) => {
 			return "text-yellow-500";
 		case "SUCCESS":
 			return "text-green-500";
-		case "INFO":
 		default:
 			return "text-muted-foreground";
 	}
@@ -343,52 +365,57 @@ const getLogLevelClass = (level: string) => {
 const statusPollingInterval = ref<number | null>(null);
 
 const checkTaskStatus = async () => {
-  try {
-    const response = await getTaskStatus(taskId);
-    const status = response.data?.status;
-    if (status === "completed" || status === "failed") {
-      taskStatus.value = status;
-      if (statusPollingInterval.value) clearInterval(statusPollingInterval.value);
-      // Final load of data
-      loadTaskFiles();
-      loadTaskLogs();
-    } else if (status === "running") {
-        taskStatus.value = "running";
-    }
-  } catch (error) {
-    console.error("Failed to get task status:", error);
-    if (statusPollingInterval.value) clearInterval(statusPollingInterval.value);
-  }
+	try {
+		const response = await getTaskStatus(taskId);
+		const status = response.data?.status;
+		if (status === "completed" || status === "failed") {
+			taskStatus.value = status;
+			if (statusPollingInterval.value)
+				clearInterval(statusPollingInterval.value);
+			// Final load of data
+			loadTaskFiles();
+			loadTaskLogs();
+		} else if (status === "running") {
+			taskStatus.value = "running";
+		}
+	} catch (error) {
+		console.error("Failed to get task status:", error);
+		if (statusPollingInterval.value) clearInterval(statusPollingInterval.value);
+	}
 };
 
 onMounted(() => {
-  taskProgress.value = 0;
-  taskStartTime.value = new Date();
+	taskProgress.value = 0;
+	taskStartTime.value = new Date();
 
-  // Check status immediately and then poll
-  checkTaskStatus();
-  statusPollingInterval.value = window.setInterval(checkTaskStatus, 3000);
+	// Check status immediately and then poll
+	checkTaskStatus();
+	statusPollingInterval.value = window.setInterval(checkTaskStatus, 3000);
 
-  taskStore.connectWebSocket(taskId);
-  loadTaskFiles();
-  startLogsPolling();
+	taskStore.connectWebSocket(taskId);
+	loadTaskFiles();
+	startLogsPolling();
 
-  // Stop polling once WebSocket is connected and has messages
-  const unwatch = watch(() => taskStore.messages, (messages) => {
-    if (messages.length > 0 && statusPollingInterval.value) {
-      clearInterval(statusPollingInterval.value);
-      unwatch(); // Stop watching
-    }
-  }, { deep: true });
+	// Stop polling once WebSocket is connected and has messages
+	const unwatch = watch(
+		() => taskStore.messages,
+		(messages) => {
+			if (messages.length > 0 && statusPollingInterval.value) {
+				clearInterval(statusPollingInterval.value);
+				unwatch(); // Stop watching
+			}
+		},
+		{ deep: true },
+	);
 });
 
 // 根据实时消息更新任务进度和状态
 watch(
 	() => taskStore.messages,
 	(msgs) => {
-		const list = msgs as any[];
+		const list = msgs;
 		const completedSystem = list.some(
-			(m: any) =>
+			(m: Message) =>
 				m.msg_type === "system" &&
 				typeof m.content === "string" &&
 				m.content.includes("任务处理完成"),
@@ -404,9 +431,11 @@ watch(
 			return;
 		}
 
-		const stepMsgs = list.filter((m: any) => m.msg_type === "step");
+		const stepMsgs = list.filter((m: Message) => m.msg_type === "step");
 		if (stepMsgs.length > 0) {
-			const completedSteps = stepMsgs.filter((m: any) => m.status === "completed").length;
+			const completedSteps = stepMsgs.filter(
+				(m: Message) => m.status === "completed",
+			).length;
 			const totalSteps = stepMsgs.length;
 			const percent = Math.round((completedSteps / totalSteps) * 100);
 			taskProgress.value = Math.min(Math.max(percent, 0), 100);

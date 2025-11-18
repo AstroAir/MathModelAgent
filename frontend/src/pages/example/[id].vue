@@ -1,19 +1,15 @@
 <script setup lang="ts">
+import { exampleAPI } from "@/apis/commonApi";
+import placeholderImage from "@/assets/icon.png";
 import { Button } from "@/components/ui/button";
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { exampleAPI } from "@/apis/commonApi";
 
-import mcmProblemC1 from "@/assets/example/2025-51MCM-Problem C_01.png";
-import mcmProblemC2 from "@/assets/example/2025-51MCM-Problem C_02.png";
-// 导入图片资源
-import huashuCup from "@/assets/example/华数杯2023年C题.png";
-
-// 图片映射表
+// 图片映射表（当前示例使用同一占位图片）
 const imageMap: Record<number, string> = {
-	1: huashuCup,
-	2: mcmProblemC1,
-	3: mcmProblemC2,
+	1: placeholderImage,
+	2: placeholderImage,
+	3: placeholderImage,
 };
 
 interface ModelingExample {
@@ -55,7 +51,7 @@ onMounted(() => {
 				description: "这是一个示例数模案例。",
 				tags: ["数据分析", "算法优化"],
 				problemText: "这里是完整的竞赛题目描述文本。",
-				image: imageMap[id] || mcmProblemC1,
+				image: imageMap[id] || placeholderImage,
 			};
 			loading.value = false;
 		}, 800);
@@ -151,4 +147,5 @@ const goBack = () => {
       <Button variant="outline" class="mt-4" @click="goBack">返回首页</Button>
     </div>
   </div>
+</div>
 </template>

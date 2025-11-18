@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { Label } from "@/components/ui/label";
 import { AlertCircle } from "lucide-vue-next";
+import { computed } from "vue";
 
 interface Props {
 	label?: string;

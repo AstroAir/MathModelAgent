@@ -153,126 +153,144 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
-  AlertCircle, AlertTriangle, Wifi, Clock, Key, Settings,
-  ArrowRight, Activity, Search, Edit, Info, RefreshCw,
-  Lightbulb
-} from 'lucide-vue-next';
+	Activity,
+	AlertCircle,
+	AlertTriangle,
+	ArrowRight,
+	Clock,
+	Edit,
+	Info,
+	Key,
+	Lightbulb,
+	RefreshCw,
+	Search,
+	Settings,
+	Wifi,
+} from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 // Props
 interface Props {
-  errorType: 'network' | 'rate_limit' | 'auth' | 'provider_unavailable' | 'search_failed' | 'generic';
-  errorMessage?: string;
-  errorCode?: string;
-  errorDetails?: string;
-  provider?: string;
-  retryAfter?: number;
-  fallbackAvailable?: boolean;
-  isRetrying?: boolean;
+	errorType:
+		| "network"
+		| "rate_limit"
+		| "auth"
+		| "provider_unavailable"
+		| "search_failed"
+		| "generic";
+	errorMessage?: string;
+	errorCode?: string;
+	errorDetails?: string;
+	provider?: string;
+	retryAfter?: number;
+	fallbackAvailable?: boolean;
+	isRetrying?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  retryAfter: 0,
-  fallbackAvailable: false,
-  isRetrying: false
+	retryAfter: 0,
+	fallbackAvailable: false,
+	isRetrying: false,
 });
 
 // Emits
 defineEmits<{
-  retry: [];
-  configure: [];
-  "switch-provider": [];
-  "check-status": [];
-  "modify-query": [];
+	retry: [];
+	configure: [];
+	"switch-provider": [];
+	"check-status": [];
+	"modify-query": [];
 }>();
 
 // State
 const showDetails = ref(false);
-const countdown = ref('');
+const countdown = ref("");
 let countdownInterval: NodeJS.Timeout | null = null;
 
 // Computed
 const suggestions = computed(() => {
-  const suggestionMap: Record<string, string[]> = {
-    network: [
-      'Check your internet connection',
-      'Try refreshing the page',
-      'Disable VPN if active'
-    ],
-    rate_limit: [
-      'Wait for the rate limit to reset',
-      'Try using a different search provider',
-      'Reduce the number of search results requested'
-    ],
-    auth: [
-      'Verify your API key is correct',
-      'Check if your API key has expired',
-      'Ensure you have sufficient API credits'
-    ],
-    provider_unavailable: [
-      'Try a different search provider',
-      'Check the provider status page',
-      'Wait and try again later'
-    ],
-    search_failed: [
-      'Try different search terms',
-      'Reduce the complexity of your query',
-      'Check for typos in your search terms'
-    ],
-    generic: [
-      'Try refreshing the page',
-      'Check your internet connection',
-      'Contact support if the problem persists'
-    ]
-  };
+	const suggestionMap: Record<string, string[]> = {
+		network: [
+			"Check your internet connection",
+			"Try refreshing the page",
+			"Disable VPN if active",
+		],
+		rate_limit: [
+			"Wait for the rate limit to reset",
+			"Try using a different search provider",
+			"Reduce the number of search results requested",
+		],
+		auth: [
+			"Verify your API key is correct",
+			"Check if your API key has expired",
+			"Ensure you have sufficient API credits",
+		],
+		provider_unavailable: [
+			"Try a different search provider",
+			"Check the provider status page",
+			"Wait and try again later",
+		],
+		search_failed: [
+			"Try different search terms",
+			"Reduce the complexity of your query",
+			"Check for typos in your search terms",
+		],
+		generic: [
+			"Try refreshing the page",
+			"Check your internet connection",
+			"Contact support if the problem persists",
+		],
+	};
 
-  return suggestionMap[props.errorType] || suggestionMap.generic;
+	return suggestionMap[props.errorType] || suggestionMap.generic;
 });
 
 // Methods
 const formatTime = (seconds: number): string => {
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}m ${remainingSeconds}s`;
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	const remainingSeconds = seconds % 60;
+	return `${minutes}m ${remainingSeconds}s`;
 };
 
 const updateCountdown = () => {
-  if (props.retryAfter > 0) {
-    countdown.value = formatTime(props.retryAfter);
-  } else {
-    countdown.value = '';
-  }
+	if (props.retryAfter > 0) {
+		countdown.value = formatTime(props.retryAfter);
+	} else {
+		countdown.value = "";
+	}
 };
 
 const checkConnection = async () => {
-  try {
-    const response = await fetch('/api/health', { method: 'HEAD' });
-    if (response.ok) {
-      alert('Connection is working. The issue may be with the search service.');
-    } else {
-      alert('Connection issue detected. Please check your network.');
-    }
-  } catch {
-    alert('Unable to connect to the server. Please check your internet connection.');
-  }
+	try {
+		const response = await fetch("/api/health", { method: "HEAD" });
+		if (response.ok) {
+			alert("Connection is working. The issue may be with the search service.");
+		} else {
+			alert("Connection issue detected. Please check your network.");
+		}
+	} catch {
+		alert(
+			"Unable to connect to the server. Please check your internet connection.",
+		);
+	}
 };
 
 // Lifecycle
 onMounted(() => {
-  updateCountdown();
-  if (props.retryAfter > 0) {
-    countdownInterval = setInterval(updateCountdown, 1000);
-  }
+	updateCountdown();
+	if (props.retryAfter > 0) {
+		countdownInterval = setInterval(updateCountdown, 1000);
+	}
 });
 
 onUnmounted(() => {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-  }
+	if (countdownInterval) {
+		clearInterval(countdownInterval);
+	}
 });
 </script>
 

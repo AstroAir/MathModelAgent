@@ -105,10 +105,11 @@ const filteredLogs = computed(() => {
 			case "timestamp":
 				comparison = a.timestamp - b.timestamp;
 				break;
-			case "level":
+			case "level": {
 				const levelOrder = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, FATAL: 4 };
 				comparison = levelOrder[a.level] - levelOrder[b.level];
 				break;
+			}
 			case "source":
 				comparison = a.source.localeCompare(b.source);
 				break;
@@ -127,9 +128,9 @@ const uniqueSources = computed(() => {
 
 const logStats = computed(() => {
 	const stats = { DEBUG: 0, INFO: 0, WARN: 0, ERROR: 0, FATAL: 0 };
-	filteredLogs.value.forEach((log) => {
+	for (const log of filteredLogs.value) {
 		stats[log.level]++;
-	});
+	}
 	return stats;
 });
 
@@ -155,17 +156,13 @@ const hasPrevPage = computed(() => {
 // Methods
 const formatTimestamp = (timestamp: number) => {
 	const date = new Date(timestamp);
-	return (
-		date.toLocaleString("zh-CN", {
-			month: "2-digit",
-			day: "2-digit",
-			hour: "2-digit",
-			minute: "2-digit",
-			second: "2-digit",
-		}) +
-		"." +
-		String(date.getMilliseconds()).padStart(3, "0")
-	);
+	return `${date.toLocaleString("zh-CN", {
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+	})}.${String(date.getMilliseconds()).padStart(3, "0")}`;
 };
 
 const toggleLogExpansion = (logId: string) => {
@@ -223,7 +220,7 @@ const exportLogs = (format: "json" | "csv" | "txt") => {
 			filename = `logs_${Date.now()}.json`;
 			mimeType = "application/json";
 			break;
-		case "csv":
+		case "csv": {
 			const headers = ["Timestamp", "Level", "Source", "Message"];
 			const csvRows = [
 				headers.join(","),
@@ -240,6 +237,7 @@ const exportLogs = (format: "json" | "csv" | "txt") => {
 			filename = `logs_${Date.now()}.csv`;
 			mimeType = "text/csv";
 			break;
+		}
 		case "txt":
 			content = logs
 				.map(

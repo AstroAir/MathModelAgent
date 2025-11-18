@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import Tree from "@/components/Tree.vue";
-import {
-	SidebarContent,
-	SidebarGroup,
-} from "@/components/ui/sidebar";
+import { SidebarContent, SidebarGroup } from "@/components/ui/sidebar";
 import { useTaskStore } from "@/stores/task";
 import { computed, onMounted, ref } from "vue";
 const taskStore = useTaskStore();

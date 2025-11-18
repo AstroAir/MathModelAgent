@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
 import { Button } from "@/components/ui/button";
 import {
-	Search,
-	Inbox,
-	FolderOpen,
 	AlertCircle,
-	type LucideIcon
+	FolderOpen,
+	Inbox,
+	type LucideIcon,
+	Search,
 } from "lucide-vue-next";
+import { computed } from "vue";
 
 interface Props {
 	icon?: LucideIcon;
@@ -58,7 +58,9 @@ const defaultConfig = computed(() => {
 
 const displayIcon = computed(() => props.icon || defaultConfig.value.icon);
 const displayTitle = computed(() => props.title || defaultConfig.value.title);
-const displayDescription = computed(() => props.description || defaultConfig.value.description);
+const displayDescription = computed(
+	() => props.description || defaultConfig.value.description,
+);
 </script>
 
 <template>

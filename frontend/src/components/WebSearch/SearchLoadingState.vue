@@ -130,34 +130,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Search, CheckCircle, Globe, Clock, X, Lightbulb
-} from 'lucide-vue-next';
+	CheckCircle,
+	Clock,
+	Globe,
+	Lightbulb,
+	Search,
+	X,
+} from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 
 // Props
 interface Props {
-  query: string;
-  searchType?: string;
-  provider?: string;
-  maxResults?: number;
-  showDetailedProgress?: boolean;
-  showTips?: boolean;
-  estimatedDuration?: number; // in seconds
+	query: string;
+	searchType?: string;
+	provider?: string;
+	maxResults?: number;
+	showDetailedProgress?: boolean;
+	showTips?: boolean;
+	estimatedDuration?: number; // in seconds
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  searchType: 'general',
-  showDetailedProgress: false,
-  showTips: true,
-  estimatedDuration: 5
+	searchType: "general",
+	showDetailedProgress: false,
+	showTips: true,
+	estimatedDuration: 5,
 });
 
 // Emits
 defineEmits<{
-  cancel: [];
+	cancel: [];
 }>();
 
 // State
@@ -167,71 +172,74 @@ const currentTipIndex = ref(0);
 
 // Computed
 const loadingTitle = computed(() => {
-  const titles = {
-    general: 'Searching the Web',
-    academic: 'Searching Academic Sources',
-    code: 'Finding Code Examples',
-    news: 'Searching Latest News',
-    research: 'Conducting Research'
-  };
-  return titles[props.searchType as keyof typeof titles] || 'Searching';
+	const titles = {
+		general: "Searching the Web",
+		academic: "Searching Academic Sources",
+		code: "Finding Code Examples",
+		news: "Searching Latest News",
+		research: "Conducting Research",
+	};
+	return titles[props.searchType as keyof typeof titles] || "Searching";
 });
 
 const progressSteps = computed(() => [
-  {
-    label: 'Initializing search',
-    completed: currentStepIndex.value > 0,
-    active: currentStepIndex.value === 0
-  },
-  {
-    label: 'Querying search provider',
-    completed: currentStepIndex.value > 1,
-    active: currentStepIndex.value === 1
-  },
-  {
-    label: 'Processing results',
-    completed: currentStepIndex.value > 2,
-    active: currentStepIndex.value === 2
-  },
-  {
-    label: 'Formatting response',
-    completed: currentStepIndex.value > 3,
-    active: currentStepIndex.value === 3
-  }
+	{
+		label: "Initializing search",
+		completed: currentStepIndex.value > 0,
+		active: currentStepIndex.value === 0,
+	},
+	{
+		label: "Querying search provider",
+		completed: currentStepIndex.value > 1,
+		active: currentStepIndex.value === 1,
+	},
+	{
+		label: "Processing results",
+		completed: currentStepIndex.value > 2,
+		active: currentStepIndex.value === 2,
+	},
+	{
+		label: "Formatting response",
+		completed: currentStepIndex.value > 3,
+		active: currentStepIndex.value === 3,
+	},
 ]);
 
 const progressPercentage = computed(() => {
-  const elapsed = (Date.now() - startTime.value) / 1000;
-  const progress = Math.min((elapsed / props.estimatedDuration) * 100, 95);
-  return Math.round(progress);
+	const elapsed = (Date.now() - startTime.value) / 1000;
+	const progress = Math.min((elapsed / props.estimatedDuration) * 100, 95);
+	return Math.round(progress);
 });
 
 const currentAction = computed(() => {
-  const actions = [
-    'Preparing search request...',
-    'Connecting to search provider...',
-    'Retrieving search results...',
-    'Processing and ranking results...',
-    'Finalizing response...'
-  ];
-  return actions[currentStepIndex.value] || actions[0];
+	const actions = [
+		"Preparing search request...",
+		"Connecting to search provider...",
+		"Retrieving search results...",
+		"Processing and ranking results...",
+		"Finalizing response...",
+	];
+	return actions[currentStepIndex.value] || actions[0];
 });
 
 const estimatedTime = computed(() => {
-  const remaining = Math.max(props.estimatedDuration - ((Date.now() - startTime.value) / 1000), 0);
-  return remaining > 1 ? `${Math.ceil(remaining)}s` : 'Almost done...';
+	const remaining = Math.max(
+		props.estimatedDuration - (Date.now() - startTime.value) / 1000,
+		0,
+	);
+	return remaining > 1 ? `${Math.ceil(remaining)}s` : "Almost done...";
 });
 
 const tips = computed(() => [
-  'Try using specific keywords for better results',
-  'Academic searches work best with formal terminology',
-  'Code searches can include programming language names',
-  'Use quotes for exact phrase matching',
-  'Recent news searches show the latest information'
+	"Try using specific keywords for better results",
+	"Academic searches work best with formal terminology",
+	"Code searches can include programming language names",
+	"Use quotes for exact phrase matching",
+	"Recent news searches show the latest information",
 ]);
 
 const currentTip = computed(() => {
-  return tips.value[currentTipIndex.value] || tips.value[0];
+	return tips.value[currentTipIndex.value] || tips.value[0];
 });
 
 // Methods
@@ -239,30 +247,33 @@ let stepInterval: NodeJS.Timeout | null = null;
 let tipInterval: NodeJS.Timeout | null = null;
 
 const simulateProgress = () => {
-  stepInterval = setInterval(() => {
-    if (currentStepIndex.value < progressSteps.value.length - 1) {
-      currentStepIndex.value++;
-    }
-  }, props.estimatedDuration * 1000 / 4);
+	stepInterval = setInterval(
+		() => {
+			if (currentStepIndex.value < progressSteps.value.length - 1) {
+				currentStepIndex.value++;
+			}
+		},
+		(props.estimatedDuration * 1000) / 4,
+	);
 };
 
 const rotateTips = () => {
-  if (props.showTips && tips.value.length > 1) {
-    tipInterval = setInterval(() => {
-      currentTipIndex.value = (currentTipIndex.value + 1) % tips.value.length;
-    }, 3000);
-  }
+	if (props.showTips && tips.value.length > 1) {
+		tipInterval = setInterval(() => {
+			currentTipIndex.value = (currentTipIndex.value + 1) % tips.value.length;
+		}, 3000);
+	}
 };
 
 // Lifecycle
 onMounted(() => {
-  simulateProgress();
-  rotateTips();
+	simulateProgress();
+	rotateTips();
 });
 
 onUnmounted(() => {
-  if (stepInterval) clearInterval(stepInterval);
-  if (tipInterval) clearInterval(tipInterval);
+	if (stepInterval) clearInterval(stepInterval);
+	if (tipInterval) clearInterval(tipInterval);
 });
 </script>
 

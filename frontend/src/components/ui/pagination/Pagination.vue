@@ -1,89 +1,89 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-vue-next'
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-vue-next";
+import { computed } from "vue";
 
 interface Props {
-  currentPage: number
-  totalPages: number
-  totalItems: number
-  itemsPerPage: number
-  showSizeChanger?: boolean
-  pageSizeOptions?: number[]
+	currentPage: number;
+	totalPages: number;
+	totalItems: number;
+	itemsPerPage: number;
+	showSizeChanger?: boolean;
+	pageSizeOptions?: number[];
 }
 
 interface Emits {
-  (e: 'update:currentPage', page: number): void
-  (e: 'update:itemsPerPage', size: number): void
+	(e: "update:currentPage", page: number): void;
+	(e: "update:itemsPerPage", size: number): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showSizeChanger: true,
-  pageSizeOptions: () => [10, 20, 50, 100]
-})
+	showSizeChanger: true,
+	pageSizeOptions: () => [10, 20, 50, 100],
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<Emits>();
 
 const startItem = computed(() => {
-  return (props.currentPage - 1) * props.itemsPerPage + 1
-})
+	return (props.currentPage - 1) * props.itemsPerPage + 1;
+});
 
 const endItem = computed(() => {
-  return Math.min(props.currentPage * props.itemsPerPage, props.totalItems)
-})
+	return Math.min(props.currentPage * props.itemsPerPage, props.totalItems);
+});
 
 const visiblePages = computed(() => {
-  const pages: (number | string)[] = []
-  const total = props.totalPages
-  const current = props.currentPage
+	const pages: (number | string)[] = [];
+	const total = props.totalPages;
+	const current = props.currentPage;
 
-  if (total <= 7) {
-    // Show all pages if total is small
-    for (let i = 1; i <= total; i++) {
-      pages.push(i)
-    }
-  } else {
-    // Always show first page
-    pages.push(1)
+	if (total <= 7) {
+		// Show all pages if total is small
+		for (let i = 1; i <= total; i++) {
+			pages.push(i);
+		}
+	} else {
+		// Always show first page
+		pages.push(1);
 
-    if (current > 4) {
-      pages.push('...')
-    }
+		if (current > 4) {
+			pages.push("...");
+		}
 
-    // Show pages around current
-    const start = Math.max(2, current - 1)
-    const end = Math.min(total - 1, current + 1)
+		// Show pages around current
+		const start = Math.max(2, current - 1);
+		const end = Math.min(total - 1, current + 1);
 
-    for (let i = start; i <= end; i++) {
-      if (i !== 1 && i !== total) {
-        pages.push(i)
-      }
-    }
+		for (let i = start; i <= end; i++) {
+			if (i !== 1 && i !== total) {
+				pages.push(i);
+			}
+		}
 
-    if (current < total - 3) {
-      pages.push('...')
-    }
+		if (current < total - 3) {
+			pages.push("...");
+		}
 
-    // Always show last page
-    if (total > 1) {
-      pages.push(total)
-    }
-  }
+		// Always show last page
+		if (total > 1) {
+			pages.push(total);
+		}
+	}
 
-  return pages
-})
+	return pages;
+});
 
 const goToPage = (page: number) => {
-  if (page >= 1 && page <= props.totalPages && page !== props.currentPage) {
-    emit('update:currentPage', page)
-  }
-}
+	if (page >= 1 && page <= props.totalPages && page !== props.currentPage) {
+		emit("update:currentPage", page);
+	}
+};
 
 const changePageSize = (size: number) => {
-  emit('update:itemsPerPage', size)
-  // Reset to first page when changing page size
-  emit('update:currentPage', 1)
-}
+	emit("update:itemsPerPage", size);
+	// Reset to first page when changing page size
+	emit("update:currentPage", 1);
+};
 </script>
 
 <template>

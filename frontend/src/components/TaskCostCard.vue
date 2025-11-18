@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { getTaskTracking, type TaskTrackingResponse } from '@/apis/commonApi';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, DollarSign, Zap, TrendingUp } from 'lucide-vue-next';
-import { useToast } from '@/components/ui/toast';
+import { type TaskTrackingResponse, getTaskTracking } from "@/apis/commonApi";
+import { Badge } from "@/components/ui/badge";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
+import { DollarSign, Loader2, TrendingUp, Zap } from "lucide-vue-next";
+import { computed, onMounted, ref } from "vue";
 
 const props = defineProps<{
 	taskId: string;
@@ -17,13 +23,17 @@ const error = ref<string | null>(null);
 
 const totalTokens = computed(() => {
 	if (!tracking.value?.token_usage) return 0;
-	return Object.values(tracking.value.token_usage)
-		.reduce((sum, usage) => sum + usage.total_tokens, 0);
+	return Object.values(tracking.value.token_usage ?? {}).reduce(
+		(sum, usage) => sum + usage.total_tokens,
+		0,
+	);
 });
 
 const hasData = computed(() => {
-	return tracking.value && tracking.value.token_usage &&
-		Object.keys(tracking.value.token_usage).length > 0;
+	return (
+		tracking.value?.token_usage &&
+		Object.keys(tracking.value.token_usage).length > 0
+	);
 });
 
 const loadTracking = async () => {
@@ -36,13 +46,13 @@ const loadTracking = async () => {
 		if (tracking.value.error) {
 			error.value = tracking.value.error;
 		}
-	} catch (err: any) {
-		error.value = '加载成本统计失败';
-		console.error('Failed to load tracking:', err);
+	} catch (err: unknown) {
+		error.value = "加载成本统计失败";
+		console.error("Failed to load tracking:", err);
 		toast({
-			title: '加载失败',
+			title: "加载失败",
 			description: error.value,
-			variant: 'destructive',
+			variant: "destructive",
 		});
 	} finally {
 		loading.value = false;
@@ -101,7 +111,7 @@ onMounted(() => {
           <div class="p-4 bg-primary/10 rounded-lg">
             <div class="text-sm text-muted-foreground mb-1">总费用</div>
             <div class="text-2xl font-bold text-primary">
-              ${{ tracking.total_cost.toFixed(4) }}
+              ${{ (tracking?.total_cost ?? 0).toFixed(4) }}
             </div>
           </div>
         </div>
@@ -110,7 +120,7 @@ onMounted(() => {
         <div class="space-y-2">
           <div class="text-sm font-semibold text-foreground">各智能体使用情况</div>
           <div
-            v-for="(usage, agent) in tracking.token_usage"
+            v-for="(usage, agent) in tracking?.token_usage || {}"
             :key="agent"
             class="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
           >

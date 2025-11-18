@@ -1,3 +1,4 @@
+import { useToast } from "@/components/ui/toast/use-toast";
 // import messageData from '@/test/20250524-115938-d4c84576.json'
 import { AgentType } from "@/utils/enum";
 import type {
@@ -14,11 +15,14 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
 export const useTaskStore = defineStore("task", () => {
+	const { toast } = useToast();
 	// 初始化时直接加载测试数据，确保页面首次渲染时有数据
 	// const messages = ref<Message[]>(messageData as Message[])
 	const messages = ref<Message[]>([]);
 	let ws: TaskWebSocket | null = null;
-	const connectionState = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
+	const connectionState = ref<
+		"connecting" | "connected" | "disconnected" | "error"
+	>("disconnected");
 
 	// 连接 WebSocket
 	function connectWebSocket(taskId: string) {
@@ -29,12 +33,41 @@ export const useTaskStore = defineStore("task", () => {
 			wsUrl,
 			(data) => {
 				console.log(data);
+
+				// Type guard to check if data is a Message
+				const isMessage = (obj: unknown): obj is Message => {
+					return (
+						typeof obj === "object" &&
+						obj !== null &&
+						"id" in obj &&
+						"type" in obj &&
+						"content" in obj &&
+						"timestamp" in obj
+					);
+				};
+
+				if (!isMessage(data)) {
+					console.warn("Received invalid message format:", data);
+					return;
+				}
+
+				// Check for rate limit system messages
+				if (
+					data.msg_type === "system" &&
+					data.content?.includes("速率限制触发")
+				) {
+					toast({
+						title: "Provider Notice",
+						description: data.content,
+						variant: "default",
+					});
+				}
 				messages.value.push(data);
 			},
 			(state) => {
 				connectionState.value = state;
-				console.log('WebSocket 状态:', state);
-			}
+				console.log("WebSocket 状态:", state);
+			},
 		);
 
 		ws.connect();
@@ -55,9 +88,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	// 下载消息
 	function downloadMessages() {
-		const dataStr =
-			"data:text/json;charset=utf-8," +
-			encodeURIComponent(JSON.stringify(messages.value, null, 2));
+		const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(messages.value, null, 2))}`;
 		const downloadAnchorNode = document.createElement("a");
 		downloadAnchorNode.setAttribute("href", dataStr);
 		downloadAnchorNode.setAttribute("download", "message.json");
@@ -68,12 +99,12 @@ export const useTaskStore = defineStore("task", () => {
 
 	// 计算属性
 	const chatMessages = computed(() =>
-		messages.value.filter((msg: any) => {
+		messages.value.filter((msg: Message) => {
 			if (
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.CODER &&
 				msg.content != null &&
-				msg.content != ""
+				msg.content !== ""
 			) {
 				return true;
 			}
@@ -92,7 +123,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const coordinatorMessages = computed(() =>
 		messages.value.filter(
-			(msg: any): msg is CoordinatorMessage =>
+			(msg: Message): msg is CoordinatorMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.COORDINATOR &&
 				msg.content != null,
@@ -101,7 +132,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const modelerMessages = computed(() =>
 		messages.value.filter(
-			(msg: any): msg is ModelerMessage =>
+			(msg: Message): msg is ModelerMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.MODELER &&
 				msg.content != null,
@@ -110,7 +141,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const coderMessages = computed(() =>
 		messages.value.filter(
-			(msg: any): msg is CoderMessage =>
+			(msg: Message): msg is CoderMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.CODER &&
 				msg.content != null,
@@ -119,7 +150,7 @@ export const useTaskStore = defineStore("task", () => {
 
 	const writerMessages = computed(() =>
 		messages.value.filter(
-			(msg: any): msg is WriterMessage =>
+			(msg: Message): msg is WriterMessage =>
 				msg.msg_type === "agent" &&
 				msg.agent_type === AgentType.WRITER &&
 				msg.content != null,
@@ -129,7 +160,7 @@ export const useTaskStore = defineStore("task", () => {
 	// 添加代码执行工具消息的计算属性
 	const interpreterMessage = computed(() =>
 		messages.value.filter(
-			(msg: any): msg is InterpreterMessage =>
+			(msg: Message): msg is InterpreterMessage =>
 				msg.msg_type === "tool" &&
 				"tool_name" in msg &&
 				msg.tool_name === "execute_code",

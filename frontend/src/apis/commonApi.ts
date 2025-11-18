@@ -10,7 +10,9 @@ export function getWriterSeque() {
 }
 
 export function openFolderAPI(task_id: string) {
-	return request.get<{ message: string; work_dir: string }>(`/files/${task_id}/open-folder`);
+	return request.get<{ message: string; work_dir: string }>(
+		`/files/${task_id}/open-folder`,
+	);
 }
 
 export function exampleAPI(example_id: string, source: string) {

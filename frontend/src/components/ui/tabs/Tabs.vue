@@ -5,7 +5,7 @@ import { TabsRoot, useForwardPropsEmits } from "reka-ui";
 const props = defineProps<TabsRootProps>();
 const emits = defineEmits<TabsRootEmits>();
 
-const forwarded: any = useForwardPropsEmits(props, emits);
+const forwarded = useForwardPropsEmits(props, emits);
 </script>
 
 <template>

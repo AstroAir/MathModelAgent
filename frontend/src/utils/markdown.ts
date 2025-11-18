@@ -88,8 +88,10 @@ marked.use({
  */
 export const renderMarkdown = async (content: string, options = {}) => {
 	// 预处理内容，确保数学公式正确换行
-	content = content.replace(/\\\[\s*\n/g, "\\[").replace(/\n\s*\\\]/g, "\\]");
-	return marked.parse(content, { ...defaultOptions, ...options });
+	const processedContent = content
+		.replace(/\\\[\s*\n/g, "\\[")
+		.replace(/\n\s*\\\]/g, "\\]");
+	return marked.parse(processedContent, { ...defaultOptions, ...options });
 };
 
 /**

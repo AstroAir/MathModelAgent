@@ -136,19 +136,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { SearchResult } from "@/types/search";
+import type { Message } from "@/utils/response";
 import {
-  Search, CheckCircle, ExternalLink, Copy, ChevronDown,
-  AlertCircle, Wrench
-} from 'lucide-vue-next';
+	AlertCircle,
+	CheckCircle,
+	ChevronDown,
+	Copy,
+	ExternalLink,
+	Search,
+	Wrench,
+} from "lucide-vue-next";
+import { computed, ref } from "vue";
 
 // Props
 interface Props {
-  content: string;
-  message?: any;
+	content: string;
+	message?: Message;
 }
 
 const props = defineProps<Props>();
@@ -158,114 +165,122 @@ const showAll = ref(false);
 
 // Computed properties
 const isSearchToolCall = computed(() => {
-  return props.message?.tool_name === 'web_search' &&
-         props.message?.msg_type === 'tool' &&
-         props.content.includes('web_search');
+	return (
+		props.message?.tool_name === "web_search" &&
+		props.message?.msg_type === "tool" &&
+		props.content.includes("web_search")
+	);
 });
 
 const isSearchResult = computed(() => {
-  return props.content.includes('Search successful') ||
-         props.content.includes('Found') && props.content.includes('results') ||
-         props.content.includes('Search failed');
+	return (
+		props.content.includes("Search successful") ||
+		(props.content.includes("Found") && props.content.includes("results")) ||
+		props.content.includes("Search failed")
+	);
 });
 
 const hasError = computed(() => {
-  return props.content.includes('Search failed') ||
-         props.content.includes('error') ||
-         props.content.includes('failed');
+	return (
+		props.content.includes("Search failed") ||
+		props.content.includes("error") ||
+		props.content.includes("failed")
+	);
 });
 
 const searchParams = computed(() => {
-  if (!isSearchToolCall.value) return {};
+	if (!isSearchToolCall.value) return {};
 
-  try {
-    // Extract search parameters from tool call content
-    const queryMatch = props.content.match(/query['":\s]+([^'",\n]+)/i);
-    const typeMatch = props.content.match(/search_type['":\s]+([^'",\n]+)/i);
-    const providerMatch = props.content.match(/provider['":\s]+([^'",\n]+)/i);
-    const maxResultsMatch = props.content.match(/max_results['":\s]+(\d+)/i);
+	try {
+		// Extract search parameters from tool call content
+		const queryMatch = props.content.match(/query['":\s]+([^'",\n]+)/i);
+		const typeMatch = props.content.match(/search_type['":\s]+([^'",\n]+)/i);
+		const providerMatch = props.content.match(/provider['":\s]+([^'",\n]+)/i);
+		const maxResultsMatch = props.content.match(/max_results['":\s]+(\d+)/i);
 
-    return {
-      query: queryMatch?.[1]?.trim() || '',
-      search_type: typeMatch?.[1]?.trim() || 'general',
-      provider: providerMatch?.[1]?.trim(),
-      max_results: maxResultsMatch?.[1] ? parseInt(maxResultsMatch[1]) : undefined
-    };
-  } catch {
-    return {};
-  }
+		return {
+			query: queryMatch?.[1]?.trim() || "",
+			search_type: typeMatch?.[1]?.trim() || "general",
+			provider: providerMatch?.[1]?.trim(),
+			max_results: maxResultsMatch?.[1]
+				? Number.parseInt(maxResultsMatch[1])
+				: undefined,
+		};
+	} catch {
+		return {};
+	}
 });
 
 const parsedResults = computed(() => {
-  if (!isSearchResult.value || hasError.value) return [];
+	if (!isSearchResult.value || hasError.value) return [];
 
-  try {
-    const lines = props.content.split('\n');
-    const results: any[] = [];
-    let currentResult: any = {};
+	try {
+		const lines = props.content.split("\n");
+		const results: SearchResult[] = [];
+		let currentResult: Partial<SearchResult> = {};
 
-    for (const line of lines) {
-      const trimmedLine = line.trim();
+		for (const line of lines) {
+			const trimmedLine = line.trim();
 
-      if (trimmedLine.match(/^\d+\.\s/)) {
-        // New result
-        if (currentResult.title) {
-          results.push(currentResult);
-        }
-        currentResult = {
-          title: trimmedLine.replace(/^\d+\.\s/, '').trim()
-        };
-      } else if (trimmedLine.startsWith('URL:')) {
-        currentResult.url = trimmedLine.replace('URL:', '').trim();
-      } else if (trimmedLine.startsWith('Snippet:')) {
-        currentResult.content = trimmedLine.replace('Snippet:', '').trim();
-      } else if (trimmedLine && currentResult.title && !currentResult.content) {
-        currentResult.content = trimmedLine;
-      }
-    }
+			if (trimmedLine.match(/^\d+\.\s/)) {
+				// New result
+				if (currentResult.title && currentResult.url) {
+					results.push(currentResult as SearchResult);
+				}
+				currentResult = {
+					title: trimmedLine.replace(/^\d+\.\s/, "").trim(),
+				};
+			} else if (trimmedLine.startsWith("URL:")) {
+				currentResult.url = trimmedLine.replace("URL:", "").trim();
+			} else if (trimmedLine.startsWith("Snippet:")) {
+				currentResult.content = trimmedLine.replace("Snippet:", "").trim();
+			} else if (trimmedLine && currentResult.title && !currentResult.content) {
+				currentResult.content = trimmedLine;
+			}
+		}
 
-    if (currentResult.title) {
-      results.push(currentResult);
-    }
+		if (currentResult.title && currentResult.url) {
+			results.push(currentResult as SearchResult);
+		}
 
-    return results;
-  } catch {
-    return [];
-  }
+		return results;
+	} catch {
+		return [];
+	}
 });
 
 const displayResults = computed(() => {
-  if (showAll.value || parsedResults.value.length <= 3) {
-    return parsedResults.value;
-  }
-  return parsedResults.value.slice(0, 3);
+	if (showAll.value || parsedResults.value.length <= 3) {
+		return parsedResults.value;
+	}
+	return parsedResults.value.slice(0, 3);
 });
 
 // Methods
 const extractQuery = (): string => {
-  const queryMatch = props.content.match(/for "([^"]+)"/);
-  return queryMatch?.[1] || searchParams.value.query || 'search query';
+	const queryMatch = props.content.match(/for "([^"]+)"/);
+	return queryMatch?.[1] || searchParams.value.query || "search query";
 };
 
 const getDomain = (url: string): string => {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url;
-  }
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return url;
+	}
 };
 
 const openUrl = (url: string) => {
-  window.open(url, '_blank');
+	window.open(url, "_blank");
 };
 
-const copyResult = async (result: any) => {
-  try {
-    const text = `${result.title}\n${result.url}\n${result.content || ''}`;
-    await navigator.clipboard.writeText(text);
-  } catch (err) {
-    console.error('Failed to copy result:', err);
-  }
+const copyResult = async (result: SearchResult) => {
+	try {
+		const text = `${result.title}\n${result.url}\n${result.content || ""}`;
+		await navigator.clipboard.writeText(text);
+	} catch (err) {
+		console.error("Failed to copy result:", err);
+	}
 };
 </script>
 

@@ -1,8 +1,6 @@
 import request from "@/utils/request";
 
-export interface UploadProgressCallback {
-	(progress: number): void;
-}
+export type UploadProgressCallback = (progress: number) => void;
 
 export function submitModelingTask(
 	problem: {
@@ -42,7 +40,7 @@ export function submitModelingTask(
 			onUploadProgress: (progressEvent) => {
 				if (onUploadProgress && progressEvent.total) {
 					const percentCompleted = Math.round(
-						(progressEvent.loaded * 100) / progressEvent.total
+						(progressEvent.loaded * 100) / progressEvent.total,
 					);
 					onUploadProgress(percentCompleted);
 				}

@@ -1,0 +1,232 @@
+# MathModelAgent 模型配置示例
+# 支持三种配置格式：
+# 1. 单一提供商配置（向后兼容）
+# 2. 多 API Key 配置（同一提供商的多个 Key）
+# 3. 多提供商配置（不同提供商作为备选）
+
+# ============================================
+# 示例 1: 单一提供商配置（向后兼容）
+# ============================================
+[config1]
+COORDINATOR_API_KEY = 'sk-xxx'
+COORDINATOR_MODEL = 'gpt-3.5-turbo'
+COORDINATOR_BASE_URL = 'https://api.openai.com/v1'
+COORDINATOR_RPM = 60  # 可选：每分钟请求数限制
+COORDINATOR_TPM = 90000  # 可选：每分钟 token 数限制
+COORDINATOR_RPD = 1000  # 可选：每日请求数限制
+
+MODELER_API_KEY = 'sk-xxx'
+MODELER_MODEL = 'gpt-4'
+MODELER_BASE_URL = 'https://api.openai.com/v1'
+MODELER_RPM = 60
+MODELER_TPM = 90000
+
+CODER_API_KEY = 'sk-xxx'
+CODER_MODEL = 'gpt-4'
+CODER_BASE_URL = 'https://api.openai.com/v1'
+CODER_RPM = 60
+CODER_TPM = 90000
+
+WRITER_API_KEY = 'sk-xxx'
+WRITER_MODEL = 'gpt-4'
+WRITER_BASE_URL = 'https://api.openai.com/v1'
+WRITER_RPM = 60
+WRITER_TPM = 90000
+
+
+# ============================================
+# 示例 2: 多 API Key 配置（同一提供商）
+# ============================================
+[config2]
+# Coordinator Agent - 使用多个 OpenAI API Key
+COORDINATOR_API_KEYS = ['sk-key1', 'sk-key2', 'sk-key3']
+COORDINATOR_MODELS = ['gpt-3.5-turbo']  # 所有 Key 使用相同模型
+COORDINATOR_BASE_URLS = ['https://api.openai.com/v1']
+COORDINATOR_RPMS = [60, 60, 60]  # 每个 Key 的 RPM 限制
+COORDINATOR_TPMS = [90000, 90000, 90000]  # 每个 Key 的 TPM 限制
+COORDINATOR_ROTATION_STRATEGY = 'round-robin'  # 轮询策略: round-robin, least-used, random
+
+# Modeler Agent - 使用多个 DeepSeek API Key
+MODELER_API_KEYS = ['sk-deepseek1', 'sk-deepseek2']
+MODELER_MODELS = ['deepseek-chat']
+MODELER_BASE_URLS = ['https://api.deepseek.com']
+MODELER_RPMS = [100, 100]
+MODELER_TPMS = [150000, 150000]
+MODELER_ROTATION_STRATEGY = 'least-used'
+
+# Coder Agent - 使用多个 API Key
+CODER_API_KEYS = ['sk-coder1', 'sk-coder2', 'sk-coder3']
+CODER_MODELS = ['gpt-4']
+CODER_BASE_URLS = ['https://api.openai.com/v1']
+CODER_RPMS = [60, 60, 60]
+CODER_TPMS = [90000, 90000, 90000]
+CODER_ROTATION_STRATEGY = 'random'
+
+# Writer Agent - 单一配置
+WRITER_API_KEY = 'sk-writer'
+WRITER_MODEL = 'gpt-4'
+WRITER_BASE_URL = 'https://api.openai.com/v1'
+WRITER_RPM = 60
+WRITER_TPM = 90000
+
+
+# ============================================
+# 示例 3: 多提供商配置（推荐）
+# ============================================
+[config3]
+# Coordinator Agent - 单一提供商
+COORDINATOR_API_KEY = 'sk-xxx'
+COORDINATOR_MODEL = 'gpt-3.5-turbo'
+COORDINATOR_BASE_URL = 'https://api.openai.com/v1'
+COORDINATOR_RPM = 60
+COORDINATOR_TPM = 90000
+
+# Modeler Agent - 多提供商配置（主用 OpenAI，备用 Anthropic 和 DeepSeek）
+[[MODELER_PROVIDERS]]
+name = "openai"
+api_key = "sk-openai-xxx"
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+priority = 1  # 优先级（数字越小优先级越高）
+rpm = 60
+tpm = 90000
+rpd = 1000
+enabled = true
+
+[[MODELER_PROVIDERS]]
+name = "anthropic"
+api_key = "sk-ant-xxx"
+model = "claude-3-opus-20240229"
+base_url = "https://api.anthropic.com"
+priority = 2
+rpm = 50
+tpm = 80000
+enabled = true
+
+[[MODELER_PROVIDERS]]
+name = "deepseek"
+api_key = "sk-deepseek-xxx"
+model = "deepseek-chat"
+base_url = "https://api.deepseek.com"
+priority = 3
+rpm = 100
+tpm = 150000
+enabled = true
+MODELER_ROTATION_STRATEGY = 'round-robin'
+MODELER_AUTO_RETRY = true
+MODELER_MAX_RETRIES = 3
+MODELER_RETRY_DELAY = 1.0
+
+# Coder Agent - 多提供商配置
+[[CODER_PROVIDERS]]
+name = "openai_primary"
+api_key = "sk-openai-1"
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+priority = 1
+rpm = 60
+tpm = 90000
+
+[[CODER_PROVIDERS]]
+name = "openai_backup"
+api_key = "sk-openai-2"
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+priority = 2
+rpm = 60
+tpm = 90000
+
+[[CODER_PROVIDERS]]
+name = "deepseek"
+api_key = "sk-deepseek-xxx"
+model = "deepseek-coder"
+base_url = "https://api.deepseek.com"
+priority = 3
+rpm = 100
+tpm = 150000
+CODER_ROTATION_STRATEGY = 'least-used'
+
+# Writer Agent - 多提供商配置
+[[WRITER_PROVIDERS]]
+name = "openai"
+api_key = "sk-openai-xxx"
+model = "gpt-4"
+base_url = "https://api.openai.com/v1"
+priority = 1
+rpm = 60
+tpm = 90000
+
+[[WRITER_PROVIDERS]]
+name = "claude"
+api_key = "sk-ant-xxx"
+model = "claude-3-opus-20240229"
+base_url = "https://api.anthropic.com"
+priority = 2
+rpm = 50
+tpm = 80000
+WRITER_ROTATION_STRATEGY = 'round-robin'
+
+
+# ============================================
+# 示例 4: 混合配置（不同 Agent 使用不同配置方式）
+# ============================================
+[config4]
+# Coordinator - 单一配置
+COORDINATOR_API_KEY = 'sk-xxx'
+COORDINATOR_MODEL = 'gpt-3.5-turbo'
+COORDINATOR_BASE_URL = 'https://api.openai.com/v1'
+
+# Modeler - 多 API Key 配置
+MODELER_API_KEYS = ['sk-key1', 'sk-key2']
+MODELER_MODELS = ['gpt-4']
+MODELER_BASE_URLS = ['https://api.openai.com/v1']
+MODELER_RPMS = [60, 60]
+MODELER_TPMS = [90000, 90000]
+MODELER_ROTATION_STRATEGY = 'round-robin'
+
+# Coder - 多提供商配置
+CODER_PROVIDERS = [
+    {name = "openai", api_key = "sk-xxx", model = "gpt-4", base_url = "https://api.openai.com/v1", priority = 1, rpm = 60, tpm = 90000},
+    {name = "deepseek", api_key = "sk-xxx", model = "deepseek-coder", base_url = "https://api.deepseek.com", priority = 2, rpm = 100, tpm = 150000}
+]
+
+# Writer - 单一配置
+WRITER_API_KEY = 'sk-xxx'
+WRITER_MODEL = 'gpt-4'
+WRITER_BASE_URL = 'https://api.openai.com/v1'
+
+
+# ============================================
+# 当前使用的配置
+# ============================================
+[current]
+current = 'config1'  # 修改此值以切换配置
+
+
+# ============================================
+# 配置说明
+# ============================================
+#
+# 1. 速率限制参数：
+#    - RPM (Requests Per Minute): 每分钟最大请求数
+#    - TPM (Tokens Per Minute): 每分钟最大 token 数
+#    - RPD (Requests Per Day): 每日最大请求数（可选）
+#
+# 2. 轮询策略 (ROTATION_STRATEGY)：
+#    - round-robin: 轮询，按顺序使用每个提供商
+#    - least-used: 最少使用，优先使用请求次数最少的提供商
+#    - random: 随机选择提供商
+#
+# 3. 重试配置：
+#    - AUTO_RETRY: 是否自动重试（默认 true）
+#    - MAX_RETRIES: 最大重试次数（默认 3）
+#    - RETRY_DELAY: 重试延迟秒数（默认 1.0）
+#
+# 4. 提供商优先级 (priority)：
+#    - 数字越小优先级越高
+#    - 系统会按优先级顺序尝试提供商
+#    - 当主提供商失败或超限时，自动切换到备用提供商
+#
+# 5. 启用/禁用提供商 (enabled)：
+#    - true: 启用该提供商
+#    - false: 禁用该提供商（不会被选择）

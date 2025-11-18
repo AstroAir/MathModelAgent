@@ -60,9 +60,9 @@ const toggleAgentCollapse = (agentKey: string) => {
 
 const toggleAllAgents = () => {
 	const allCollapsed = Object.values(collapsedAgents.value).every((v) => v);
-	Object.keys(collapsedAgents.value).forEach((key) => {
+	for (const key of Object.keys(collapsedAgents.value)) {
 		collapsedAgents.value[key] = !allCollapsed;
-	});
+	}
 };
 
 // 本地表单数据
@@ -485,9 +485,18 @@ const providerCategories = {
 // 扁平化的providers对象用于向后兼容
 const providers = Object.values(providerCategories).reduce(
 	(acc, category) => {
-		return { ...acc, ...category.providers };
+		return Object.assign(acc, category.providers);
 	},
-	{} as Record<string, any>,
+	{} as Record<
+		string,
+		{
+			url: string;
+			key: string;
+			baseUrl: string;
+			modelId: string;
+			description: string;
+		}
+	>,
 );
 
 // 当供应商选择改变时，自动填写配置
@@ -501,7 +510,10 @@ const onProviderChange = (configKey: string, providerKey: string) => {
 			unifiedConfig.value.modelId = provider.modelId;
 		} else {
 			// 单独配置模式
-			const formConfig = (form.value as any)[configKey];
+			const formConfig =
+				form.value[
+					configKey as keyof Omit<typeof form.value, "openalex_email">
+				];
 			formConfig.provider = providerKey;
 			formConfig.baseUrl = provider.baseUrl;
 			formConfig.modelId = provider.modelId;

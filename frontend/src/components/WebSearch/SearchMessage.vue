@@ -64,105 +64,114 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Search, AlertCircle } from 'lucide-vue-next';
-import SearchResultsCard from './SearchResultsCard.vue';
-import type { SearchResult } from '@/types/search';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import type { SearchResult } from "@/types/search";
+import { AlertCircle, Search } from "lucide-vue-next";
+import { computed } from "vue";
+import SearchResultsCard from "./SearchResultsCard.vue";
 
 // Props
 interface Props {
-  messageType: 'tool_call' | 'tool_result' | 'loading';
-  searchData: {
-    query: string;
-    search_type?: string;
-    provider?: string;
-    max_results?: number;
-  };
-  content?: string;
-  error?: string;
+	messageType: "tool_call" | "tool_result" | "loading";
+	searchData: {
+		query: string;
+		search_type?: string;
+		provider?: string;
+		max_results?: number;
+	};
+	content?: string;
+	error?: string;
 }
 
 const props = defineProps<Props>();
 
 // Emits
 const emit = defineEmits<{
-  'add-to-chat': [content: string];
-  'url-opened': [url: string];
-  'new-search': [];
+	"add-to-chat": [content: string];
+	"url-opened": [url: string];
+	"new-search": [];
 }>();
 
 // Computed properties
 const searchResults = computed<SearchResult[]>(() => {
-  if (!props.content || props.messageType !== 'tool_result') return [];
+	if (!props.content || props.messageType !== "tool_result") return [];
 
-  try {
-    // Parse the search results from the content
-    // This assumes the backend returns formatted search results
-    const lines = props.content.split('\n');
-    const results: SearchResult[] = [];
+	try {
+		// Parse the search results from the content
+		// This assumes the backend returns formatted search results
+		const lines = props.content.split("\n");
+		const results: SearchResult[] = [];
 
-    let currentResult: Partial<SearchResult> = {};
+		let currentResult: Partial<SearchResult> = {};
 
-    for (const line of lines) {
-      if (line.match(/^\d+\.\s/)) {
-        // New result starting
-        if (currentResult.title) {
-          results.push(currentResult as SearchResult);
-        }
-        currentResult = {
-          title: line.replace(/^\d+\.\s/, '').trim()
-        };
-      } else if (line.trim().startsWith('URL:')) {
-        currentResult.url = line.replace('URL:', '').trim();
-      } else if (line.trim().startsWith('Snippet:')) {
-        currentResult.content = line.replace('Snippet:', '').trim();
-      } else if (line.trim() && currentResult.title && !currentResult.content) {
-        // Continuation of content
-        currentResult.content = (currentResult.content || '') + ' ' + line.trim();
-      }
-    }
+		for (const line of lines) {
+			if (line.match(/^\d+\.\s/)) {
+				// New result starting
+				if (currentResult.title) {
+					results.push(currentResult as SearchResult);
+				}
+				currentResult = {
+					title: line.replace(/^\d+\.\s/, "").trim(),
+				};
+			} else if (line.trim().startsWith("URL:")) {
+				currentResult.url = line.replace("URL:", "").trim();
+			} else if (line.trim().startsWith("Snippet:")) {
+				currentResult.content = line.replace("Snippet:", "").trim();
+			} else if (line.trim() && currentResult.title && !currentResult.content) {
+				// Continuation of content
+				currentResult.content = `${currentResult.content || ""} ${line.trim()}`;
+			}
+		}
 
-    // Add the last result
-    if (currentResult.title) {
-      results.push(currentResult as SearchResult);
-    }
+		// Add the last result
+		if (currentResult.title) {
+			results.push(currentResult as SearchResult);
+		}
 
-    return results;
-  } catch (error) {
-    console.error('Failed to parse search results:', error);
-    return [];
-  }
+		return results;
+	} catch (error) {
+		console.error("Failed to parse search results:", error);
+		return [];
+	}
 });
 
 const errorMessage = computed(() => {
-  return props.error || (props.messageType === 'tool_result' && !searchResults.value.length && props.content?.includes('failed') ? props.content : null);
+	return (
+		props.error ||
+		(props.messageType === "tool_result" &&
+		!searchResults.value.length &&
+		props.content?.includes("failed")
+			? props.content
+			: null)
+	);
 });
 
 const searchTime = computed(() => {
-  // Extract search time from content if available
-  const timeMatch = props.content?.match(/in ([\d.]+)s/);
-  return timeMatch ? parseFloat(timeMatch[1]) : 0;
+	// Extract search time from content if available
+	const timeMatch = props.content?.match(/in ([\d.]+)s/);
+	return timeMatch ? Number.parseFloat(timeMatch[1]) : 0;
 });
 
 const totalResults = computed(() => {
-  // Extract total results from content if available
-  const resultsMatch = props.content?.match(/Found (\d+) results/);
-  return resultsMatch ? parseInt(resultsMatch[1]) : searchResults.value.length;
+	// Extract total results from content if available
+	const resultsMatch = props.content?.match(/Found (\d+) results/);
+	return resultsMatch
+		? Number.parseInt(resultsMatch[1])
+		: searchResults.value.length;
 });
 
 // Methods
 const handleAddToChat = (content: string) => {
-  emit('add-to-chat', content);
+	emit("add-to-chat", content);
 };
 
 const handleUrlOpened = (url: string) => {
-  emit('url-opened', url);
+	emit("url-opened", url);
 };
 
 const handleNewSearch = () => {
-  emit('new-search');
+	emit("new-search");
 };
 </script>
 

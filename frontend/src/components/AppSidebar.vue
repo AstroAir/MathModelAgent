@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NavUser from "@/components/NavUser.vue";
 import {
 	Sidebar,
 	SidebarContent,
@@ -11,8 +12,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import NavUser from "@/components/NavUser.vue";
-import { Home, MessageSquare, Settings, History } from "lucide-vue-next";
+import { History, Home, MessageSquare, Settings } from "lucide-vue-next";
 import { useRouter } from "vue-router";
 
 const router = useRouter();

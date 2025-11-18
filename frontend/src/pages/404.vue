@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, ArrowLeft, Search, FileQuestion } from "lucide-vue-next";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { ArrowLeft, FileQuestion, Home, Search } from "lucide-vue-next";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 

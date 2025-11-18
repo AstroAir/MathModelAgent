@@ -263,25 +263,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Settings, Globe, Search, Eye, EyeOff, Activity, Sliders,
-  RotateCcw, Download, Save
-} from 'lucide-vue-next';
-import { useWebSearch } from '@/composables/useWebSearch';
-import { getSearchSettings, updateSearchSettings, testSearchProvider } from '@/apis/searchApi';
-import { SearchProvider } from '@/types/search';
+	getSearchSettings,
+	testSearchProvider,
+	updateSearchSettings,
+} from "@/apis/searchApi";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useWebSearch } from "@/composables/useWebSearch";
+import { SearchProvider } from "@/types/search";
+import {
+	Activity,
+	Download,
+	Eye,
+	EyeOff,
+	Globe,
+	RotateCcw,
+	Save,
+	Search,
+	Settings,
+	Sliders,
+} from "lucide-vue-next";
+import { computed, onMounted, reactive, ref } from "vue";
+
+// Types
+interface ProviderSettings {
+	enabled: boolean;
+	apiKey: string;
+	timeout: number;
+	maxResults: number;
+}
+
+interface SearchSettingsData {
+	providers: {
+		tavily: ProviderSettings;
+		exa: ProviderSettings;
+	};
+	defaultProvider: string;
+	defaultSearchType: string;
+	enableFallback: boolean;
+	includeContent: boolean;
+	maxResults: number;
+	timeout: number;
+}
 
 // Emits
 const emit = defineEmits<{
-  cancel: [];
-  saved: [settings: any];
+	cancel: [];
+	saved: [settings: SearchSettingsData];
 }>();
 
 // Composables
@@ -291,133 +330,135 @@ const { providerStatuses, checkProviderStatus } = useWebSearch();
 const isSaving = ref(false);
 const isTestingProvider = ref(false);
 const showApiKeys = reactive({
-  tavily: false,
-  exa: false
+	tavily: false,
+	exa: false,
 });
 
 const settings = reactive({
-  providers: {
-    tavily: {
-      enabled: false,
-      apiKey: '',
-      timeout: 30,
-      maxResults: 10
-    },
-    exa: {
-      enabled: false,
-      apiKey: '',
-      timeout: 30,
-      maxResults: 10
-    }
-  },
-  defaultProvider: 'tavily',
-  defaultSearchType: 'general',
-  enableFallback: true,
-  includeContent: true,
-  maxResults: 10,
-  timeout: 30
+	providers: {
+		tavily: {
+			enabled: false,
+			apiKey: "",
+			timeout: 30,
+			maxResults: 10,
+		},
+		exa: {
+			enabled: false,
+			apiKey: "",
+			timeout: 30,
+			maxResults: 10,
+		},
+	},
+	defaultProvider: "tavily",
+	defaultSearchType: "general",
+	enableFallback: true,
+	includeContent: true,
+	maxResults: 10,
+	timeout: 30,
 });
 
 // Computed
 const tavilyStatus = computed(() => ({
-  configured: !!settings.providers.tavily.apiKey,
-  available: (providerStatuses as any)?.tavily?.available || false
+	configured: !!settings.providers.tavily.apiKey,
+	available: providerStatuses?.tavily?.available || false,
 }));
 
 const exaStatus = computed(() => ({
-  configured: !!settings.providers.exa.apiKey,
-  available: (providerStatuses as any)?.exa?.available || false
+	configured: !!settings.providers.exa.apiKey,
+	available: providerStatuses?.exa?.available || false,
 }));
 
 // Methods
-const testProvider = async (provider: 'tavily' | 'exa') => {
-  isTestingProvider.value = true;
-  try {
-    await testSearchProvider(provider as any);
-    await checkProviderStatus(provider as any);
-  } catch (error) {
-    console.error('Failed to test provider:', error);
-  } finally {
-    isTestingProvider.value = false;
-  }
+const testProvider = async (provider: "tavily" | "exa") => {
+	isTestingProvider.value = true;
+	try {
+		await testSearchProvider(provider as SearchProvider);
+		await checkProviderStatus(provider as SearchProvider);
+	} catch (error) {
+		console.error("Failed to test provider:", error);
+	} finally {
+		isTestingProvider.value = false;
+	}
 };
 
 const saveSettings = async () => {
-  isSaving.value = true;
-  try {
-    const defaultProviderEnum =
-      settings.defaultProvider === 'exa' ? SearchProvider.EXA : SearchProvider.TAVILY;
+	isSaving.value = true;
+	try {
+		const defaultProviderEnum =
+			settings.defaultProvider === "exa"
+				? SearchProvider.EXA
+				: SearchProvider.TAVILY;
 
-    const fallbackProviders: SearchProvider[] = [];
-    if (settings.providers.tavily.enabled) {
-      fallbackProviders.push(SearchProvider.TAVILY);
-    }
-    if (settings.providers.exa.enabled) {
-      fallbackProviders.push(SearchProvider.EXA);
-    }
+		const fallbackProviders: SearchProvider[] = [];
+		if (settings.providers.tavily.enabled) {
+			fallbackProviders.push(SearchProvider.TAVILY);
+		}
+		if (settings.providers.exa.enabled) {
+			fallbackProviders.push(SearchProvider.EXA);
+		}
 
-    await updateSearchSettings({
-      default_provider: defaultProviderEnum,
-      max_results: settings.maxResults,
-      timeout: settings.timeout,
-      enable_fallback: settings.enableFallback,
-      fallback_providers: fallbackProviders,
-    });
-    emit('saved', settings);
-  } catch (error) {
-    console.error('Failed to save settings:', error);
-  } finally {
-    isSaving.value = false;
-  }
+		await updateSearchSettings({
+			default_provider: defaultProviderEnum,
+			max_results: settings.maxResults,
+			timeout: settings.timeout,
+			enable_fallback: settings.enableFallback,
+			fallback_providers: fallbackProviders,
+		});
+		emit("saved", settings);
+	} catch (error) {
+		console.error("Failed to save settings:", error);
+	} finally {
+		isSaving.value = false;
+	}
 };
 
 const resetToDefaults = () => {
-  Object.assign(settings, {
-    providers: {
-      tavily: { enabled: false, apiKey: '', timeout: 30, maxResults: 10 },
-      exa: { enabled: false, apiKey: '', timeout: 30, maxResults: 10 }
-    },
-    defaultProvider: 'tavily',
-    defaultSearchType: 'general',
-    enableFallback: true,
-    includeContent: true
-  });
+	Object.assign(settings, {
+		providers: {
+			tavily: { enabled: false, apiKey: "", timeout: 30, maxResults: 10 },
+			exa: { enabled: false, apiKey: "", timeout: 30, maxResults: 10 },
+		},
+		defaultProvider: "tavily",
+		defaultSearchType: "general",
+		enableFallback: true,
+		includeContent: true,
+	});
 };
 
 const exportSettings = () => {
-  const exportData = { ...settings };
-  // Remove sensitive data
-  exportData.providers.tavily.apiKey = '';
-  exportData.providers.exa.apiKey = '';
+	const exportData = { ...settings };
+	// Remove sensitive data
+	exportData.providers.tavily.apiKey = "";
+	exportData.providers.exa.apiKey = "";
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: 'application/json'
-  });
+	const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+		type: "application/json",
+	});
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `search-settings-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `search-settings-${Date.now()}.json`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 };
 
 // Lifecycle
 onMounted(async () => {
-  try {
-    const response = await getSearchSettings();
-    const data = response.data;
-    settings.defaultProvider = data.default_provider || 'tavily';
-    settings.maxResults = data.max_results ?? 10;
-    settings.timeout = data.timeout ?? 30;
-    settings.enableFallback = data.enable_fallback ?? true;
-    settings.includeContent = true;
-  } catch (error) {
-    console.error('Failed to load search settings:', error);
-  }
-  await checkProviderStatus();
+	try {
+		const response = await getSearchSettings();
+		const data = response.data;
+		settings.defaultProvider = data.default_provider || "tavily";
+		settings.maxResults = data.max_results ?? 10;
+		settings.timeout = data.timeout ?? 30;
+		settings.enableFallback = data.enable_fallback ?? true;
+		settings.includeContent = true;
+	} catch (error) {
+		console.error("Failed to load search settings:", error);
+	}
+	await checkProviderStatus();
 });
 </script>
 

@@ -135,33 +135,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { SearchResult } from "@/types/search";
 import {
-  Search, Clock, ExternalLink, MessageSquare, Copy, Calendar,
-  ChevronDown, Download
-} from 'lucide-vue-next';
-import type { SearchResult } from '@/types/search';
+	Calendar,
+	ChevronDown,
+	Clock,
+	Copy,
+	Download,
+	ExternalLink,
+	MessageSquare,
+	Search,
+} from "lucide-vue-next";
+import { computed, ref } from "vue";
 
 // Props
 interface Props {
-  results: SearchResult[];
-  query: string;
-  searchTime: number;
-  totalResults: number;
-  initialDisplayCount?: number;
+	results: SearchResult[];
+	query: string;
+	searchTime: number;
+	totalResults: number;
+	initialDisplayCount?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  initialDisplayCount: 5
+	initialDisplayCount: 5,
 });
 
 // Emits
 const emit = defineEmits<{
-  'new-search': [];
-  'add-to-chat': [content: string];
-  'url-opened': [url: string];
+	"new-search": [];
+	"add-to-chat": [content: string];
+	"url-opened": [url: string];
 }>();
 
 // State
@@ -169,94 +175,97 @@ const showAll = ref(false);
 
 // Computed
 const displayResults = computed(() => {
-  if (showAll.value || props.results.length <= props.initialDisplayCount) {
-    return props.results;
-  }
-  return props.results.slice(0, props.initialDisplayCount);
+	if (showAll.value || props.results.length <= props.initialDisplayCount) {
+		return props.results;
+	}
+	return props.results.slice(0, props.initialDisplayCount);
 });
 
 // Methods
 const getDomain = (url: string): string => {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return url;
-  }
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return url;
+	}
 };
 
 const formatDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  } catch {
-    return dateString;
-  }
+	try {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-US", {
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	} catch {
+		return dateString;
+	}
 };
 
 const openUrl = (url: string) => {
-  window.open(url, '_blank');
-  emit('url-opened', url);
+	window.open(url, "_blank");
+	emit("url-opened", url);
 };
 
 const copyUrl = async (url: string) => {
-  try {
-    await navigator.clipboard.writeText(url);
-    // Could add toast notification here
-  } catch (err) {
-    console.error('Failed to copy URL:', err);
-  }
+	try {
+		await navigator.clipboard.writeText(url);
+		// Could add toast notification here
+	} catch (err) {
+		console.error("Failed to copy URL:", err);
+	}
 };
 
 const copyToChat = (result: SearchResult) => {
-  const content = `**${result.title}**\n${result.url}\n\n${result.content || 'No content preview available.'}`;
-  emit('add-to-chat', content);
+	const content = `**${result.title}**\n${result.url}\n\n${result.content || "No content preview available."}`;
+	emit("add-to-chat", content);
 };
 
 const addAllToChat = () => {
-  const allContent = props.results.map((result, index) =>
-    `${index + 1}. **${result.title}**\n   ${result.url}\n   ${result.content || 'No content preview available.'}`
-  ).join('\n\n');
+	const allContent = props.results
+		.map(
+			(result, index) =>
+				`${index + 1}. **${result.title}**\n   ${result.url}\n   ${result.content || "No content preview available."}`,
+		)
+		.join("\n\n");
 
-  const summary = `**Web Search Results for "${props.query}"**\n\nFound ${props.totalResults} results in ${props.searchTime.toFixed(2)}s:\n\n${allContent}`;
-  emit('add-to-chat', summary);
+	const summary = `**Web Search Results for "${props.query}"**\n\nFound ${props.totalResults} results in ${props.searchTime.toFixed(2)}s:\n\n${allContent}`;
+	emit("add-to-chat", summary);
 };
 
 const toggleShowAll = () => {
-  showAll.value = !showAll.value;
+	showAll.value = !showAll.value;
 };
 
 const exportResults = () => {
-  const exportData = {
-    query: props.query,
-    searchTime: props.searchTime,
-    totalResults: props.totalResults,
-    timestamp: new Date().toISOString(),
-    results: props.results.map(result => ({
-      title: result.title,
-      url: result.url,
-      content: result.content,
-      source: result.source,
-      published_date: result.published_date,
-      score: result.score
-    }))
-  };
+	const exportData = {
+		query: props.query,
+		searchTime: props.searchTime,
+		totalResults: props.totalResults,
+		timestamp: new Date().toISOString(),
+		results: props.results.map((result) => ({
+			title: result.title,
+			url: result.url,
+			content: result.content,
+			source: result.source,
+			published_date: result.published_date,
+			score: result.score,
+		})),
+	};
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-    type: 'application/json'
-  });
+	const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+		type: "application/json",
+	});
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `search-results-${props.query.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = `search-results-${props.query.replace(/[^a-z0-9]/gi, "-")}-${Date.now()}.json`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
 };
 </script>
 

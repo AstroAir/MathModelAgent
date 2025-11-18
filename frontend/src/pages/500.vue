@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { AlertTriangle, Check, Copy, Home, RefreshCw } from "lucide-vue-next";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Home, RefreshCw, AlertTriangle, Copy, Check } from "lucide-vue-next";
 
 const router = useRouter();
 const copied = ref(false);

@@ -31,17 +31,20 @@ export function getFileContent(taskId: string, filename: string) {
 
 // 获取文件下载链接
 export function getFileDownloadUrl(taskId: string, filename: string) {
-	return request.get<{ download_url: string }>(`/files/${taskId}/download-url`, {
-		params: {
-			filename,
+	return request.get<{ download_url: string }>(
+		`/files/${taskId}/download-url`,
+		{
+			params: {
+				filename,
+			},
 		},
-	});
+	);
 }
 
 // 获取所有文件的打包下载链接
 export function getAllFilesDownloadUrl(taskId: string) {
 	// This now directly triggers a download, the URL is the endpoint itself.
-	const baseUrl = import.meta.env.VITE_API_URL;
+	const baseUrl = import.meta.env.VITE_API_BASE_URL;
 	return `${baseUrl}/files/${taskId}/download-all`;
 }
 
@@ -56,7 +59,7 @@ export function uploadFile(taskId: string, file: File) {
 			headers: {
 				"Content-Type": "multipart/form-data",
 			},
-		}
+		},
 	);
 }
 

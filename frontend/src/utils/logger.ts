@@ -1,5 +1,6 @@
 import { useLogStore } from "@/stores/log";
 import type { LogLevel } from "@/types/log";
+import type { App } from "vue";
 
 // Logger utility class for centralized logging
 export class Logger {
@@ -21,27 +22,32 @@ export class Logger {
 	}
 
 	// Log methods for different levels
-	debug(message: string, source = "App", details?: any) {
+	debug(message: string, source = "App", details?: unknown) {
 		this.log("DEBUG", message, source, details);
 	}
 
-	info(message: string, source = "App", details?: any) {
+	info(message: string, source = "App", details?: unknown) {
 		this.log("INFO", message, source, details);
 	}
 
-	warn(message: string, source = "App", details?: any) {
+	warn(message: string, source = "App", details?: unknown) {
 		this.log("WARN", message, source, details);
 	}
 
-	error(message: string, source = "App", details?: any) {
+	error(message: string, source = "App", details?: unknown) {
 		this.log("ERROR", message, source, details);
 	}
 
-	fatal(message: string, source = "App", details?: any) {
+	fatal(message: string, source = "App", details?: unknown) {
 		this.log("FATAL", message, source, details);
 	}
 
-	private log(level: LogLevel, message: string, source: string, details?: any) {
+	private log(
+		level: LogLevel,
+		message: string,
+		source: string,
+		details?: unknown,
+	) {
 		if (!this.logStore) {
 			console.warn("Logger not initialized with log store");
 			return;
@@ -75,7 +81,7 @@ export const logger = Logger.getInstance();
 // Vue plugin for easy integration
 export function createLoggerPlugin() {
 	return {
-		install(app: any) {
+		install(app: App) {
 			const logStore = useLogStore();
 			logger.init(logStore);
 

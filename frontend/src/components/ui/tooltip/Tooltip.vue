@@ -9,7 +9,7 @@ import {
 const props = defineProps<TooltipRootProps>();
 const emits = defineEmits<TooltipRootEmits>();
 
-const forwarded: any = useForwardPropsEmits(props, emits);
+const forwarded = useForwardPropsEmits(props, emits);
 </script>
 
 <template>

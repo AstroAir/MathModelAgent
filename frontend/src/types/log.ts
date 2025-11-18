@@ -6,5 +6,5 @@ export interface LogEntry {
 	level: LogLevel;
 	source: string; // module or component name
 	message: string;
-	details?: any; // For stack traces or other rich data
+	details?: unknown; // For stack traces or other rich data
 }

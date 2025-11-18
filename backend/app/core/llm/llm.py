@@ -14,6 +14,10 @@ import litellm
 from app.schemas.enums import AgentType
 from app.utils.track import agent_metrics
 from icecream import ic
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.utils.provider_manager import ProviderManager
 
 litellm.callbacks = [agent_metrics]
 
@@ -228,6 +232,172 @@ class LLM:
 #     ):
 #         super().__init__(api_key, model, base_url, task_id)
 # self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+
+
+class ManagedLLM(LLM):
+    """带提供商管理和速率限制的 LLM"""
+
+    def __init__(
+        self,
+        provider_manager: "ProviderManager",
+        task_id: str,
+        agent_name: str,
+    ):
+        # 使用第一个提供商初始化基类
+        first_provider = (
+            provider_manager.providers[0] if provider_manager.providers else None
+        )
+        if not first_provider:
+            raise ValueError(f"No providers configured for {agent_name}")
+
+        super().__init__(
+            api_key=first_provider.api_key,
+            model=first_provider.model,
+            base_url=first_provider.base_url,
+            task_id=task_id,
+        )
+
+        self.provider_manager = provider_manager
+        self.agent_name = agent_name
+        self.current_provider = first_provider
+
+    async def chat(
+        self,
+        history: list = None,
+        tools: list = None,
+        tool_choice: str = None,
+        max_retries: int = 8,
+        retry_delay: float = 1.0,
+        top_p: float | None = None,
+        agent_name: AgentType = AgentType.SYSTEM,
+        sub_title: str | None = None,
+    ) -> str:
+        """
+        带提供商管理和速率限制的聊天方法
+
+        自动处理：
+        - 速率限制检查
+        - 提供商故障转移
+        - 重试逻辑
+        """
+        # 估算 token 数量（简单估算：字符数 / 4）
+        estimated_tokens = 0
+        if history:
+            for msg in history:
+                content = msg.get("content", "")
+                if isinstance(content, str):
+                    estimated_tokens += len(content) // 4
+
+        # 尝试所有可用的提供商
+        exclude_providers = []
+        last_error = None
+
+        for attempt in range(max_retries):
+            try:
+                # 获取下一个可用的提供商
+                provider = await self.provider_manager.get_next_provider(
+                    estimated_tokens=estimated_tokens,
+                    exclude_providers=exclude_providers,
+                )
+
+                if not provider:
+                    logger.error(
+                        "No available providers, all providers exhausted or rate limited"
+                    )
+                    if last_error:
+                        raise last_error
+                    raise Exception("No available providers")
+
+                # 更新当前提供商配置
+                self.current_provider = provider
+                self.api_key = provider.api_key
+                self.model = provider.model
+                self.base_url = provider.base_url
+
+                logger.info(
+                    f"Using provider: {provider.name} (model: {provider.model}) "
+                    f"for {self.agent_name}, attempt {attempt + 1}/{max_retries}"
+                )
+
+                # 发送速率限制警告消息
+                if attempt > 0:
+                    await self._send_rate_limit_warning(provider.name, attempt)
+
+                # 调用父类的 chat 方法
+                try:
+                    response = await super().chat(
+                        history=history,
+                        tools=tools,
+                        tool_choice=tool_choice,
+                        max_retries=1,  # 单个提供商只尝试一次
+                        retry_delay=retry_delay,
+                        top_p=top_p,
+                        agent_name=agent_name,
+                        sub_title=sub_title,
+                    )
+
+                    # 记录成功
+                    actual_tokens = 0
+                    if hasattr(response, "usage") and response.usage:
+                        actual_tokens = response.usage.total_tokens
+
+                    await self.provider_manager.record_request_result(
+                        provider=provider,
+                        success=True,
+                        actual_tokens=actual_tokens,
+                        estimated_tokens=estimated_tokens,
+                    )
+
+                    return response
+
+                except Exception as e:
+                    last_error = e
+                    logger.error(
+                        f"Provider {provider.name} failed: {str(e)}, "
+                        f"attempt {attempt + 1}/{max_retries}"
+                    )
+
+                    # 记录失败
+                    await self.provider_manager.record_request_result(
+                        provider=provider,
+                        success=False,
+                    )
+
+                    # 将此提供商加入排除列表
+                    exclude_providers.append(provider.get_identifier())
+
+                    # 如果还有重试机会，继续
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay * (attempt + 1))
+                        continue
+                    else:
+                        raise
+
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries - 1:
+                    logger.warning(f"Retrying after error: {str(e)}")
+                    await asyncio.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    logger.error(f"All retry attempts exhausted: {str(e)}")
+                    raise
+
+        # 如果所有尝试都失败
+        if last_error:
+            raise last_error
+        raise Exception("Failed to complete request after all retries")
+
+    async def _send_rate_limit_warning(self, provider_name: str, attempt: int):
+        """发送速率限制警告消息到前端"""
+        warning_msg = SystemMessage(
+            content=f"⚠️ 速率限制触发，切换到备用提供商: {provider_name} (尝试 {attempt + 1})"
+        )
+        await redis_manager.publish_message(self.task_id, warning_msg)
+
+    async def get_provider_stats(self):
+        """获取提供商统计信息"""
+        return await self.provider_manager.get_all_stats()
 
 
 async def simple_chat(model: LLM, history: list) -> str:

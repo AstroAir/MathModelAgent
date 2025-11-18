@@ -5,7 +5,7 @@
 /**
  * Debounce function to prevent excessive theme updates
  */
-export function debounce<T extends (...args: any[]) => void>(
+export function debounce<T extends (...args: never[]) => void>(
 	func: T,
 	wait: number,
 ): (...args: Parameters<T>) => void {
@@ -30,11 +30,11 @@ export function optimizeElementsForTheme(
 ) {
 	const elementsToOptimize = elements || document.querySelectorAll("*");
 
-	Array.from(elementsToOptimize).forEach((element) => {
+	for (const element of Array.from(elementsToOptimize)) {
 		if (element instanceof HTMLElement) {
 			element.classList.add("theme-optimized");
 		}
-	});
+	}
 }
 
 /**
@@ -43,9 +43,9 @@ export function optimizeElementsForTheme(
 export function cleanupThemeOptimization(delay = 300) {
 	setTimeout(() => {
 		const optimizedElements = document.querySelectorAll(".theme-optimized");
-		Array.from(optimizedElements).forEach((element) => {
+		for (const element of Array.from(optimizedElements)) {
 			element.classList.remove("theme-optimized");
-		});
+		}
 	}, delay);
 }
 
@@ -58,13 +58,13 @@ export function preloadThemeAssets() {
 		// Add any theme-specific assets here
 	];
 
-	themeAssets.forEach((asset) => {
+	for (const asset of themeAssets) {
 		const link = document.createElement("link");
 		link.rel = "preload";
 		link.href = asset;
 		link.as = "image";
 		document.head.appendChild(link);
-	});
+	}
 }
 
 /**
@@ -117,7 +117,9 @@ export class ThemePerformanceMonitor {
 export function batchDOMUpdates(updates: (() => void)[]) {
 	// Use requestAnimationFrame for smooth updates
 	requestAnimationFrame(() => {
-		updates.forEach((update) => update());
+		for (const update of updates) {
+			update();
+		}
 	});
 }
 

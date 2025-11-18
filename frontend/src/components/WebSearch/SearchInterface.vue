@@ -159,140 +159,197 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Search, Settings, AlertCircle } from 'lucide-vue-next';
-import { performWebSearch, getWebContent } from '@/apis/searchApi';
-import type { SearchFormData, SearchResult, SearchType } from '@/types/search';
-import SearchResults from './SearchResults.vue';
+import { getWebContent, performWebSearch } from "@/apis/searchApi";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import type { SearchFormData, SearchResult, SearchType } from "@/types/search";
+import { AlertCircle, Search, Settings } from "lucide-vue-next";
+import { computed, reactive, ref, watch } from "vue";
+import SearchResults from "./SearchResults.vue";
 
 // Props
 interface Props {
-  showProviderSelection?: boolean;
-  defaultSearchType?: SearchType;
-  defaultMaxResults?: number;
+	showProviderSelection?: boolean;
+	defaultSearchType?: SearchType;
+	defaultMaxResults?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showProviderSelection: true,
-  defaultSearchType: 'general' as SearchType,
-  defaultMaxResults: 10
+	showProviderSelection: true,
+	defaultSearchType: "general" as SearchType,
+	defaultMaxResults: 10,
 });
 
 // Emits
 const emit = defineEmits<{
-  searchPerformed: [query: string, results: SearchResult[]];
-  urlOpened: [url: string];
-  contentRetrieved: [url: string, content: string];
+	searchPerformed: [query: string, results: SearchResult[]];
+	urlOpened: [url: string];
+	contentRetrieved: [url: string, content: string];
 }>();
 
 // Reactive state
 const searchForm = reactive<SearchFormData>({
-  query: '',
-  searchType: props.defaultSearchType,
-  provider: undefined,
-  maxResults: props.defaultMaxResults
+	query: "",
+	searchType: props.defaultSearchType,
+	provider: undefined,
+	maxResults: props.defaultMaxResults,
 });
 
 const isLoading = ref(false);
 const error = ref<string | null>(null);
 const results = ref<SearchResult[]>([]);
-const lastQuery = ref('');
+const lastQuery = ref("");
 const searchTime = ref(0);
 const totalResults = ref(0);
 const showAdvanced = ref(false);
-const domainsInput = ref('');
+const domainsInput = ref("");
 const dateRange = reactive({
-  start: '',
-  end: ''
+	start: "",
+	end: "",
 });
+
+interface ApiErrorDetail {
+	message?: string;
+	provider?: string;
+	error_code?: string;
+}
+
+interface ApiErrorShape {
+	response?: {
+		data?: {
+			detail?: string | ApiErrorDetail;
+			message?: string;
+		};
+	};
+	message?: string;
+}
+
+const getErrorMessage = (err: unknown, fallback: string): string => {
+	if (typeof err === "string") {
+		return err;
+	}
+	if (err instanceof Error && err.message) {
+		return err.message;
+	}
+	const maybeError = err as ApiErrorShape;
+	const detail = maybeError.response?.data?.detail;
+	if (typeof detail === "string") {
+		return detail;
+	}
+	if (detail && typeof detail === "object" && "message" in detail) {
+		const message = (detail as ApiErrorDetail).message;
+		if (message) {
+			return message;
+		}
+	}
+	if (typeof maybeError.response?.data?.message === "string") {
+		return maybeError.response.data.message;
+	}
+	if (maybeError.message) {
+		return maybeError.message;
+	}
+	return fallback;
+};
 
 // Computed
 const domains = computed(() => {
-  return domainsInput.value
-    ? domainsInput.value.split(',').map(d => d.trim()).filter(Boolean)
-    : undefined;
+	return domainsInput.value
+		? domainsInput.value
+				.split(",")
+				.map((d) => d.trim())
+				.filter(Boolean)
+		: undefined;
 });
 
 const dateRangeFilter = computed(() => {
-  if (!dateRange.start && !dateRange.end) return undefined;
-  return {
-    start_date: dateRange.start || undefined,
-    end_date: dateRange.end || undefined
-  };
+	if (!dateRange.start && !dateRange.end) return undefined;
+	return {
+		start_date: dateRange.start || undefined,
+		end_date: dateRange.end || undefined,
+	};
 });
 
 // Methods
 const handleSearch = async () => {
-  if (!searchForm.query.trim() || isLoading.value) return;
+	if (!searchForm.query.trim() || isLoading.value) return;
 
-  isLoading.value = true;
-  error.value = null;
-  results.value = [];
+	isLoading.value = true;
+	error.value = null;
+	results.value = [];
 
-  try {
-    const searchRequest = {
-      query: searchForm.query,
-      search_type: searchForm.searchType,
-      provider: searchForm.provider || undefined,
-      max_results: searchForm.maxResults,
-      include_content: true,
-      domains: domains.value,
-      date_range: dateRangeFilter.value
-    };
+	try {
+		const searchRequest = {
+			query: searchForm.query,
+			search_type: searchForm.searchType,
+			provider: searchForm.provider || undefined,
+			max_results: searchForm.maxResults,
+			include_content: true,
+			domains: domains.value,
+			date_range: dateRangeFilter.value,
+		};
 
-    const response = await performWebSearch(searchRequest);
+		const response = await performWebSearch(searchRequest);
 
-    results.value = response.data.results;
-    lastQuery.value = searchForm.query;
-    searchTime.value = response.data.search_time;
-    totalResults.value = response.data.total_results || response.data.results.length;
+		results.value = response.data.results;
+		lastQuery.value = searchForm.query;
+		searchTime.value = response.data.search_time;
+		totalResults.value =
+			response.data.total_results || response.data.results.length;
 
-    emit('searchPerformed', lastQuery.value, results.value);
-  } catch (err: any) {
-    error.value = err.response?.data?.detail || err.message || 'Search failed';
-  } finally {
-    isLoading.value = false;
-  }
+		emit("searchPerformed", lastQuery.value, results.value);
+	} catch (err: unknown) {
+		console.error("Search failed:", err);
+		error.value = getErrorMessage(err, "Search failed");
+	} finally {
+		isLoading.value = false;
+	}
 };
 
 const handleOpenUrl = (url: string) => {
-  window.open(url, '_blank');
-  emit('urlOpened', url);
+	window.open(url, "_blank");
+	emit("urlOpened", url);
 };
 
 const handleGetContent = async (url: string) => {
-  try {
-    const response = await getWebContent([url]);
-    const content = response.data[url];
-    if (content) {
-      emit('contentRetrieved', url, content);
-    }
-  } catch (err: any) {
-    console.error('Failed to get content:', err);
-  }
+	try {
+		const response = await getWebContent([url]);
+		const content = response.data[url];
+		if (content) {
+			emit("contentRetrieved", url, content);
+		}
+	} catch (err: unknown) {
+		console.error("Failed to get content:", err);
+	}
 };
 
 // Watch for external query updates
-watch(() => props.defaultSearchType, (newType) => {
-  searchForm.searchType = newType;
-});
+watch(
+	() => props.defaultSearchType,
+	(newType) => {
+		searchForm.searchType = newType;
+	},
+);
 
 // Expose methods for parent components
 defineExpose({
-  search: handleSearch,
-  clearResults: () => {
-    results.value = [];
-    lastQuery.value = '';
-    error.value = null;
-  },
-  setQuery: (query: string) => {
-    searchForm.query = query;
-  }
+	search: handleSearch,
+	clearResults: () => {
+		results.value = [];
+		lastQuery.value = "";
+		error.value = null;
+	},
+	setQuery: (query: string) => {
+		searchForm.query = query;
+	},
 });
 </script>
 

@@ -54,30 +54,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Badge } from '@/components/ui/badge';
-import { Wrench } from 'lucide-vue-next';
-import SearchBubble from './WebSearch/SearchBubble.vue';
+import { Badge } from "@/components/ui/badge";
+import type { Message } from "@/utils/response";
+import { Wrench } from "lucide-vue-next";
+import { computed } from "vue";
+import SearchBubble from "./WebSearch/SearchBubble.vue";
 
 // Props
 interface Props {
-  type: 'user' | 'agent' | 'tool' | 'system';
-  content: string;
-  agentType?: string;
-  message?: any;
+	type: "user" | "agent" | "tool" | "system";
+	content: string;
+	agentType?: string;
+	message?: Message;
 }
 
 const props = defineProps<Props>();
 
 // Computed properties
 const isWebSearchTool = computed(() => {
-  return props.type === 'tool' && (
-    props.content.includes('web_search') ||
-    props.content.includes('Web Search') ||
-    props.content.includes('Search successful') ||
-    props.content.includes('Found') && props.content.includes('results') ||
-    props.message?.tool_name === 'web_search'
-  );
+	return (
+		props.type === "tool" &&
+		(props.content.includes("web_search") ||
+			props.content.includes("Web Search") ||
+			props.content.includes("Search successful") ||
+			(props.content.includes("Found") && props.content.includes("results")) ||
+			props.message?.tool_name === "web_search")
+	);
 });
 </script>
 

@@ -144,9 +144,9 @@ export const useThemeStore = defineStore(
 			root.classList.add(currentTheme.value);
 
 			// Apply CSS variables
-			Object.entries(colors).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(colors)) {
 				root.style.setProperty(`--${key}`, value);
-			});
+			}
 
 			// Apply transition properties
 			root.style.setProperty(
@@ -197,7 +197,10 @@ export const useThemeStore = defineStore(
 			theme: "light" | "dark",
 			colors: Partial<Record<string, string>>,
 		) => {
-			config.value.colors[theme] = { ...config.value.colors[theme], ...colors } as Record<string, string>;
+			config.value.colors[theme] = {
+				...config.value.colors[theme],
+				...colors,
+			} as Record<string, string>;
 			if (currentTheme.value === theme) {
 				applyTheme();
 			}
@@ -234,7 +237,6 @@ export const useThemeStore = defineStore(
 		persist: {
 			key: "theme-store",
 			storage: localStorage,
-
 		},
 	},
 );

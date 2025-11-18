@@ -76,7 +76,7 @@ export function getProfile() {
 export function updateProfile(data: UserProfile) {
 	return request.put<{ data: UserProfile; message: string }>(
 		"/api/settings/profile",
-		data
+		data,
 	);
 }
 
@@ -88,7 +88,7 @@ export function getNotificationPreferences() {
 export function updateNotificationPreferences(data: NotificationPreferences) {
 	return request.put<{ data: NotificationPreferences; message: string }>(
 		"/api/settings/notifications",
-		data
+		data,
 	);
 }
 
@@ -100,7 +100,7 @@ export function getPrivacySettings() {
 export function updatePrivacySettings(data: PrivacySettings) {
 	return request.put<{ data: PrivacySettings; message: string }>(
 		"/api/settings/privacy",
-		data
+		data,
 	);
 }
 
@@ -112,7 +112,7 @@ export function get2FAStatus() {
 export function update2FA(data: { enabled: boolean; method?: string }) {
 	return request.put<{ data: TwoFactorAuth; message: string }>(
 		"/api/settings/security/2fa",
-		data
+		data,
 	);
 }
 
@@ -130,7 +130,7 @@ export function getActiveSessions() {
 
 export function revokeSession(sessionId: string) {
 	return request.delete<{ message: string }>(
-		`/api/settings/security/sessions/${sessionId}`
+		`/api/settings/security/sessions/${sessionId}`,
 	);
 }
 
