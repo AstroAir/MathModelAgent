@@ -1,5 +1,8 @@
-// ... existing code ...
 import request from "@/utils/request";
+
+export interface UploadProgressCallback {
+	(progress: number): void;
+}
 
 export function submitModelingTask(
 	problem: {
@@ -9,6 +12,7 @@ export function submitModelingTask(
 		language?: string;
 	},
 	files?: File[],
+	onUploadProgress?: UploadProgressCallback,
 ) {
 	const formData = new FormData();
 	// 添加问题数据
@@ -34,7 +38,15 @@ export function submitModelingTask(
 			headers: {
 				"Content-Type": "multipart/form-data",
 			},
-			timeout: 30000, // 添加超时设置
+			timeout: 300000, // 5分钟超时
+			onUploadProgress: (progressEvent) => {
+				if (onUploadProgress && progressEvent.total) {
+					const percentCompleted = Math.round(
+						(progressEvent.loaded * 100) / progressEvent.total
+					);
+					onUploadProgress(percentCompleted);
+				}
+			},
 		});
 	}
 }

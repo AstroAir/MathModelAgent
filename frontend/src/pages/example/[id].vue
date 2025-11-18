@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { exampleAPI } from "@/apis/commonApi";
 
 import mcmProblemC1 from "@/assets/example/2025-51MCM-Problem C_01.png";
 import mcmProblemC2 from "@/assets/example/2025-51MCM-Problem C_02.png";
@@ -62,10 +63,20 @@ onMounted(() => {
 });
 
 // 基于当前样例开始新任务
-const startModelingTask = () => {
-	if (example.value) {
-		localStorage.setItem("selectedExample", JSON.stringify(example.value));
-		router.push("/task/create");
+const startModelingTask = async () => {
+	if (!example.value) return;
+
+	try {
+		const res = await exampleAPI(
+			example.value.id.toString(),
+			example.value.source,
+		);
+		const taskId = res.data?.task_id;
+		if (taskId) {
+			router.push(`/task/${taskId}`);
+		}
+	} catch (error) {
+		console.error("Failed to start modeling task from example:", error);
 	}
 };
 

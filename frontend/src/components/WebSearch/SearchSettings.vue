@@ -275,6 +275,8 @@ import {
   RotateCcw, Download, Save
 } from 'lucide-vue-next';
 import { useWebSearch } from '@/composables/useWebSearch';
+import { getSearchSettings, updateSearchSettings, testSearchProvider } from '@/apis/searchApi';
+import { SearchProvider } from '@/types/search';
 
 // Emits
 const emit = defineEmits<{
@@ -311,28 +313,30 @@ const settings = reactive({
   defaultProvider: 'tavily',
   defaultSearchType: 'general',
   enableFallback: true,
-  includeContent: true
+  includeContent: true,
+  maxResults: 10,
+  timeout: 30
 });
 
 // Computed
 const tavilyStatus = computed(() => ({
   configured: !!settings.providers.tavily.apiKey,
-  available: providerStatuses.tavily?.available || false
+  available: (providerStatuses as any)?.tavily?.available || false
 }));
 
 const exaStatus = computed(() => ({
   configured: !!settings.providers.exa.apiKey,
-  available: providerStatuses.exa?.available || false
+  available: (providerStatuses as any)?.exa?.available || false
 }));
 
 // Methods
 const testProvider = async (provider: 'tavily' | 'exa') => {
   isTestingProvider.value = true;
   try {
+    await testSearchProvider(provider as any);
     await checkProviderStatus(provider as any);
-    // Show success message
   } catch (error) {
-    // Show error message
+    console.error('Failed to test provider:', error);
   } finally {
     isTestingProvider.value = false;
   }
@@ -341,7 +345,24 @@ const testProvider = async (provider: 'tavily' | 'exa') => {
 const saveSettings = async () => {
   isSaving.value = true;
   try {
-    // Save settings to backend or local storage
+    const defaultProviderEnum =
+      settings.defaultProvider === 'exa' ? SearchProvider.EXA : SearchProvider.TAVILY;
+
+    const fallbackProviders: SearchProvider[] = [];
+    if (settings.providers.tavily.enabled) {
+      fallbackProviders.push(SearchProvider.TAVILY);
+    }
+    if (settings.providers.exa.enabled) {
+      fallbackProviders.push(SearchProvider.EXA);
+    }
+
+    await updateSearchSettings({
+      default_provider: defaultProviderEnum,
+      max_results: settings.maxResults,
+      timeout: settings.timeout,
+      enable_fallback: settings.enableFallback,
+      fallback_providers: fallbackProviders,
+    });
     emit('saved', settings);
   } catch (error) {
     console.error('Failed to save settings:', error);
@@ -384,9 +405,19 @@ const exportSettings = () => {
 };
 
 // Lifecycle
-onMounted(() => {
-  // Load existing settings
-  checkProviderStatus();
+onMounted(async () => {
+  try {
+    const response = await getSearchSettings();
+    const data = response.data;
+    settings.defaultProvider = data.default_provider || 'tavily';
+    settings.maxResults = data.max_results ?? 10;
+    settings.timeout = data.timeout ?? 30;
+    settings.enableFallback = data.enable_fallback ?? true;
+    settings.includeContent = true;
+  } catch (error) {
+    console.error('Failed to load search settings:', error);
+  }
+  await checkProviderStatus();
 });
 </script>
 

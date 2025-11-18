@@ -4,6 +4,8 @@ import {
 	getFileContent,
 	getFileDownloadUrl,
 	getFiles,
+		uploadFile,
+		deleteFile,
 } from "@/apis/filesApi";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +51,8 @@ import {
 	List,
 	RefreshCw,
 	Search,
+	Trash2,
+	Upload,
 } from "lucide-vue-next";
 import { computed, onUnmounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -240,6 +244,76 @@ const downloadAll = async () => {
 	} finally {
 		downloadingAll.value = false;
 	}
+
+// 文件上传和删除
+const fileInput = ref<HTMLInputElement | null>(null);
+const uploadingFile = ref(false);
+const deletingFile = ref<string | null>(null);
+
+// 触发文件选择
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+// 处理文件上传
+const handleFileUpload = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (!input.files || input.files.length === 0) {
+    return;
+  }
+  const file = input.files[0];
+
+  try {
+    uploadingFile.value = true;
+    const res = await uploadFile(taskId as string, file);
+    toast({
+      title: "上传成功",
+      description: `文件 ${res.data.filename} 已上传`,
+    });
+    // Refresh file list by re-fetching
+    await openFolder();
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.detail || error.message || "未知错误";
+    toast({
+      title: "上传失败",
+      description: `上传文件时出错: ${errorMsg}`,
+      variant: "destructive",
+    });
+  } finally {
+    uploadingFile.value = false;
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
+  }
+};
+
+// 删除文件
+const handleDeleteFile = async (filename: string) => {
+  const confirmDelete = confirm(`确定要删除文件 "${filename}" 吗？此操作不可撤销。`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+    deletingFile.value = filename;
+    await deleteFile(taskId as string, filename);
+    toast({
+      title: "删除成功",
+      description: `文件 ${filename} 已被删除`,
+    });
+    // Optimistically update UI
+    fileList.value = fileList.value.filter(f => (f.name || f.filename) !== filename);
+  } catch (error: any) {
+    const errorMsg = error.response?.data?.detail || error.message || "未知错误";
+    toast({
+      title: "删除失败",
+      description: `删除文件时出错: ${errorMsg}`,
+      variant: "destructive",
+    });
+  } finally {
+    deletingFile.value = null;
+  }
+};
 };
 
 // 判断文件是否可预览
@@ -759,6 +833,10 @@ onUnmounted(() => {
                     @click="viewMode = viewMode === 'detailed' ? 'compact' : 'detailed'"
                     size="sm"
                     variant="ghost"
+
+		  <!-- Hidden File Input for Upload -->
+		  <input type="file" ref="fileInput" @change="handleFileUpload" class="hidden" />
+
                     class="h-7 w-7 p-0"
                   >
                     <LayoutGrid v-if="viewMode === 'detailed'" class="w-4 h-4" />
@@ -784,6 +862,27 @@ onUnmounted(() => {
                   >
                     <RefreshCw v-if="downloadingAll" class="w-4 h-4 animate-spin" />
                     <Archive v-else class="w-4 h-4" />
+								  </Button>
+								</TooltipTrigger>
+								<TooltipContent>
+								  <p>下载全部文件</p>
+								</TooltipContent>
+							  </Tooltip>
+							</TooltipProvider>
+
+							<!-- 上传文件 -->
+							<TooltipProvider>
+							  <Tooltip>
+								<TooltipTrigger as-child>
+								  <Button
+									@click="triggerFileUpload"
+									:disabled="uploadingFile"
+									size="sm"
+									variant="ghost"
+									class="h-7 w-7 p-0"
+								  >
+									<RefreshCw v-if="uploadingFile" class="w-4 h-4 animate-spin" />
+									<Upload v-else class="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -898,6 +997,27 @@ onUnmounted(() => {
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+
+                  <!-- 删除按钮 -->
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger as-child>
+                        <Button
+                          @click="handleDeleteFile(file.name || file.filename || '')"
+                          :disabled="deletingFile === (file.name || file.filename || '')"
+                          size="sm"
+                          variant="ghost"
+                          class="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                        >
+                          <RefreshCw v-if="deletingFile === (file.name || file.filename || '')" class="w-4 h-4 animate-spin" />
+                          <Trash2 v-else class="w-4 h-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>删除文件</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
             </template>
@@ -915,6 +1035,16 @@ onUnmounted(() => {
                   {{ formatFileSize(file.size) }}
                 </span>
                 <div class="flex gap-1 flex-shrink-0">
+                  <Button
+                    @click="handleDeleteFile(file.name || file.filename || '')"
+                    :disabled="deletingFile === (file.name || file.filename || '')"
+                    size="sm"
+                    variant="ghost"
+                    class="h-6 w-6 p-0 text-red-500 hover:text-red-600"
+                  >
+                    <RefreshCw v-if="deletingFile === (file.name || file.filename || '')" class="w-3 h-3 animate-spin" />
+                    <Trash2 v-else class="w-3 h-3" />
+                  </Button>
                   <Button
                     v-if="isPreviewable(file.name || file.filename || '')"
                     @click="previewFileContent(file)"

@@ -8,13 +8,15 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettingsStore } from "@/stores/settings";
-import { Bell, Lock, LogOut, Shield, User } from "lucide-vue-next";
+import { Bell, Lock, LogOut, Search as SearchIcon, Shield, User } from "lucide-vue-next";
 import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import AccountSettings from "./components/AccountSettings.vue";
 import NotificationSettings from "./components/NotificationSettings.vue";
 import PrivacySettings from "./components/PrivacySettings.vue";
 import SecuritySettings from "./components/SecuritySettings.vue";
+import SearchSettings from "@/components/WebSearch/SearchSettings.vue";
+import SearchInterface from "@/components/WebSearch/SearchInterface.vue";
 
 const settingsStore = useSettingsStore();
 const router = useRouter();
@@ -50,7 +52,7 @@ const handleLogout = () => {
 
       <!-- Settings Tabs -->
       <Tabs v-model="activeTab" class="space-y-6">
-        <TabsList class="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
+        <TabsList class="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
           <TabsTrigger value="account" class="flex items-center gap-2 py-3">
             <User class="h-4 w-4" />
             <span class="hidden sm:inline">Account</span>
@@ -66,6 +68,10 @@ const handleLogout = () => {
           <TabsTrigger value="privacy" class="flex items-center gap-2 py-3">
             <Lock class="h-4 w-4" />
             <span class="hidden sm:inline">Privacy</span>
+          </TabsTrigger>
+          <TabsTrigger value="search" class="flex items-center gap-2 py-3">
+            <SearchIcon class="h-4 w-4" />
+            <span class="hidden sm:inline">Search</span>
           </TabsTrigger>
         </TabsList>
 
@@ -87,6 +93,23 @@ const handleLogout = () => {
         <!-- Privacy Tab -->
         <TabsContent value="privacy" class="space-y-6">
           <PrivacySettings />
+        </TabsContent>
+
+        <!-- Search Tab -->
+        <TabsContent value="search" class="space-y-6">
+          <SearchSettings />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Web Search</CardTitle>
+              <CardDescription>
+                Run web searches using your configured providers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SearchInterface />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 

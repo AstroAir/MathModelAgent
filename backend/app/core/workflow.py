@@ -2,7 +2,7 @@ from app.core.agents import WriterAgent, CoderAgent, CoordinatorAgent, ModelerAg
 from app.schemas.request import Problem
 from app.schemas.response import SystemMessage, StepMessage
 from app.tools.openalex_scholar import OpenAlexScholar
-from app.utils.log_util import logger
+from app.utils.task_logger import TaskLogger
 from app.utils.common_utils import create_work_dir, get_config_template
 from app.models.user_output import UserOutput
 from app.config.setting import settings
@@ -28,20 +28,22 @@ class WorkFlow:
 
 
 class MathModelWorkFlow(WorkFlow):
-    task_id: str  #
-    work_dir: str  # worklow work dir
-    ques_count: int = 0  # 问题数量
-    questions: dict[str, str | int] = {}  # 问题
+    task_id: str
+    work_dir: str
+    ques_count: int = 0
+    questions: dict[str, str | int] = {}
+    task_logger: TaskLogger
 
     async def execute(self, problem: Problem):
         self.task_id = problem.task_id
         self.work_dir = create_work_dir(self.task_id)
+        self.task_logger = TaskLogger(self.task_id)
 
         # Auto-detect language if set to "auto"
         if problem.language == "auto":
             detected = detect_language_detailed(problem.ques_all)
             problem.language = detected["language"]
-            logger.info(
+            await self.task_logger.info(
                 f"Auto-detected language: {problem.language} "
                 f"(confidence: {detected['confidence']:.2%}, "
                 f"Chinese ratio: {detected['chinese_ratio']:.2%})"
@@ -58,7 +60,7 @@ class MathModelWorkFlow(WorkFlow):
         coordinator_llm, modeler_llm, coder_llm, writer_llm = llm_factory.get_all_llms()
 
         coordinator_agent = CoordinatorAgent(
-            self.task_id, coordinator_llm, language=problem.language
+            self.task_id, coordinator_llm, self.task_logger, language=problem.language
         )
 
         await redis_manager.publish_message(
@@ -72,7 +74,7 @@ class MathModelWorkFlow(WorkFlow):
             self.ques_count = coordinator_response.ques_count
         except Exception as e:
             #  非数学建模问题
-            logger.error(f"CoordinatorAgent 执行失败: {e}")
+            await self.task_logger.error(f"CoordinatorAgent 执行失败: {e}")
             raise e
 
         await redis_manager.publish_message(
@@ -88,7 +90,7 @@ class MathModelWorkFlow(WorkFlow):
         )
 
         modeler_agent = ModelerAgent(
-            self.task_id, modeler_llm, language=problem.language
+            self.task_id, modeler_llm, self.task_logger, language=problem.language
         )
 
         modeler_response = await modeler_agent.run(coordinator_response)
@@ -125,6 +127,7 @@ class MathModelWorkFlow(WorkFlow):
         coder_agent = CoderAgent(
             task_id=problem.task_id,
             model=coder_llm,
+            task_logger=self.task_logger,
             work_dir=self.work_dir,
             max_chat_turns=settings.MAX_CHAT_TURNS,
             max_retries=settings.MAX_RETRIES,
@@ -135,6 +138,7 @@ class MathModelWorkFlow(WorkFlow):
         writer_agent = WriterAgent(
             task_id=problem.task_id,
             model=writer_llm,
+            task_logger=self.task_logger,
             comp_template=problem.comp_template,
             format_output=problem.format_output,
             scholar=scholar,
@@ -246,7 +250,7 @@ class MathModelWorkFlow(WorkFlow):
 
             except Exception as e:
                 error_msg = f"处理子任务 {key} 时发生错误: {str(e)}"
-                logger.error(error_msg)
+                await self.task_logger.error(error_msg)
                 # 发送步骤消息：任务失败
                 await redis_manager.publish_message(
                     self.task_id,
@@ -273,7 +277,7 @@ class MathModelWorkFlow(WorkFlow):
         # 关闭沙盒
 
         await code_interpreter.cleanup()
-        logger.info(user_output.get_res())
+        await self.task_logger.info(f"Intermediate results: {user_output.get_res()}")
 
         ################################################ write steps
 
@@ -295,7 +299,7 @@ class MathModelWorkFlow(WorkFlow):
 
             except Exception as e:
                 error_msg = f"论文手处理 {key} 部分时发生错误: {str(e)}"
-                logger.error(error_msg)
+                await self.task_logger.error(error_msg)
                 await redis_manager.publish_message(
                     self.task_id,
                     SystemMessage(
@@ -308,6 +312,6 @@ class MathModelWorkFlow(WorkFlow):
                 # 继续处理其他部分
                 continue
 
-        logger.info(user_output.get_res())
+        await self.task_logger.info(f"Final results: {user_output.get_res()}")
 
         user_output.save_result()

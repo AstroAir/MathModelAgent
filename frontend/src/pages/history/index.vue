@@ -16,6 +16,7 @@ import { Pagination } from "@/components/ui/pagination";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,

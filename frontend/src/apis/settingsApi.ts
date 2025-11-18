@@ -70,68 +70,74 @@ export interface AccountDeletion {
 
 // Profile
 export function getProfile() {
-	return request.get<UserProfile>("/settings/profile");
+	return request.get<UserProfile>("/api/settings/profile");
 }
 
 export function updateProfile(data: UserProfile) {
 	return request.put<{ data: UserProfile; message: string }>(
-		"/settings/profile",
+		"/api/settings/profile",
 		data
 	);
 }
 
 // Notifications
 export function getNotificationPreferences() {
-	return request.get<NotificationPreferences>("/settings/notifications");
+	return request.get<NotificationPreferences>("/api/settings/notifications");
 }
 
 export function updateNotificationPreferences(data: NotificationPreferences) {
 	return request.put<{ data: NotificationPreferences; message: string }>(
-		"/settings/notifications",
+		"/api/settings/notifications",
 		data
 	);
 }
 
 // Privacy
 export function getPrivacySettings() {
-	return request.get<PrivacySettings>("/settings/privacy");
+	return request.get<PrivacySettings>("/api/settings/privacy");
 }
 
 export function updatePrivacySettings(data: PrivacySettings) {
 	return request.put<{ data: PrivacySettings; message: string }>(
-		"/settings/privacy",
+		"/api/settings/privacy",
 		data
 	);
 }
 
 // Security
 export function get2FAStatus() {
-	return request.get<TwoFactorAuth>("/settings/security/2fa");
+	return request.get<TwoFactorAuth>("/api/settings/security/2fa");
 }
 
 export function update2FA(data: { enabled: boolean; method?: string }) {
 	return request.put<{ data: TwoFactorAuth; message: string }>(
-		"/settings/security/2fa",
+		"/api/settings/security/2fa",
 		data
 	);
 }
 
 export function changePassword(data: PasswordChange) {
-	return request.post<{ message: string }>("/settings/security/password", data);
+	return request.post<{ message: string }>(
+		"/api/settings/password/change",
+		data,
+	);
 }
 
 // Sessions
 export function getActiveSessions() {
-	return request.get<SessionInfo[]>("/settings/security/sessions");
+	return request.get<SessionInfo[]>("/api/settings/security/sessions");
 }
 
 export function revokeSession(sessionId: string) {
 	return request.delete<{ message: string }>(
-		`/settings/security/sessions/${sessionId}`
+		`/api/settings/security/sessions/${sessionId}`
 	);
 }
 
 // Account
 export function deleteAccount(data: AccountDeletion) {
-	return request.post<{ message: string }>("/settings/account/delete", data);
+	return request.post<{ message: string }>(
+		"/api/settings/account/delete",
+		data,
+	);
 }

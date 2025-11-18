@@ -7,6 +7,8 @@ export interface Message {
   sender?: string;
   msg_type?: string;
   agent_type?: string;
+  step_name?: string;
+  status?: string;
 }
 
 export interface UserMessage extends Message {
@@ -70,9 +72,10 @@ export interface OutputItem {
 
 export interface FileContentResponse {
   content: string;
-  file_name?: string;
+  filename: string;
   file_type?: string;
   is_image?: boolean;
   mime_type?: string;
-  truncated?: boolean;
+  size?: number;
+  encoding?: string;
 }

@@ -3,7 +3,7 @@ from app.core.llm.llm import LLM
 from app.core.prompts import get_coordinator_prompt
 import json
 import re
-from app.utils.log_util import logger
+from app.utils.task_logger import TaskLogger
 from app.schemas.A2A import CoordinatorToModeler
 
 
@@ -12,10 +12,11 @@ class CoordinatorAgent(Agent):
         self,
         task_id: str,
         model: LLM,
+        task_logger: TaskLogger,
         max_chat_turns: int = 30,
         language: str = "zh",
     ) -> None:
-        super().__init__(task_id, model, max_chat_turns)
+        super().__init__(task_id, model, task_logger, max_chat_turns)
         self.system_prompt = get_coordinator_prompt(language)
 
     async def run(self, ques_all: str) -> CoordinatorToModeler:
@@ -43,16 +44,18 @@ class CoordinatorAgent(Agent):
 
                 questions = json.loads(json_str)
                 ques_count = questions["ques_count"]
-                logger.info(f"questions:{questions}")
+                await self.task_logger.info(f"questions:{questions}")
                 return CoordinatorToModeler(questions=questions, ques_count=ques_count)
 
             except (json.JSONDecodeError, ValueError, KeyError) as e:
                 attempt += 1
-                logger.warning(f"解析失败 (尝试 {attempt}/{max_retries}): {str(e)}")
+                await self.task_logger.warning(
+                    f"Failed to parse, attempt {attempt}/{max_retries}: {str(e)}"
+                )
 
                 if attempt > max_retries:
-                    logger.error("超过最大重试次数，放弃解析")
-                    raise RuntimeError(f"无法解析模型响应: {str(e)}")
+                    await self.task_logger.error("Exceeded max retries, failing.")
+                    raise RuntimeError(f"Unable to parse model response: {str(e)}")
 
                 # 添加错误反馈提示
                 error_prompt = f"⚠️ 上次响应格式错误: {str(e)}。请严格输出JSON格式"

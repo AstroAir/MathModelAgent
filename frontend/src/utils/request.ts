@@ -1,5 +1,6 @@
 // src/utils/request.js
 import axios from "axios";
+import { toast } from "@/components/ui/toast";
 // import { message } from 'antd' // 或其他UI库的消息提示组件
 
 // 创建axios实例
@@ -33,9 +34,24 @@ service.interceptors.response.use(
 		return response;
 	},
 	(error) => {
-		// 对响应错误做点什么
-		// console.log('err' + error) // for debug
-		// message.error(error.message)
+		// 对响应错误做全局处理（仅网络错误或服务器错误时提示）
+		const status = error?.response?.status as number | undefined;
+		const detail =
+			(error?.response?.data &&
+				((error.response.data as any).detail || (error.response.data as any).message)) ||
+			(error?.message as string | undefined);
+		const description =
+			detail || (status ? `请求失败，状态码：${status}` : "请求失败，请检查网络连接");
+
+		// 仅在没有显式处理的情况下进行全局提示：网络错误或 5xx
+		if (!status || status >= 500) {
+			toast({
+				title: "请求异常",
+				description,
+				variant: "destructive",
+			});
+		}
+
 		return Promise.reject(error);
 	},
 );

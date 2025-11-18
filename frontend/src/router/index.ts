@@ -26,8 +26,25 @@ const routes = [
 		component: () => import("@/pages/history/index.vue"),
 	},
 	{
+		path: "/example/:id",
+		component: () => import("@/pages/example/[id].vue"),
+		props: true,
+	},
+	{
 		path: "/settings",
 		component: () => import("@/pages/settings/index.vue"),
+	},
+	{
+		path: "/404",
+		component: () => import("@/pages/404.vue"),
+	},
+	{
+		path: "/500",
+		component: () => import("@/pages/500.vue"),
+	},
+	{
+		path: "/:pathMatch(.*)*",
+		redirect: "/404",
 	},
 ];
 

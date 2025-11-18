@@ -18,18 +18,25 @@ export const useTaskStore = defineStore("task", () => {
 	// const messages = ref<Message[]>(messageData as Message[])
 	const messages = ref<Message[]>([]);
 	let ws: TaskWebSocket | null = null;
+	const connectionState = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
 
 	// 连接 WebSocket
 	function connectWebSocket(taskId: string) {
 		const baseUrl = import.meta.env.VITE_WS_URL;
 		const wsUrl = `${baseUrl}/task/${taskId}`;
 
-		ws = new TaskWebSocket(wsUrl, (data) => {
-			console.log(data);
-			messages.value.push(data);
-		});
-		// 初始化测试数据（已在上面初始化，这里可以注释掉）
-		// messages.value = messageData as Message[]
+		ws = new TaskWebSocket(
+			wsUrl,
+			(data) => {
+				console.log(data);
+				messages.value.push(data);
+			},
+			(state) => {
+				connectionState.value = state;
+				console.log('WebSocket 状态:', state);
+			}
+		);
+
 		ws.connect();
 	}
 
@@ -165,5 +172,6 @@ export const useTaskStore = defineStore("task", () => {
 		closeWebSocket,
 		downloadMessages,
 		addUserMessage,
+		connectionState,
 	};
 });

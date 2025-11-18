@@ -53,6 +53,22 @@ async def create_task_history(request: CreateTaskHistoryRequest):
         raise HTTPException(status_code=500, detail=f"创建任务历史记录失败: {str(e)}")
 
 
+@router.get("/history/tasks/count")
+async def get_task_count(task_type: Optional[str] = None):
+    """
+    获取任务数量统计
+    """
+    try:
+        total = task_history_manager.get_task_count()
+        custom_count = task_history_manager.get_task_count("custom")
+        example_count = task_history_manager.get_task_count("example")
+
+        return {"total": total, "custom": custom_count, "example": example_count}
+    except Exception as e:
+        logger.error(f"获取任务数量统计失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取任务数量统计失败: {str(e)}")
+
+
 @router.get("/history/tasks", response_model=TaskHistoryListResponse)
 async def get_task_history_list(
     task_type: Optional[str] = None, pinned_only: bool = False
@@ -150,19 +166,3 @@ async def delete_task_history(task_id: str):
     except Exception as e:
         logger.error(f"删除任务历史记录失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"删除任务历史记录失败: {str(e)}")
-
-
-@router.get("/history/tasks/count")
-async def get_task_count(task_type: Optional[str] = None):
-    """
-    获取任务数量统计
-    """
-    try:
-        total = task_history_manager.get_task_count()
-        custom_count = task_history_manager.get_task_count("custom")
-        example_count = task_history_manager.get_task_count("example")
-
-        return {"total": total, "custom": custom_count, "example": example_count}
-    except Exception as e:
-        logger.error(f"获取任务数量统计失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"获取任务数量统计失败: {str(e)}")

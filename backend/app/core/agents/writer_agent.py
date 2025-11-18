@@ -4,7 +4,7 @@ from app.core.prompts import get_writer_prompt
 from app.schemas.enums import CompTemplate, FormatOutPut
 from app.tools.openalex_scholar import OpenAlexScholar
 from app.tools.web_search_tool import WebSearchTool
-from app.utils.log_util import logger
+from app.utils.task_logger import TaskLogger
 from app.services.redis_manager import redis_manager
 from app.schemas.response import SystemMessage, WriterMessage
 import json
@@ -22,6 +22,7 @@ class WriterAgent(Agent):
         self,
         task_id: str,
         model: LLM,
+        task_logger: TaskLogger,
         max_chat_turns: int = 10,  # 添加最大对话轮次限制
         comp_template: CompTemplate = CompTemplate,
         format_output: FormatOutPut = FormatOutPut.Markdown,
@@ -29,7 +30,7 @@ class WriterAgent(Agent):
         max_memory: int = 25,  # 添加最大记忆轮次
         language: str = "zh",
     ) -> None:
-        super().__init__(task_id, model, max_chat_turns, max_memory)
+        super().__init__(task_id, model, task_logger, max_chat_turns, max_memory)
         self.format_out_put = format_output
         self.comp_template = comp_template
         self.scholar = scholar
@@ -52,7 +53,7 @@ class WriterAgent(Agent):
             available_images: 可用的图片相对路径列表（如 20250420-173744-9f87792c/编号_分布.png）
             sub_title: 子任务标题
         """
-        logger.info(f"subtitle是:{sub_title}")
+        await self.task_logger.info(f"Subtitle is: {sub_title}")
 
         if self.is_first_run:
             self.is_first_run = False
@@ -64,11 +65,11 @@ class WriterAgent(Agent):
             self.available_images = available_images
             # 拼接成完整URL
             image_list = ",".join(available_images)
-            image_prompt = f"\n可用的图片链接列表：\n{image_list}\n请在写作时适当引用这些图片链接。"
-            logger.info(f"image_prompt是:{image_prompt}")
+            image_prompt = f"\nAvailable image URLs:\n{image_list}\nPlease reference these images appropriately in your writing."
+            await self.task_logger.info(f"Image prompt is: {image_prompt}")
             prompt = prompt + image_prompt
 
-        logger.info(f"{self.__class__.__name__}:开始:执行对话")
+        await self.task_logger.info(f"{self.__class__.__name__}: Starting execution.")
         self.current_chat_turns += 1  # 重置对话轮次计数器
 
         await self.append_chat_history({"role": "user", "content": prompt})
@@ -88,15 +89,17 @@ class WriterAgent(Agent):
             hasattr(response.choices[0].message, "tool_calls")
             and response.choices[0].message.tool_calls
         ):
-            logger.info("检测到工具调用")
+            await self.task_logger.info("Tool call detected.")
             tool_call = response.choices[0].message.tool_calls[0]
             tool_id = tool_call.id
 
             if tool_call.function.name == "search_papers":
-                logger.info("调用工具: search_papers")
+                await self.task_logger.info("Calling tool: search_papers")
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=f"写作手调用{tool_call.function.name}工具"),
+                    SystemMessage(
+                        content=f"WriterAgent is calling {tool_call.function.name} tool."
+                    ),
                 )
 
                 query = json.loads(tool_call.function.arguments)["query"]
@@ -115,14 +118,14 @@ class WriterAgent(Agent):
                 try:
                     papers = await self.scholar.search_papers(query)
                 except Exception as e:
-                    error_msg = f"搜索文献失败: {str(e)}"
-                    logger.error(error_msg)
+                    error_msg = f"Failed to search papers: {str(e)}"
+                    await self.task_logger.error(error_msg)
                     return WriterResponse(
                         response_content=error_msg, footnotes=footnotes
                     )
                 # 搜索结果已通过redis发送到前端
                 papers_str = self.scholar.papers_to_str(papers)
-                logger.info(f"搜索文献结果\n{papers_str}")
+                await self.task_logger.info(f"Paper search results:\n{papers_str}")
                 await self.append_chat_history(
                     {
                         "role": "tool",
@@ -132,10 +135,12 @@ class WriterAgent(Agent):
                     }
                 )
             elif tool_call.function.name == "web_search":
-                logger.info("调用工具: web_search")
+                await self.task_logger.info("Calling tool: web_search")
                 await redis_manager.publish_message(
                     self.task_id,
-                    SystemMessage(content=f"写作手调用{tool_call.function.name}工具"),
+                    SystemMessage(
+                        content=f"WriterAgent is calling {tool_call.function.name} tool."
+                    ),
                 )
 
                 # 解析参数
@@ -166,14 +171,16 @@ class WriterAgent(Agent):
                     )
 
                     if search_result.error:
-                        error_msg = f"网络搜索失败: {search_result.error}"
-                        logger.error(error_msg)
+                        error_msg = f"Web search failed: {search_result.error}"
+                        await self.task_logger.error(error_msg)
                         return WriterResponse(
                             response_content=error_msg, footnotes=footnotes
                         )
 
                     search_content = search_result.result
-                    logger.info(f"网络搜索结果\n{search_content}")
+                    await self.task_logger.info(
+                        f"Web search results:\n{search_content}"
+                    )
                     await self.append_chat_history(
                         {
                             "role": "tool",
@@ -183,8 +190,8 @@ class WriterAgent(Agent):
                         }
                     )
                 except Exception as e:
-                    error_msg = f"网络搜索失败: {str(e)}"
-                    logger.error(error_msg)
+                    error_msg = f"Web search failed: {str(e)}"
+                    await self.task_logger.error(error_msg)
                     return WriterResponse(
                         response_content=error_msg, footnotes=footnotes
                     )
@@ -199,7 +206,7 @@ class WriterAgent(Agent):
         else:
             response_content = response.choices[0].message.content
         self.chat_history.append({"role": "assistant", "content": response_content})
-        logger.info(f"{self.__class__.__name__}:完成:执行对话")
+        await self.task_logger.info(f"{self.__class__.__name__}: Finished execution.")
         return WriterResponse(response_content=response_content, footnotes=footnotes)
 
     async def summarize(self) -> str:
@@ -219,6 +226,6 @@ class WriterAgent(Agent):
             )
             return response.choices[0].message.content
         except Exception as e:
-            logger.error(f"总结生成失败: {str(e)}")
+            await self.task_logger.error(f"Summary generation failed: {str(e)}")
             # 返回一个基础总结，避免完全失败
-            return "由于网络原因无法生成详细总结，但已完成主要任务处理。"
+            return "Summary generation failed due to a network issue, but the main task has been completed."

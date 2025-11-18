@@ -1,5 +1,5 @@
 from app.core.llm.llm import LLM, simple_chat
-from app.utils.log_util import logger
+from app.utils.task_logger import TaskLogger
 from icecream import ic
 
 # Agent基类：实现了基础的对话历史管理、内存压缩和工具调用验证
@@ -12,11 +12,13 @@ class Agent:
         self,
         task_id: str,
         model: LLM,
+        task_logger: TaskLogger,
         max_chat_turns: int = 30,  # 单个agent最大对话轮次
         max_memory: int = 12,  # 最大记忆轮次
     ) -> None:
         self.task_id = task_id
         self.model = model
+        self.task_logger = task_logger
         self.chat_history: list[dict] = []  # 存储对话历史
         self.max_chat_turns = max_chat_turns  # 最大对话轮次
         self.current_chat_turns = 0  # 当前对话轮次计数器
@@ -33,7 +35,9 @@ class Agent:
             str: 模型的响应
         """
         try:
-            logger.info(f"{self.__class__.__name__}:开始:执行对话")
+            await self.task_logger.info(
+                f"{self.__class__.__name__}: Starting execution."
+            )
             self.current_chat_turns = 0  # 重置对话轮次计数器
 
             # 更新对话历史
@@ -48,11 +52,13 @@ class Agent:
             )
             response_content = response.choices[0].message.content
             self.chat_history.append({"role": "assistant", "content": response_content})
-            logger.info(f"{self.__class__.__name__}:完成:执行对话")
+            await self.task_logger.info(
+                f"{self.__class__.__name__}: Finished execution."
+            )
             return response_content
         except Exception as e:
-            error_msg = f"执行过程中遇到错误: {str(e)}"
-            logger.error(f"Agent执行失败: {str(e)}")
+            error_msg = f"An error occurred during execution: {str(e)}"
+            await self.task_logger.error(f"Agent execution failed: {str(e)}")
             return error_msg
 
     async def append_chat_history(self, msg: dict) -> None:
@@ -76,8 +82,8 @@ class Agent:
             return
 
         ic("开始内存清理")
-        logger.info(
-            f"{self.__class__.__name__}:开始清除记忆，当前记录数：{len(self.chat_history)}"
+        await self.task_logger.info(
+            f"{self.__class__.__name__}: Starting memory clearing, current records: {len(self.chat_history)}"
         )
 
         try:
@@ -127,14 +133,18 @@ class Agent:
 
                 self.chat_history = new_history
                 ic(f"内存清理完成，新历史长度: {len(self.chat_history)}")
-                logger.info(
-                    f"{self.__class__.__name__}:记忆清除完成，压缩至：{len(self.chat_history)}条记录"
+                await self.task_logger.info(
+                    f"{self.__class__.__name__}: Memory clearing completed, compressed to: {len(self.chat_history)} records"
                 )
             else:
-                logger.info(f"{self.__class__.__name__}:无需清除记忆，记录数量合理")
+                await self.task_logger.info(
+                    f"{self.__class__.__name__}: No need to clear memory, record count is reasonable."
+                )
 
         except Exception as e:
-            logger.error(f"记忆清除失败，使用简单切片策略: {str(e)}")
+            await self.task_logger.error(
+                f"Memory clearing failed, using simple slice strategy: {str(e)}"
+            )
             # 如果总结失败，回退到安全的策略：保留系统消息和最后几条消息，确保工具调用完整性
             safe_history = self._get_safe_fallback_history()
             self.chat_history = safe_history

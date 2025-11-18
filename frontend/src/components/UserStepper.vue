@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { saveApiConfig } from "@/apis/apiKeyApi";
-import { submitModelingTask } from "@/apis/submitModelingApi";
+import { submitModelingTask, type UploadProgressCallback } from "@/apis/submitModelingApi";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +65,10 @@ const showUploadSuccess = ref(false);
 const showSubmitSuccess = ref(false);
 
 const taskId = ref<string | null>(null);
+
+// 上传进度状态
+const uploadProgress = ref(0);
+const isUploading = ref(false);
 
 // 添加 fileInput 的类型声明
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -155,6 +159,14 @@ const handleSubmit = async () => {
 			英文: "en",
 		};
 
+		// 重置上传进度
+		uploadProgress.value = 0;
+		isUploading.value = true;
+
+		const onUploadProgress: UploadProgressCallback = (progress: number) => {
+			uploadProgress.value = progress;
+		};
+
 		const response = await submitModelingTask(
 			{
 				ques_all: question.value,
@@ -163,7 +175,10 @@ const handleSubmit = async () => {
 				language: languageMap[selectedOptions.value.language] || "zh",
 			},
 			uploadedFiles.value,
+			onUploadProgress,
 		);
+
+		isUploading.value = false;
 
 		taskId.value = response?.data?.task_id ?? null;
 		taskStore.addUserMessage(question.value);
@@ -178,6 +193,8 @@ const handleSubmit = async () => {
 			description: "任务提交成功，编号为：" + taskId.value,
 		});
 	} catch (error) {
+		isUploading.value = false;
+		uploadProgress.value = 0;
 		console.error("任务提交失败:", error);
 		toast({
 			title: "任务提交失败",
@@ -354,12 +371,31 @@ const handleSubmit = async () => {
           </div>
         </div>
 
+        <!-- 上传进度条 -->
+        <div v-if="isUploading" class="mt-6 space-y-3">
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-medium text-foreground">上传进度</span>
+            <span class="text-muted-foreground">{{ uploadProgress }}%</span>
+          </div>
+          <div class="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+            <div
+              class="bg-gradient-to-r from-blue-500 to-primary h-2.5 rounded-full transition-all duration-300 ease-out"
+              :style="{ width: `${uploadProgress}%` }"
+            >
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground text-center">
+            正在上传文件，请稍候...
+          </p>
+        </div>
+
         <div class="mt-8 flex justify-between items-center">
-          <Button variant="outline" @click="prevStep" class="px-6">
+          <Button variant="outline" @click="prevStep" class="px-6" :disabled="isUploading">
             ← 上一步
           </Button>
-          <Button @click="handleSubmit" class="px-8 shadow-md hover:shadow-lg transition-all">
-            🚀 开始分析
+          <Button @click="handleSubmit" class="px-8 shadow-md hover:shadow-lg transition-all" :disabled="isUploading">
+            <span v-if="isUploading">上传中...</span>
+            <span v-else>🚀 开始分析</span>
           </Button>
         </div>
       </div>

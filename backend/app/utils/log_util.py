@@ -56,3 +56,13 @@ class LoggerInitializer:
 # 初始化日志处理器
 log_initializer = LoggerInitializer()
 logger = log_initializer.init_log()
+
+
+def get_logger(name: str | None = None):
+    """Compatibility helper to obtain the application logger.
+
+    The optional *name* parameter is accepted for API compatibility but
+    currently ignored because loguru already records module/function
+    information in the log output.
+    """
+    return logger

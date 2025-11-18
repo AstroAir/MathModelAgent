@@ -191,8 +191,9 @@ async def exampleModeling(
     )
     task_history_manager.add_task(task_history)
 
-    # 存储任务ID
+    # 存储任务ID和状态
     await redis_manager.set(f"task_id:{task_id}", task_id)
+    await redis_manager.set(f"task:{task_id}:status", "pending")
 
     logger.info(f"Adding background task for task_id: {task_id}")
     # 将任务添加到后台执行
@@ -315,8 +316,9 @@ async def modeling(
     )
     task_history_manager.add_task(task_history)
 
-    # 存储任务ID
+    # 存储任务ID和状态
     await redis_manager.set(f"task_id:{task_id}", task_id)
+    await redis_manager.set(f"task:{task_id}:status", "pending")
 
     logger.info(f"Adding background task for task_id: {task_id}")
     # 将任务添加到后台执行
@@ -342,6 +344,9 @@ async def run_modeling_task_async(
     )
 
     try:
+        # 更新任务状态为运行中
+        await redis_manager.set(f"task:{task_id}:status", "running")
+
         # 发送任务开始状态
         await redis_manager.publish_message(
             task_id,
@@ -355,6 +360,9 @@ async def run_modeling_task_async(
         task = asyncio.create_task(MathModelWorkFlow().execute(problem))
         # 设置超时时间（比如 5 小时）
         await asyncio.wait_for(task, timeout=3600 * 5)
+
+        # 更新任务状态为完成
+        await redis_manager.set(f"task:{task_id}:status", "completed")
 
         # 发送任务完成状态
         await redis_manager.publish_message(
@@ -370,6 +378,8 @@ async def run_modeling_task_async(
     except asyncio.TimeoutError:
         error_msg = "任务执行超时（超过5小时）"
         logger.error(f"Task {task_id} timeout: {error_msg}")
+        # 更新任务状态为失败
+        await redis_manager.set(f"task:{task_id}:status", "failed")
         await redis_manager.publish_message(
             task_id,
             SystemMessage(content=error_msg, type="error"),
@@ -379,6 +389,8 @@ async def run_modeling_task_async(
     except Exception as e:
         error_msg = f"任务执行过程中发生错误: {str(e)}"
         logger.error(f"Task {task_id} failed: {error_msg}")
+        # 更新任务状态为失败
+        await redis_manager.set(f"task:{task_id}:status", "failed")
         await redis_manager.publish_message(
             task_id,
             SystemMessage(content=error_msg, type="error"),

@@ -2,6 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Loader2 } from "lucide-vue-next";
 import { ref, onMounted } from "vue";
+import request from "@/utils/request";
 
 const status = ref<"online" | "offline" | "checking">("checking");
 
@@ -9,12 +10,11 @@ const checkStatus = async () => {
 	try {
 		status.value = "checking";
 		// 这里可以添加实际的健康检查 API 调用
-		// const response = await fetch('/api/health');
-		// if (response.ok) {
-		status.value = "online";
-		// } else {
-		//   status.value = 'offline';
-		// }
+		const res = await request.get("/status");
+		const data: any = (res as any).data ?? res;
+		const backendOk = data?.backend?.status === "running";
+		const redisOk = data?.redis?.status === "running";
+		status.value = backendOk && redisOk ? "online" : "offline";
 	} catch (error) {
 		status.value = "offline";
 	}

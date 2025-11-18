@@ -2,6 +2,7 @@ from app.core.agents.agent import Agent
 from app.core.llm.llm import LLM
 from app.core.prompts import get_modeler_prompt
 from app.schemas.A2A import CoordinatorToModeler, ModelerToCoder
+from app.utils.task_logger import TaskLogger
 import json
 from icecream import ic
 
@@ -14,16 +15,18 @@ class ModelerAgent(Agent):  # 继承自Agent类
         self,
         task_id: str,
         model: LLM,
+        task_logger: TaskLogger,
         max_chat_turns: int = 30,
         language: str = "zh",
     ) -> None:
-        super().__init__(task_id, model, max_chat_turns)
+        super().__init__(task_id, model, task_logger, max_chat_turns)
         self.system_prompt = get_modeler_prompt(language)
 
     async def run(self, coordinator_to_modeler: CoordinatorToModeler) -> ModelerToCoder:
         await self.append_chat_history(
             {"role": "system", "content": self.system_prompt}
         )
+        await self.task_logger.info(f"Running {self.__class__.__name__}...")
         await self.append_chat_history(
             {
                 "role": "user",
@@ -41,10 +44,15 @@ class ModelerAgent(Agent):  # 继承自Agent类
         json_str = json_str.replace("```json", "").replace("```", "").strip()
 
         if not json_str:
+            await self.task_logger.error("LLM returned an empty JSON string.")
             raise ValueError("返回的 JSON 字符串为空，请检查输入内容。")
         try:
             questions_solution = json.loads(json_str)
             ic(questions_solution)
+            await self.task_logger.info(
+                f"{self.__class__.__name__} successfully parsed the solution."
+            )
             return ModelerToCoder(questions_solution=questions_solution)
         except json.JSONDecodeError as e:
+            await self.task_logger.error(f"JSON parsing error: {e}")
             raise ValueError(f"JSON 解析错误: {e}")

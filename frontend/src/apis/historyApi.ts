@@ -26,23 +26,26 @@ export const getTaskHistoryList = async (params?: {
   }
 
   const url = `/history/tasks${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-  return request.get(url);
+  const res = await request.get<TaskHistoryListResponse>(url);
+  return (res as any).data ?? res;
 };
 
 /**
  * 获取单个任务历史记录
  */
 export const getTaskHistory = async (taskId: string): Promise<TaskHistoryItem> => {
-  return request.get(`/history/tasks/${taskId}`);
+  const res = await request.get<TaskHistoryItem>(`/history/tasks/${taskId}`);
+  return (res as any).data ?? res;
 };
 
 /**
  * 创建任务历史记录
  */
 export const createTaskHistory = async (
-  data: CreateTaskHistoryRequest
+  data: CreateTaskHistoryRequest,
 ): Promise<TaskHistoryItem> => {
-  return request.post("/history/tasks", data);
+  const res = await request.post<TaskHistoryItem>("/history/tasks", data);
+  return (res as any).data ?? res;
 };
 
 /**
@@ -50,23 +53,28 @@ export const createTaskHistory = async (
  */
 export const updateTaskHistory = async (
   taskId: string,
-  data: UpdateTaskHistoryRequest
+  data: UpdateTaskHistoryRequest,
 ): Promise<TaskHistoryItem> => {
-  return request.patch(`/history/tasks/${taskId}`, data);
+  const res = await request.patch<TaskHistoryItem>(`/history/tasks/${taskId}`, data);
+  return (res as any).data ?? res;
 };
 
 /**
  * 切换任务收藏状态
  */
 export const toggleTaskPin = async (taskId: string): Promise<TaskHistoryItem> => {
-  return request.post(`/history/tasks/${taskId}/toggle-pin`);
+  const res = await request.post<TaskHistoryItem>(`/history/tasks/${taskId}/toggle-pin`);
+  return (res as any).data ?? res;
 };
 
 /**
  * 删除任务历史记录
  */
 export const deleteTaskHistory = async (taskId: string): Promise<{ success: boolean; message: string }> => {
-  return request.delete(`/history/tasks/${taskId}`);
+  const res = await request.delete<{ success: boolean; message: string }>(
+    `/history/tasks/${taskId}`,
+  );
+  return (res as any).data ?? res;
 };
 
 /**
@@ -77,5 +85,8 @@ export const getTaskCount = async (): Promise<{
   custom: number;
   example: number;
 }> => {
-  return request.get("/history/tasks/count");
+  const res = await request.get<{ total: number; custom: number; example: number }>(
+    "/history/tasks/count",
+  );
+  return (res as any).data ?? res;
 };
