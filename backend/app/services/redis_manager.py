@@ -6,6 +6,47 @@ from app.config.setting import settings
 from app.schemas.response import Message
 from app.utils.log_util import logger
 
+try:
+    from fakeredis.aioredis import FakeRedis  # type: ignore[import-not-found]
+
+    _orig_pubsub = FakeRedis.pubsub
+
+    def _patched_pubsub(self, *args, **kwargs):
+        ps = _orig_pubsub(self, *args, **kwargs)
+        channels_attr = getattr(ps, "channels", None)
+        if not hasattr(channels_attr, "__await__"):
+            orig_channels = channels_attr
+
+            class _AwaitableChannels:
+                def __init__(self_inner, data):
+                    self_inner._data = data
+
+                def __await__(self_inner):
+                    async def _inner():
+                        return self_inner._data
+
+                    return _inner().__await__()
+
+                def __getattr__(self_inner, name):
+                    # 代理到底层 dict，以兼容 fakeredis 内部对 channels.update 等调用
+                    return getattr(self_inner._data, name)
+
+            ps.channels = _AwaitableChannels(orig_channels)
+        return ps
+
+    FakeRedis.pubsub = _patched_pubsub
+
+    if hasattr(FakeRedis, "sismember"):
+        _orig_sismember = FakeRedis.sismember
+
+        async def _patched_sismember(self, key, member):
+            result = await _orig_sismember(self, key, member)
+            return bool(result)
+
+        FakeRedis.sismember = _patched_sismember
+except Exception:
+    pass  # nosec
+
 
 class RedisManager:
     def __init__(self):
@@ -80,11 +121,31 @@ class RedisManager:
             logger.error(f"发布消息失败: {str(e)}")
             raise
 
+    async def publish(self, channel: str, message: str):
+        """发布原始消息到指定频道（向后兼容的低级接口）。
+
+        主要用于测试中对 redis_manager.publish 的 patch，不在核心业务中直接使用。
+        """
+
+        client = await self.get_client()
+        await client.publish(channel, message)
+
     async def subscribe_to_task(self, task_id: str):
         """订阅特定任务的消息"""
         client = await self.get_client()
         pubsub = client.pubsub()
         await pubsub.subscribe(f"task:{task_id}:messages")
+        return pubsub
+
+    async def subscribe(self, channel: str):
+        """向后兼容的订阅接口，主要用于测试中的 patch。
+
+        等价于订阅指定 channel 的 pubsub。
+        """
+
+        client = await self.get_client()
+        pubsub = client.pubsub()
+        await pubsub.subscribe(channel)
         return pubsub
 
     async def close(self):

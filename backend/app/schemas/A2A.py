@@ -8,7 +8,8 @@ class CoordinatorToModeler(BaseModel):
 
 
 class ModelerToCoder(BaseModel):
-    questions_solution: dict[str, str]
+    # 建模结果可以是字符串或嵌套字典，这里放宽为 Any 以兼容更多结构
+    questions_solution: dict[str, Any]
 
 
 class CoderToWriter(BaseModel):

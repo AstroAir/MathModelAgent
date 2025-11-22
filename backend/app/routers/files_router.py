@@ -185,9 +185,9 @@ async def get_file_content(filename: str, task_id: str = Depends(verify_task_acc
     支持文本文件类型: txt, md, json, csv, xml, yml, yaml, py, js, ts, vue, html, css, log
     支持图片类型: png, jpg, jpeg, gif, bmp, webp, svg
     """
+    safe_filename = secure_filename(unquote(filename))
     try:
         work_dir = get_work_dir(task_id)
-        safe_filename = secure_filename(unquote(filename))
         file_path = os.path.join(work_dir, safe_filename)
 
         # Security check: Ensure the final path is within the working directory
@@ -261,11 +261,25 @@ async def get_file_content(filename: str, task_id: str = Depends(verify_task_acc
                 "encoding": used_encoding,
                 "size": file_size,
             }
+    except FileNotFoundError:
+        # 工作目录不存在时返回 404，而不是 500
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+    except HTTPException:
+        # 已构造好的 HTTP 异常直接抛出（如 400/403/404）
+        raise
     except Exception as e:
         logger.error(f"Error reading file {safe_filename} for task {task_id}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Could not read file: {safe_filename}"
         )
+
+
+@router.get("/{task_id}/file-content")
+async def get_file_content_compat(
+    filename: str, task_id: str = Depends(verify_task_access)
+):
+    """兼容旧路径 /file-content，内部复用 get_file_content 逻辑。"""
+    return await get_file_content(filename=filename, task_id=task_id)
 
 
 @router.post("/{task_id}/files")
@@ -314,6 +328,71 @@ async def upload_file(
         raise HTTPException(status_code=500, detail="File upload failed.")
 
 
+@router.post("/{task_id}/upload")
+async def upload_file_compat(
+    task_id: str = Depends(verify_task_access),
+    files: list[UploadFile] = File(...),
+):
+    """兼容旧路径 /upload，支持单个或多个文件上传。
+
+    参数名为 files，以兼容现有前端和测试用例：
+    - 单文件：files={"files": (filename, BytesIO(...), content_type)}
+    - 多文件：files=[("files", (filename1, ...)), ("files", (filename2, ...))]
+    """
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided.")
+
+    try:
+        work_dir = get_work_dir(task_id)
+        saved_files: list[str] = []
+        total_size = 0
+
+        for upload in files:
+            if not upload.filename:
+                continue
+
+            safe_filename = secure_filename(upload.filename)
+            file_ext = os.path.splitext(safe_filename)[1].lower()
+
+            if file_ext not in ALLOWED_EXTENSIONS:
+                raise HTTPException(
+                    status_code=400, detail=f"File type not allowed: {file_ext}"
+                )
+
+            file_path = os.path.join(work_dir, safe_filename)
+
+            content = await upload.read()
+            if len(content) > MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413, detail="File size exceeds the 100MB limit."
+                )
+
+            with open(file_path, "wb") as f:
+                f.write(content)
+
+            saved_files.append(safe_filename)
+            total_size += len(content)
+
+        if not saved_files:
+            raise HTTPException(status_code=400, detail="No valid files uploaded.")
+
+        logger.info(
+            f"Files uploaded successfully: {saved_files} to task {task_id}, total_size={total_size}"
+        )
+        return {
+            "message": "Files uploaded successfully",
+            "filenames": saved_files,
+            "total_size": total_size,
+        }
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"File upload failed for task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail="File upload failed.")
+
+
 @router.delete("/{task_id}/files")
 async def delete_file(filename: str, task_id: str = Depends(verify_task_access)):
     try:
@@ -335,6 +414,15 @@ async def delete_file(filename: str, task_id: str = Depends(verify_task_access))
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Task '{task_id}' not found.")
+    except HTTPException:
+        # 已经构造好的 HTTP 异常（如 404/403），直接抛出
+        raise
     except Exception as e:
         logger.error(f"File deletion failed for task {task_id}: {e}")
         raise HTTPException(status_code=500, detail="File deletion failed.")
+
+
+@router.delete("/{task_id}/file")
+async def delete_file_compat(filename: str, task_id: str = Depends(verify_task_access)):
+    """兼容旧路径 /file，内部复用 delete_file 逻辑。"""
+    return await delete_file(filename=filename, task_id=task_id)

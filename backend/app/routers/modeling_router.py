@@ -20,14 +20,49 @@ import os
 import asyncio
 from fastapi import HTTPException
 from icecream import ic
-from app.schemas.request import ExampleRequest
 from pydantic import BaseModel
 import litellm
 from app.config.setting import settings
 import requests
 from app.models.task_history import TaskHistoryItem, task_history_manager
+from app.utils.config_loader import save_model_config
+from typing import Any, Dict
 
-router = APIRouter()
+router = APIRouter(prefix="/modeling", tags=["modeling"])
+
+
+def _map_template_to_enum(template: str | None) -> CompTemplate:
+    """将前端/测试中的模板字符串映射到枚举值。
+
+    支持："国赛"/"CHINA"/"guosai" -> CHINA，"美赛"/"AMERICAN"/"meisai" -> AMERICAN。
+    """
+
+    if not template:
+        return CompTemplate.CHINA
+
+    value = template.strip().lower()
+    if value in {"国赛", "china", "guosai"}:
+        return CompTemplate.CHINA
+    if value in {"美赛", "american", "meisai"}:
+        return CompTemplate.AMERICAN
+    return CompTemplate.CHINA
+
+
+def _map_format_to_enum(fmt: str | None) -> FormatOutPut:
+    """将前端/测试中的输出格式字符串映射到枚举值。
+
+    支持："markdown" -> Markdown, "latex" -> LaTeX。
+    """
+
+    if not fmt:
+        return FormatOutPut.Markdown
+
+    value = fmt.strip().lower()
+    if value in {"markdown", "md"}:
+        return FormatOutPut.Markdown
+    if value in {"latex", "tex"}:
+        return FormatOutPut.LaTeX
+    return FormatOutPut.Markdown
 
 
 class ValidateApiKeyRequest(BaseModel):
@@ -58,38 +93,139 @@ class SaveApiConfigRequest(BaseModel):
     openalex_email: str
 
 
+class ExampleModelingRequest(BaseModel):
+    """兼容示例建模请求的多种字段格式。
+
+    - 测试与前端：example_name/template/language/format_output
+    - 旧结构：example_id/source
+    """
+
+    example_name: str | None = None
+    template: str | None = None
+    language: str | None = "zh"
+    format_output: str | None = "markdown"
+
+    example_id: str | None = None
+    source: str | None = None
+
+
 @router.post("/save-api-config")
-async def save_api_config(request: SaveApiConfigRequest):
+async def save_api_config(payload: Dict[str, Any]):
+    """保存验证成功的 API 配置到 settings，并写入 model_config.toml。
+
+    兼容两种请求格式：
+    - 扁平结构（测试用）：COORDINATOR_API_KEY、MODELER_MODEL 等
+    - 嵌套结构：coordinator/modeler/coder/writer 字段中包含 apiKey/modelId/baseUrl
     """
-    保存验证成功的 API 配置到 settings
-    """
+
     try:
-        # 更新各个模块的设置
-        if request.coordinator:
-            settings.COORDINATOR_API_KEY = request.coordinator.get("apiKey", "")
-            settings.COORDINATOR_MODEL = request.coordinator.get("modelId", "")
-            settings.COORDINATOR_BASE_URL = request.coordinator.get("baseUrl", "")
+        updates: Dict[str, Any] = {}
 
-        if request.modeler:
-            settings.MODELER_API_KEY = request.modeler.get("apiKey", "")
-            settings.MODELER_MODEL = request.modeler.get("modelId", "")
-            settings.MODELER_BASE_URL = request.modeler.get("baseUrl", "")
+        # 兼容嵌套结构
+        coordinator_cfg = payload.get("coordinator")
+        modeler_cfg = payload.get("modeler")
+        coder_cfg = payload.get("coder")
+        writer_cfg = payload.get("writer")
 
-        if request.coder:
-            settings.CODER_API_KEY = request.coder.get("apiKey", "")
-            settings.CODER_MODEL = request.coder.get("modelId", "")
-            settings.CODER_BASE_URL = request.coder.get("baseUrl", "")
+        if isinstance(coordinator_cfg, dict):
+            settings.COORDINATOR_API_KEY = coordinator_cfg.get("apiKey", "")
+            settings.COORDINATOR_MODEL = coordinator_cfg.get("modelId", "")
+            settings.COORDINATOR_BASE_URL = coordinator_cfg.get("baseUrl", "")
+            updates.update(
+                {
+                    "COORDINATOR_API_KEY": settings.COORDINATOR_API_KEY,
+                    "COORDINATOR_MODEL": settings.COORDINATOR_MODEL,
+                    "COORDINATOR_BASE_URL": settings.COORDINATOR_BASE_URL,
+                }
+            )
+        else:
+            # 扁平结构
+            if "COORDINATOR_API_KEY" in payload:
+                settings.COORDINATOR_API_KEY = payload.get("COORDINATOR_API_KEY", "")
+                updates["COORDINATOR_API_KEY"] = settings.COORDINATOR_API_KEY
+            if "COORDINATOR_MODEL" in payload:
+                settings.COORDINATOR_MODEL = payload.get("COORDINATOR_MODEL", "")
+                updates["COORDINATOR_MODEL"] = settings.COORDINATOR_MODEL
+            if "COORDINATOR_BASE_URL" in payload:
+                settings.COORDINATOR_BASE_URL = payload.get("COORDINATOR_BASE_URL", "")
+                updates["COORDINATOR_BASE_URL"] = settings.COORDINATOR_BASE_URL
 
-        if request.writer:
-            settings.WRITER_API_KEY = request.writer.get("apiKey", "")
-            settings.WRITER_MODEL = request.writer.get("modelId", "")
-            settings.WRITER_BASE_URL = request.writer.get("baseUrl", "")
+        if isinstance(modeler_cfg, dict):
+            settings.MODELER_API_KEY = modeler_cfg.get("apiKey", "")
+            settings.MODELER_MODEL = modeler_cfg.get("modelId", "")
+            settings.MODELER_BASE_URL = modeler_cfg.get("baseUrl", "")
+            updates.update(
+                {
+                    "MODELER_API_KEY": settings.MODELER_API_KEY,
+                    "MODELER_MODEL": settings.MODELER_MODEL,
+                    "MODELER_BASE_URL": settings.MODELER_BASE_URL,
+                }
+            )
+        else:
+            if "MODELER_API_KEY" in payload:
+                settings.MODELER_API_KEY = payload.get("MODELER_API_KEY", "")
+                updates["MODELER_API_KEY"] = settings.MODELER_API_KEY
+            if "MODELER_MODEL" in payload:
+                settings.MODELER_MODEL = payload.get("MODELER_MODEL", "")
+                updates["MODELER_MODEL"] = settings.MODELER_MODEL
+            if "MODELER_BASE_URL" in payload:
+                settings.MODELER_BASE_URL = payload.get("MODELER_BASE_URL", "")
+                updates["MODELER_BASE_URL"] = settings.MODELER_BASE_URL
 
-        if request.openalex_email:
-            settings.OPENALEX_EMAIL = request.openalex_email
+        if isinstance(coder_cfg, dict):
+            settings.CODER_API_KEY = coder_cfg.get("apiKey", "")
+            settings.CODER_MODEL = coder_cfg.get("modelId", "")
+            settings.CODER_BASE_URL = coder_cfg.get("baseUrl", "")
+            updates.update(
+                {
+                    "CODER_API_KEY": settings.CODER_API_KEY,
+                    "CODER_MODEL": settings.CODER_MODEL,
+                    "CODER_BASE_URL": settings.CODER_BASE_URL,
+                }
+            )
+        else:
+            if "CODER_API_KEY" in payload:
+                settings.CODER_API_KEY = payload.get("CODER_API_KEY", "")
+                updates["CODER_API_KEY"] = settings.CODER_API_KEY
+            if "CODER_MODEL" in payload:
+                settings.CODER_MODEL = payload.get("CODER_MODEL", "")
+                updates["CODER_MODEL"] = settings.CODER_MODEL
+            if "CODER_BASE_URL" in payload:
+                settings.CODER_BASE_URL = payload.get("CODER_BASE_URL", "")
+                updates["CODER_BASE_URL"] = settings.CODER_BASE_URL
 
-        return {"success": True, "message": "配置保存成功"}
-    except Exception as e:
+        if isinstance(writer_cfg, dict):
+            settings.WRITER_API_KEY = writer_cfg.get("apiKey", "")
+            settings.WRITER_MODEL = writer_cfg.get("modelId", "")
+            settings.WRITER_BASE_URL = writer_cfg.get("baseUrl", "")
+            updates.update(
+                {
+                    "WRITER_API_KEY": settings.WRITER_API_KEY,
+                    "WRITER_MODEL": settings.WRITER_MODEL,
+                    "WRITER_BASE_URL": settings.WRITER_BASE_URL,
+                }
+            )
+        else:
+            if "WRITER_API_KEY" in payload:
+                settings.WRITER_API_KEY = payload.get("WRITER_API_KEY", "")
+                updates["WRITER_API_KEY"] = settings.WRITER_API_KEY
+            if "WRITER_MODEL" in payload:
+                settings.WRITER_MODEL = payload.get("WRITER_MODEL", "")
+                updates["WRITER_MODEL"] = settings.WRITER_MODEL
+            if "WRITER_BASE_URL" in payload:
+                settings.WRITER_BASE_URL = payload.get("WRITER_BASE_URL", "")
+                updates["WRITER_BASE_URL"] = settings.WRITER_BASE_URL
+
+        openalex_email = payload.get("openalex_email") or payload.get("OPENALEX_EMAIL")
+        if openalex_email:
+            settings.OPENALEX_EMAIL = openalex_email
+            updates["OPENALEX_EMAIL"] = openalex_email
+
+        if updates:
+            save_model_config(updates)
+
+        return {"success": True, "message": "API configuration saved successfully"}
+    except Exception as e:  # pragma: no cover - 错误路径
         logger.error(f"保存配置失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"保存配置失败: {str(e)}")
 
@@ -159,12 +295,26 @@ async def validate_openalex_email(request: ValidateOpenalexEmailRequest):
 
 @router.post("/example")
 async def exampleModeling(
-    example_request: ExampleRequest,
+    example_request: ExampleModelingRequest,
     background_tasks: BackgroundTasks,
 ):
     task_id = create_task_id()
     work_dir = create_work_dir(task_id)
-    example_dir = os.path.join("app", "example", "example", example_request.source)
+
+    # 统一 example 名称与来源目录
+    example_name = example_request.example_name or example_request.example_id
+    source = example_request.source
+
+    if not source:
+        # 根据示例名称简单推断来源目录，默认使用 2024 高教杯示例
+        if example_name and "2023" in example_name:
+            source = "2023华数杯C题"
+        elif example_name and "2025" in example_name:
+            source = "2025五一杯C题"
+        else:
+            source = "2024高教杯C题"
+
+    example_dir = os.path.join("app", "example", "example", source)
     ic(example_dir)
     with open(os.path.join(example_dir, "questions.txt"), "r", encoding="utf-8") as f:
         ques_all = f.read()
@@ -207,16 +357,33 @@ async def exampleModeling(
     return {"task_id": task_id, "status": "processing"}
 
 
-@router.post("/modeling")
+@router.post("")
 async def modeling(
     background_tasks: BackgroundTasks,
-    ques_all: str = Form(...),  # 从表单获取
-    comp_template: CompTemplate = Form(...),  # 从表单获取
-    format_output: FormatOutPut = Form(...),  # 从表单获取
+    problem: str | None = Form(default=None),
+    template: str | None = Form(default=None),
+    language: str | None = Form(default="zh"),
+    format_output: str | None = Form(default="markdown"),
     files: list[UploadFile] = File(default=None),
 ):
+    """建模主入口，与测试使用的 /modeling 表单字段保持兼容。
+
+    - problem: 问题描述（必填）
+    - template: 比赛模板（"国赛"/"美赛" 等）
+    - language: 语言（"zh"/"en"/"auto"）
+    - format_output: 输出格式（"markdown"/"latex" 等）
+    """
+
+    if not problem:
+        # 与测试期望一致：缺少 problem 时返回 422
+        raise HTTPException(status_code=422, detail="Problem description is required")
+
     task_id = create_task_id()
     work_dir = create_work_dir(task_id)
+
+    ques_all = problem
+    comp_template = _map_template_to_enum(template)
+    format_enum = _map_format_to_enum(format_output)
 
     file_count = 0
     archive_files = []  # 记录压缩包文件
@@ -323,7 +490,7 @@ async def modeling(
     logger.info(f"Adding background task for task_id: {task_id}")
     # 将任务添加到后台执行
     background_tasks.add_task(
-        run_modeling_task_async, task_id, ques_all, comp_template, format_output
+        run_modeling_task_async, task_id, ques_all, comp_template, format_enum
     )
     return {"task_id": task_id, "status": "processing"}
 

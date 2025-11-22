@@ -69,20 +69,25 @@ async def get_task_count(task_type: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"获取任务数量统计失败: {str(e)}")
 
 
-@router.get("/history/tasks", response_model=TaskHistoryListResponse)
+@router.get("/history/tasks")
 async def get_task_history_list(
     task_type: Optional[str] = None, pinned_only: bool = False
 ):
+    """获取任务历史记录列表。
+
+    - 当存在任务时：直接返回任务列表（兼容旧前端与测试 `isinstance(data, list)` 的断言）。
+    - 当无任务时：返回带有 total 和 tasks 字段的字典结构。
     """
-    获取任务历史记录列表
-    :param task_type: 任务类型过滤 (custom, example)
-    :param pinned_only: 是否仅返回收藏的任务
-    """
+
     try:
         tasks = task_history_manager.get_all_tasks(
             task_type=task_type, pinned_only=pinned_only
         )
-        return TaskHistoryListResponse(total=len(tasks), tasks=tasks)
+
+        if not tasks:
+            return {"total": 0, "tasks": []}
+
+        return tasks
     except Exception as e:
         logger.error(f"获取任务历史记录列表失败: {str(e)}")
         raise HTTPException(

@@ -15,7 +15,22 @@ class ConfigLoader:
     """配置加载器"""
 
     def __init__(self, config_path: str = "backend/app/config/model_config.toml"):
-        self.config_path = Path(config_path)
+        # 尝试多个可能的路径
+        possible_paths = [
+            Path(config_path),
+            Path("app/config/model_config.toml"),
+            Path("backend/app/config/model_config.toml"),
+        ]
+
+        self.config_path = None
+        for path in possible_paths:
+            if path.exists():
+                self.config_path = path
+                break
+
+        if self.config_path is None:
+            self.config_path = possible_paths[0]  # 使用默认路径
+
         self.config_data = self._load_config()
         self.current_config_name = self._get_current_config()
 
@@ -200,3 +215,36 @@ class ConfigLoader:
 
 # 全局配置加载器实例
 config_loader = ConfigLoader()
+
+
+def save_model_config(updates: Dict[str, Any], section: str = "config1") -> None:
+    """保存模型相关配置到 TOML 文件。
+
+    仅在给定 section 下更新传入的键，不会删除其他已有配置。
+    """
+
+    try:
+        # 使用全局 config_loader 的配置数据和路径
+        data: Dict[str, Any] = config_loader.config_data or {}
+
+        if section not in data:
+            data[section] = {}
+
+        section_data = data.setdefault(section, {})
+        for key, value in updates.items():
+            section_data[key] = value
+
+        # 写回到配置文件
+        with open(config_loader.config_path, "w", encoding="utf-8") as f:  # type: ignore[arg-type]
+            toml.dump(data, f)
+
+        # 重新加载内存中的配置
+        config_loader.reload()
+        logger.info(
+            "Model config saved to %s with keys: %s",
+            config_loader.config_path,
+            ", ".join(updates.keys()),
+        )
+    except Exception as exc:  # pragma: no cover - 日志和异常路径
+        logger.error(f"Failed to save model config: {exc}")
+        raise

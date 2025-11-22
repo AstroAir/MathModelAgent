@@ -17,6 +17,12 @@ from app.utils.log_util import logger
 from fastapi.staticfiles import StaticFiles
 from app.utils.cli import get_ascii_banner, center_cli_str
 
+# 确保必需的目录在导入时就存在
+PROJECT_FOLDER = "./project"
+WORK_DIR = "./project/work_dir"
+os.makedirs(PROJECT_FOLDER, exist_ok=True)
+os.makedirs(WORK_DIR, exist_ok=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +31,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting MathModelAgent")
 
     PROJECT_FOLDER = "./project"
+    WORK_DIR = "./project/work_dir"
     os.makedirs(PROJECT_FOLDER, exist_ok=True)
+    os.makedirs(WORK_DIR, exist_ok=True)  # 确保工作目录存在
 
     yield
     logger.info("Stopping MathModelAgent")
